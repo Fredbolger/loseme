@@ -18,6 +18,23 @@ services:
     volumes:
       - qdrant_data:/qdrant/storage
 
+  test:
+    build: ./api
+    volumes:
+      - .:/app
+    working_dir: /app
+    environment:
+      PYTHONPATH: /app
+    command: pytest -v tests
+  
+  docs:
+    build:
+      context: .
+      dockerfile: Dockerfile.docs
+    volumes:
+      - .:/app  # Mount local files for live rebuilds
+    command: sh -c "make -C docs clean html"
+
 volumes:
   qdrant_data:
 

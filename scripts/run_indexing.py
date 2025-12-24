@@ -1,74 +1,108 @@
-"""
-End-to-end Phase 1 indexing runner.
-
-This script wires together:
-- Filesystem ingestion
-- Simple chunking
-- Dummy embeddings
-- In-memory vector store
-
-Run this BEFORE adding FastAPI.
-"""
-
+import signal
 from pathlib import Path
-
+import hashlib
+from src.core.logging import logger
+from src.domain.models import IndexingScope
 from collectors.filesystem.filesystem_source import FilesystemIngestionSource
 from pipeline.chunking.simple_chunker import SimpleTextChunker
 from pipeline.embeddings.dummy import DummyEmbeddingProvider
-from storage.vector_db.in_memory import InMemoryVectorStore
-from src.domain.models import IndexingScope
+from storage.metadata_db.db import init_db, log_active_schema
+from storage.metadata_db.indexing_runs import (
+    create_run,
+    load_latest_run,
+    update_checkpoint,
+    update_status,
+)
+from storage.metadata_db.processed_documents import (
+    mark_processed,
+    is_processed,
+    get_all_processed,
+)
 
 
-def main():
-    # ---- CONFIG ----
-    scope = IndexingScope(
-        directories=[Path("./docs")],
-        include_patterns=["*.md", "*.txt"],
-        exclude_patterns=[],
+def compute_doc_hash(content: str) -> str:
+    """Compute a SHA256 hash for a document."""
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+
+def run_indexing():
+    logger.info("=== Starting indexing process ===")
+
+    init_db()
+    log_active_schema()
+    logger.debug("Metadata DB initialized")
+
+    scope = IndexingScope(directories=[Path("./docs")])
+    logger.info(f"Indexing scope: {scope.directories}")
+
+    source = FilesystemIngestionSource(scope)
+
+    resume_run = load_latest_run("filesystem", scope)
+
+    if resume_run is None:
+        run = create_run("filesystem", scope)
+        logger.info("Created new indexing run %s", run.id)
+    else:
+        run = resume_run
+        logger.info(
+            "Resuming indexing run %s (status=%s)",
+            run.id,
+            run.status,
+        )
+
+    # --- Interrupt handler -------------------------------------------------
+    def handle_interrupt(signum, frame):
+        logger.warning(
+            f"SIGINT received → marking run {run.id} as interrupted"
+        )
+        update_status(run.id, "interrupted")
+        logger.info("Run marked as interrupted, exiting")
+        exit(0)
+
+    signal.signal(signal.SIGINT, handle_interrupt)
+
+    # --- Indexing loop -----------------------------------------------------
+    logger.info(
+        f"Listing documents (after checkpoint={run.last_document_id})"
     )
+    documents = source.list_documents(after=run.last_document_id)
+    logger.info(f"{len(documents)} documents discovered")
 
-    # ---- COMPONENTS ----
-    ingestion = FilesystemIngestionSource()
-    chunker = SimpleTextChunker(chunk_size=500, overlap=50)
-    embedder = DummyEmbeddingProvider(dimension=384)
-    vector_store = InMemoryVectorStore(dimension=embedder.dimension())
+    for doc in documents:
+        doc_id = str(doc.path)
+        logger.debug(f"Considering document: {doc_id}")
 
-    # ---- INDEXING ----
-    print("Starting indexing run…")
+        content = doc.path.read_text()
+        doc_hash = compute_doc_hash(content)
 
-    document_ids = ingestion.list_documents(scope)
-    print(f"Found {len(document_ids)} documents")
-
-    total_chunks = 0
-
-    for doc_id in document_ids:
-        document = ingestion.read_document(doc_id)
-
-        if not document.path or not document.path.exists():
+        if is_processed(run.id, doc_id, doc_hash):
+            logger.info(f"Skipping already processed and unchanged document: {doc_id}")
             continue
 
-        with open(document.path, "r", encoding="utf-8", errors="ignore") as f:
-            text = f.read()
+        logger.info(f"Processing document: {doc_id}")
 
-        chunks = chunker.chunk(document, text)
+        chunker = SimpleTextChunker()
+        chunks = chunker.chunk(doc, content)
+        logger.debug(f"Produced {len(chunks)} chunks")
 
-        for chunk in chunks:
-            vector = embedder.embed(chunk.content)
-            vector_store.add(chunk, vector)
+        embedding_provider = DummyEmbeddingProvider()
+        for i, chunk in enumerate(chunks):
+            embedding = embedding_provider.embed(chunk.content)
+            logger.debug(
+                f"Embedded chunk {i + 1}/{len(chunks)} "
+                f"(len={len(chunk.content)})"
+            )
+            # vector DB insert will go here
 
-        total_chunks += len(chunks)
+        mark_processed(run.id, doc_id, doc_hash)
+        update_checkpoint(run.id, doc_id)
 
-    print(f"Indexed {total_chunks} chunks")
+        logger.info(f"Indexed document {doc_id}, {len(chunks)} chunks")
 
-    # ---- TEST QUERY ----
-    query = "architecture"
-    query_vector = embedder.embed(query)
-    results = vector_store.query(query_vector, top_k=5)
-
-    print("\nTop results for query:", query)
-    for chunk_id, score, metadata in results:
-        print(f"- {chunk_id[:8]}… score={score:.4f} metadata={metadata}")
+    update_status(run.id, "completed")
+    logger.info(f"Indexing run {run.id} completed successfully")
 
 
 if __name__ == "__main__":
-    main()
+    run_indexing()
+

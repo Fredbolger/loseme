@@ -1,4 +1,3 @@
-# storage/vector_db/in_memory.py
 from typing import List, Tuple
 import math
 
@@ -15,6 +14,9 @@ class InMemoryVectorStore:
         self._vectors: List[Tuple[str, List[float], dict]] = []
 
     def add(self, chunk: Chunk, vector: List[float]) -> None:
+        """
+        Adds a chunk and its vector to the store.
+        """
         if len(vector) != self.dimension:
             raise ValueError("Vector dimension mismatch")
 
@@ -29,7 +31,11 @@ class InMemoryVectorStore:
             )
         )
 
-    def query(self, query_vector: List[float], top_k: int = 5):
+    def query(self, query_vector: List[float], top_k: int = 5) -> List[Tuple[str, float, dict]]:
+        """
+        Queries the store for the top_k most similar vectors.
+
+        """
         if len(query_vector) != self.dimension:
             raise ValueError("Query vector dimension mismatch")
 

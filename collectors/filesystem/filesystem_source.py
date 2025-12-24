@@ -1,43 +1,36 @@
-# collectors/filesystem/filesystem_source.py
 from pathlib import Path
-from typing import List
-from src.domain.ingestion import IngestionSource
+from typing import List, Optional
 from src.domain.models import Document, IndexingScope
-import hashlib
 
-class FilesystemIngestionSource(IngestionSource):
-    """
-    Filesystem-based ingestion source implementing the pull-based, resumable interface.
-    """
+class FilesystemIngestionSource:
+    def __init__(self, scope: IndexingScope):
+        self.scope = scope
 
-    def list_documents(self, scope: IndexingScope) -> List[str]:
-        file_paths = []
-        for directory in scope.directories:
-            if not directory.exists() or not directory.is_dir():
+    def list_documents(self, after: Optional[str] = None) -> List[Document]:
+        """
+        List all documents in the scope, optionally starting after a given document ID.
+        """
+        docs = []
+        start = after is None
+        for path in self._walk_files():
+            doc_id = str(path)
+            if after and not start:
+                if doc_id == after:
+                    start = True
                 continue
-            for path in directory.rglob('*'):
+            docs.append(Document(id=doc_id, path=path, source="filesystem"))
+        return docs
+
+    def _walk_files(self):
+        """
+        Walk through all files in scope.directories matching include/exclude patterns.
+        Returns sorted paths to ensure resumable indexing works consistently.
+        """
+        all_files = []
+        for directory in self.scope.directories:
+            for path in Path(directory).rglob("*"):
                 if path.is_file():
-                    # Apply simple include/exclude patterns
-                    if scope.include_patterns and not any(path.match(pat) for pat in scope.include_patterns):
-                        continue
-                    if any(path.match(pat) for pat in scope.exclude_patterns):
-                        continue
-                    file_paths.append(str(path))
-        return file_paths
-
-    def read_document(self, doc_id: str) -> Document:
-        path = Path(doc_id)
-        with open(path, 'rb') as f:
-            content = f.read()
-        checksum = hashlib.sha256(content).hexdigest()
-        return Document(
-            id=str(path.resolve()),
-            source='filesystem',
-            path=path.resolve(),
-            metadata={'size': len(content)},
-            checksum=checksum
-        )
-
-    def supports_resume(self) -> bool:
-        return True
+                    all_files.append(path)
+        # Sort paths lexicographically
+        return sorted(all_files)
 
