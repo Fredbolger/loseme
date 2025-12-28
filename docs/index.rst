@@ -49,7 +49,9 @@ Documentation
    :caption: Overview
 
    architecture
-   phase1
+   phase1_overview
+   phase1_architecture
+   phase1_checklist
 
 .. toctree::
    :maxdepth: 2

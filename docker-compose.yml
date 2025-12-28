@@ -31,7 +31,7 @@ services:
   docs:
     build:
       context: .
-      dockerfile: Dockerfile.docs
+      dockerfile: docker/docs.Dockerfile
     volumes:
       - .:/app  # Mount local files for live rebuilds
     command: sh -c "make -C docs clean html"

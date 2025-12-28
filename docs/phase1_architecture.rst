@@ -1,0 +1,29 @@
+Phase 1: Architecture
+---------------------
+
+.. code-block:: text
+
+   Filesystem → Collector → Chunker → Embedder → Vector DB
+                                       ↓
+                                    Metadata DB
+
+   CLI → API → Vector DB + Metadata DB
+
+Phase 1: Work Package Overview
+---------------------
+
+Phase 1 is divided into the following work packages:
+
+1. Repository & Infrastructure Setup
+2. Core Data Model
+3. Filesystem Collector
+4. Chunking Module
+5. Embedding Module
+6. Storage Layer
+7. API Layer
+8. CLI Client
+9. Integration & Validation
+
+Each package can be worked on mostly independently.
+
+
