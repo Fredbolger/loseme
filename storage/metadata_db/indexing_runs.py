@@ -7,9 +7,9 @@ from pathlib import Path
 
 from storage.metadata_db.db import execute, fetch_one
 from src.domain.models import IndexingRun, IndexingScope
-from src.core.logging import logger
 from storage.metadata_db.processed_documents import get_all_processed
-
+import logging
+logger = logging.getLogger(__name__)
 
 def _now() -> str:
     return datetime.utcnow().isoformat()

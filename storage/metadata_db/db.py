@@ -80,7 +80,8 @@ def log_active_schema() -> None:
     Logs current database schema using the project logger.
     """
     # Lazy import to prevent import-time failures
-    from src.core.logging import logger
+    import logging
+    logger = logging.getLogger(__name__)
 
     tables = fetch_all("SELECT name, sql FROM sqlite_master WHERE type='table'")
     indexes = fetch_all("SELECT name, sql FROM sqlite_master WHERE type='index'")

@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 from .models import Document, IndexingScope
+from collectors.filesystem.filesystem_source import FilesystemIngestionSource
 
 class IngestionSource(ABC):
     """

@@ -1,8 +1,12 @@
 from fastapi import FastAPI
 
-app = FastAPI(title="Semantic Memory API")
+from api.app.routes import ingest_router, health_router
 
-@app.get("/health")
-def health():
+app = FastAPI(title="Local Semantic Memory API")
+
+app.include_router(ingest_router)
+app.include_router(health_router)
+
+@app.get("/")
+def root():
     return {"status": "ok"}
-
