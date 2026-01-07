@@ -9,7 +9,7 @@ Phase 1: Architecture
 
    CLI → API → Vector DB + Metadata DB
 
-Work Package Overview
+Phase 1: Work Package Overview
 ---------------------
 
 Phase 1 is divided into the following work packages:

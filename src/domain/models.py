@@ -10,15 +10,28 @@ from pydantic import BaseModel, Field, field_validator
 class Document(BaseModel):
     id: str
     source: str
+    content: str
     path: Optional[Path] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
-    checksum: Optional[str] = None
+    checksum: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    @field_validator('content')
+    def content_must_not_be_empty(cls, v):
+        if not v.strip():
+            raise ValueError('Document content must not be empty')
+        return v 
 
     @field_validator('id')
     def id_must_not_be_empty(cls, v):
         if not v:
             raise ValueError('Document id must not be empty')
+        return v
+    
+    @field_validator('checksum')
+    def checksum_must_not_be_empty(cls, v):
+        if not v:
+            raise ValueError('Document checksum must not be empty')
         return v
 
 

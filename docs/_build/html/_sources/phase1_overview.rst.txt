@@ -32,7 +32,6 @@ Completed
 - Docker Compose setup with API and Qdrant
 - Core Pydantic models (Document, Chunk, IndexingScope)
 - Filesystem collector for text files
-- Simple chunking module
 - Dummy embedding provider
 - Metadata DB tables
 - Basic ingestion API endpoints
@@ -42,6 +41,7 @@ Remaining Tasks
 ---------------
 
 - PDF extraction and metadata timestamps
+- Simple chunking module
 - Real embeddings (SentenceTransformers)
 - Vector storage in Qdrant
 - Vector search endpoint

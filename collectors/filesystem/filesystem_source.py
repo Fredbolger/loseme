@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import List, Optional
+import hashlib
 from src.domain.models import Document, IndexingScope
 from fnmatch import fnmatch
 import logging
@@ -45,7 +46,25 @@ class FilesystemIngestionSource:
                 continue
 
             logger.debug(f"Including path {path}.")
-            docs.append(Document(id=doc_id, path=path, source="filesystem"))
+
+            content = path.read_text(errors="ignore")
+
+            checksum = hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+            docs.append(
+                    Document(
+                        id=doc_id,
+                        source="filesystem",
+                        content=content,
+                        path=path,
+                        checksum=checksum,
+                        created_at=path.stat().st_ctime,
+                        metadata={
+                            "relative_path": rel_path,
+                        },
+                    )
+            )
+
 
         return docs
 

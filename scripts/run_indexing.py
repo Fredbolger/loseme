@@ -71,9 +71,8 @@ def run_indexing():
     for doc in documents:
         doc_id = str(doc.path)
         logger.debug(f"Considering document: {doc_id}")
-
-        content = doc.path.read_text()
-        doc_hash = compute_doc_hash(content)
+    
+        doc_hash = doc.checksum
 
         if is_processed(run.id, doc_id, doc_hash):
             logger.info(f"Skipping already processed and unchanged document: {doc_id}")
@@ -82,7 +81,7 @@ def run_indexing():
         logger.info(f"Processing document: {doc_id}")
 
         chunker = SimpleTextChunker()
-        chunks = chunker.chunk(doc, content)
+        chunks = chunker.chunk(doc, doc.content)
         logger.debug(f"Produced {len(chunks)} chunks")
 
         embedding_provider = DummyEmbeddingProvider()

@@ -11,23 +11,31 @@ from unittest.mock import patch
 from collectors.filesystem.filesystem_source import FilesystemIngestionSource
 from src.domain.models import IndexingScope
 
-def test_filesystem_excludes_paths():
-    logger.debug("Starting test_filesystem_excludes_paths")
+def test_filesystem_excludes_paths(tmp_path):
+    # Arrange: create real files on disk
+    root = tmp_path
+
+    included = root / "file1.txt"
+    excluded_dir = root / "IgnorePath"
+    excluded_dir.mkdir()
+    excluded = excluded_dir / "file2.txt"
+
+    included.write_text("included content")
+    excluded.write_text("excluded content")
+
     scope = IndexingScope(
-        directories=["/root"],
+        directories=[root],
         include_patterns=[],
         exclude_patterns=["IgnorePath/*"],
     )
 
     source = FilesystemIngestionSource(scope)
 
-    with patch.object(FilesystemIngestionSource, "_walk_files") as mock_walk:
-        mock_walk.return_value = [
-            (Path("/root"), Path("/root/file1.txt")),
-            (Path("/root"), Path("/root/IgnorePath/file2.txt")),
-        ]
+    # Act
+    docs = source.list_documents()
 
-        docs = source.list_documents()
-
+    # Assert
     assert len(docs) == 1
+    assert docs[0].path == included
+    assert docs[0].content == "included content"
 
