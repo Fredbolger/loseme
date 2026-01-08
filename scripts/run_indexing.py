@@ -19,6 +19,7 @@ from storage.metadata_db.processed_documents import (
     get_all_processed,
 )
 
+from storage.vector_db.runtime import get_vector_store
 
 def compute_doc_hash(content: str) -> str:
     """Compute a SHA256 hash for a document."""
@@ -91,7 +92,9 @@ def run_indexing():
                 f"Embedded chunk {i + 1}/{len(chunks)} "
                 f"(len={len(chunk.content)})"
             )
-            # vector DB insert will go here
+
+        store = get_vector_store()
+        store.add(chunk, embedding)
 
         mark_processed(run.id, doc_id, doc_hash)
         update_checkpoint(run.id, doc_id)

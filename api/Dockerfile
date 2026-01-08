@@ -17,7 +17,8 @@ RUN pip install \
     pydantic \
     pytest \
     pytest-mock \
-    httpx
+    httpx \
+    typer
 
 # 🔑 Ensure consistent imports everywhere
 ENV PYTHONPATH=/app

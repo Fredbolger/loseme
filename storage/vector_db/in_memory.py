@@ -56,3 +56,8 @@ class InMemoryVectorStore:
             return 0.0
         return dot / (norm_a * norm_b)
 
+    def clear(self) -> None:
+        """
+        Clears the vector store.
+        """
+        self._vectors.clear()
