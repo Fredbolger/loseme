@@ -12,7 +12,7 @@ Phase 1 Goal (Definition of Done)
 By the end of Phase 1, the system must:
 
 * Ingest local **text-based files** (Markdown, TXT, PDF)
-* Chunk their content meaningfully
+* Chunk their content (for now just trivial)
 * Generate embeddings locally (CPU)
 * Store embeddings in a vector database
 * Expose a **search API**
@@ -32,28 +32,11 @@ Phase 1 Architecture (Concrete)
 
 .. code-block:: text
 
-   Filesystem → Collector → Chunker → Embedder → Vector DB
-                                       ↓
-                                    Metadata DB
+   Filesystem → Collector → DocumentExtractos → Chunker → Embedder → Vector DB
+                                                             ↓
+                                                         Metadata DB
 
    CLI → API → Vector DB + Metadata DB
-
-Work Package Overview
----------------------
-
-Phase 1 is divided into the following work packages:
-
-1. Repository & Infrastructure Setup
-2. Core Data Model
-3. Filesystem Collector
-4. Chunking Module
-5. Embedding Module
-6. Storage Layer
-7. API Layer
-8. CLI Client
-9. Integration & Validation
-
-Each package can be worked on mostly independently.
 
 Repository & Infrastructure Setup
 ---------------------------------
@@ -62,15 +45,15 @@ Repository & Infrastructure Setup
 
 **Tasks:**
 
-* [ ] Create Git repository
-* [ ] Add top-level README.md
+* [x] Create Git repository
+* [x] Add top-level README.md
 * [x] Create base folder structure
 * [x] Add `.gitignore`
 * [x] Create `docker-compose.yml`
-* [ ] Add API Dockerfile
-* [ ] Add Qdrant service
-* [ ] Add SQLite volume
-* [ ] Verify `docker-compose up` works
+* [x] Add API Dockerfile
+* [x] Add Qdrant service
+* [x] Add SQLite volume
+* [x] Verify `docker-compose up` works
 
 **Acceptance Criteria:**
 
@@ -85,11 +68,11 @@ Core Data Model
 
 **Tasks:**
 
-* [ ] Define `Document` schema
-* [ ] Define `Chunk` schema
-* [ ] Define metadata fields (source, path, timestamps)
-* [ ] Define device identifier strategy
-* [ ] Add Pydantic models
+* [x] Define `Document` schema
+* [x] Define `Chunk` schema
+* [x] Define metadata fields (source, path, timestamps)
+* [x] Define device identifier strategy
+* [x] Add Pydantic models
 
 **Acceptance Criteria:**
 
@@ -103,16 +86,15 @@ Filesystem Collector
 
 **Tasks:**
 
-* [ ] Walk directory tree
+* [x] Walk directory tree
 * [ ] Filter supported file types (`.md`, `.txt`, `.pdf`)
-* [ ] Extract raw text
-* [ ] Capture metadata (path, modified time)
-* [ ] Assign document IDs
-* [ ] Return standardized `Document` objects
+* [x] Extract raw text
+* [x] Capture metadata (path, modified time)
+* [x] Assign document IDs
+* [x] Return standardized `Document` objects
 
 **Notes:**
 
-* PDF parsing can be imperfect — acceptable in Phase 1
 * Errors must not crash ingestion
 
 **Acceptance Criteria:**
@@ -124,13 +106,14 @@ Chunking Module
 ---------------
 
 **Goal:** Split documents into semantically meaningful chunks suitable for embeddings.
+This is currently delayed into Phase 2. 
 
 **Tasks:**
 
 * [ ] Define chunk size (500–700 tokens)
 * [ ] Implement paragraph-based splitting
 * [ ] Add overlap (10–20%)
-* [ ] Assign chunk IDs
+* [x] Assign chunk IDs
 * [ ] Preserve document references
 
 **Acceptance Criteria:**
@@ -164,10 +147,10 @@ Storage Layer
 
 **Tasks:**
 
-* [ ] Create Qdrant collection
-* [ ] Define vector size
-* [ ] Store chunk embeddings
-* [ ] Attach metadata payload
+* [x] Create Qdrant collection
+* [x] Define vector size
+* [x] Store chunk embeddings
+* [x] Attach metadata payload
 
 **Acceptance Criteria:**
 
@@ -177,10 +160,10 @@ Storage Layer
 
 **Tasks:**
 
-* [ ] Define tables for documents and chunks
-* [ ] Store file paths and timestamps
-* [ ] Store source and device info
-* [ ] Implement basic queries
+* [x] Define tables for documents and chunks
+* [x] Store file paths and timestamps
+* [x] Store source and device info
+* [x] Implement basic queries
 
 **Acceptance Criteria:**
 
@@ -199,12 +182,12 @@ API Layer
 
 **Tasks:**
 
-* [ ] Setup FastAPI app
-* [ ] Add Pydantic request/response models
-* [ ] Wire ingestion pipeline
-* [ ] Implement vector search
+* [x] Setup FastAPI app
+* [x] Add Pydantic request/response models
+* [x] Wire ingestion pipeline
+* [x] Implement vector search
 * [ ] Add basic metadata filtering
-* [ ] Return ranked results
+* [x] Return ranked results
 
 **Acceptance Criteria:**
 
@@ -218,9 +201,9 @@ CLI Client
 
 **Tasks:**
 
-* [ ] Create CLI using Typer
-* [ ] Add `ingest` command
-* [ ] Add `search` command
+* [x] Create CLI using Typer
+* [x] Add `ingest` command
+* [x] Add `search` command
 * [ ] Display results clearly
 * [ ] Handle API connection errors
 
@@ -270,6 +253,7 @@ What Comes Next
 Phase 2 will introduce:
 
 * Local LLM summaries
+* Basic chunking
 * Tag extraction
 * Better filtering
 * Quality improvements

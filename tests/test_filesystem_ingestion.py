@@ -10,6 +10,8 @@ from pathlib import Path
 from unittest.mock import patch
 from collectors.filesystem.filesystem_source import FilesystemIngestionSource
 from src.domain.models import IndexingScope
+from src.domain.extraction.registry import ExtractorRegistry
+from src.domain.extraction.plaintext import PlainTextExtractor
 
 def test_filesystem_excludes_paths(tmp_path):
     # Arrange: create real files on disk
@@ -22,6 +24,8 @@ def test_filesystem_excludes_paths(tmp_path):
 
     included.write_text("included content")
     excluded.write_text("excluded content")
+    
+    # Now two files exist under the paths: root/file1.txt and root/IgnorePath/file2.txt
 
     scope = IndexingScope(
         directories=[root],
@@ -29,13 +33,18 @@ def test_filesystem_excludes_paths(tmp_path):
         exclude_patterns=["IgnorePath/*"],
     )
 
-    source = FilesystemIngestionSource(scope)
+    registry = ExtractorRegistry([
+        PlainTextExtractor(),
+    ])
+ 
+    source = FilesystemIngestionSource(
+            scope=scope,
+            extractor_registry=registry
+    )
 
     # Act
     docs = source.list_documents()
 
     # Assert
     assert len(docs) == 1
-    assert docs[0].path == included
-    assert docs[0].content == "included content"
-
+    assert docs[0].source_path == str(included)

@@ -5,22 +5,19 @@ from pathlib import Path
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field, field_validator
-
+from typing_extensions import Literal
 
 class Document(BaseModel):
     id: str
-    source: str
-    content: str
-    path: Optional[Path] = None
+    source_type: Literal['filesystem']
+    source_id: str
+    device_id: str
+    source_path: str
     metadata: Dict[str, Any] = Field(default_factory=dict)
     checksum: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
     
-    @field_validator('content')
-    def content_must_not_be_empty(cls, v):
-        if not v.strip():
-            raise ValueError('Document content must not be empty')
-        return v 
 
     @field_validator('id')
     def id_must_not_be_empty(cls, v):
@@ -34,10 +31,30 @@ class Document(BaseModel):
             raise ValueError('Document checksum must not be empty')
         return v
 
+    @field_validator('source_type')
+    def source_type_must_be_valid(cls, v):
+        if v != 'filesystem':
+            raise ValueError("source_type must be 'filesystem'")
+        return v
+
+    @field_validator('source_path')
+    def source_path_must_not_be_empty(cls, v):
+        if not v:
+            raise ValueError('source_path must not be empty')
+        return v
+
+    @field_validator('device_id')
+    def device_id_must_not_be_empty(cls, v):
+        if not v:
+            raise ValueError('device_id must not be empty')
+        return v
+
 
 class Chunk(BaseModel):
     id: str
     document_id: str
+    document_checksum: str
+    index: int
     content: str
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
@@ -46,7 +63,21 @@ class Chunk(BaseModel):
         if not v:
             raise ValueError('IDs must not be empty')
         return v
-
+    @field_validator('content')
+    def content_must_not_be_empty(cls, v):
+        if not v.strip():
+            raise ValueError('Chunk content must not be empty')
+        return v
+    @field_validator('document_checksum')
+    def document_checksum_must_not_be_empty(cls, v):
+        if not v:
+            raise ValueError('document_checksum must not be empty')
+        return v
+    @field_validator('index')
+    def index_must_be_non_negative(cls, v):
+        if v < 0:
+            raise ValueError('Chunk index must be non-negative')
+        return v
 
 class IndexingScope(BaseModel):
     directories: list[Path] = []
@@ -69,8 +100,8 @@ class IndexingRun(BaseModel):
     id: str
     scope: IndexingScope
     start_time: datetime = Field(default_factory=datetime.utcnow)
-    status: str = 'pending'  # 'pending', 'running', 'completed', 'interrupted'
-    processed_documents: List[str] = Field(default_factory=list)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    status: Literal['pending', 'running', 'completed', 'interrupted']
     last_document_id: Optional[str] = None
 
     @field_validator('id')

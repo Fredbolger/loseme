@@ -1,7 +1,11 @@
+import os
 from pathlib import Path
 from typing import List, Optional
 import hashlib
+from datetime import datetime
 from src.domain.models import Document, IndexingScope
+from src.domain.ids import make_logical_document_id, make_source_instance_id
+from src.domain.extraction.registry import ExtractorRegistry
 from fnmatch import fnmatch
 import logging
 
@@ -9,8 +13,12 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 class FilesystemIngestionSource:
-    def __init__(self, scope: IndexingScope):
+    def __init__(self, 
+                 scope: IndexingScope,
+                 extractor_registry: ExtractorRegistry
+                 ):
         self.scope = scope
+        self.extractor_registry = extractor_registry
 
     def list_documents(self, after: Optional[str] = None) -> List[Document]:
         """
@@ -18,6 +26,8 @@ class FilesystemIngestionSource:
         """
         docs = []
         start = after is None
+
+        device_id = os.environ.get("LOSEME_DEVICE_ID")
 
         logger.debug(f"files are: {list(self._walk_files())}")
         for root, path in self._walk_files():
@@ -38,29 +48,41 @@ class FilesystemIngestionSource:
                 logger.debug(f"Excluding path {path} due to include patterns.")
                 continue
 
-            doc_id = str(path)
-
             if after and not start:
                 if doc_id == after:
                     start = True
                 continue
 
             logger.debug(f"Including path {path}.")
-
-            content = path.read_text(errors="ignore")
-
-            checksum = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        
+            result = self.extractor_registry.extract(path)
+            if result is None:
+                continue
+   
+            doc_id = make_logical_document_id(
+                    text=result.text
+            )
+            source_instance_id = make_source_instance_id(
+                    source_type="filesystem",
+                    source_path=path,
+                    device_id=device_id,
+            )
 
             docs.append(
                     Document(
                         id=doc_id,
-                        source="filesystem",
-                        content=content,
-                        path=path,
-                        checksum=checksum,
-                        created_at=path.stat().st_ctime,
+                        source_type="filesystem",
+                        source_id=source_instance_id,
+                        device_id=device_id,
+                        source_path=str(path),
+                        checksum=doc_id,
+                        created_at=datetime.fromtimestamp(path.stat().st_ctime),
+                        updated_at=datetime.fromtimestamp(path.stat().st_mtime),
                         metadata={
+                            **result.metadata,
                             "relative_path": rel_path,
+                            "size": path.stat().st_size,
+                            "content_type": result.content_type,
                         },
                     )
             )

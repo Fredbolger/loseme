@@ -1,0 +1,224 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Phase 2 – Persistent Vector Search &amp; Qdrant Integration &mdash; Vector DB Project 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Vector DB Project
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Overview</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phase1.html">Phase 1 – Semantic Memory</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/collectors.html">Collectors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/pipeline.html">Pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/storage.html">Storage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/domain.html">Domain</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Vector DB Project</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Phase 2 – Persistent Vector Search &amp; Qdrant Integration</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/phase2_overview.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="phase-2-persistent-vector-search-qdrant-integration">
+<h1>Phase 2 – Persistent Vector Search &amp; Qdrant Integration<a class="headerlink" href="#phase-2-persistent-vector-search-qdrant-integration" title="Link to this heading"></a></h1>
+<section id="phase-goal">
+<h2>Phase Goal<a class="headerlink" href="#phase-goal" title="Link to this heading"></a></h2>
+<p>Stabilise and harden the system after Phase 1 by introducing a <strong>persistent
+vector database (Qdrant)</strong>, aligning ingestion and search with real-world
+operation, and clearly separating <strong>test</strong>, <strong>development</strong>, and <strong>runtime</strong>
+concerns.</p>
+<p>Phase 2 assumes:</p>
+<ul class="simple">
+<li><p>Phase 1 (filesystem ingestion, API, CLI skeleton) is complete</p></li>
+<li><p>Docker is the primary execution environment</p></li>
+</ul>
+</section>
+<section id="entry-criteria">
+<h2>Entry Criteria<a class="headerlink" href="#entry-criteria" title="Link to this heading"></a></h2>
+<p>The following conditions mark the official start of Phase 2:</p>
+<ul class="simple">
+<li><p>Filesystem ingestion endpoint implemented (<code class="docutils literal notranslate"><span class="pre">/ingest/filesystem</span></code>)</p></li>
+<li><p>CLI available via <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">compose</span> <span class="pre">run</span> <span class="pre">cli</span></code></p></li>
+<li><p>Vector store abstraction in place</p></li>
+<li><p>All Phase 1 tests passing</p></li>
+<li><p>Qdrant service integrated via Docker Compose</p></li>
+<li><p>Qdrant persistence verified via Docker volume</p></li>
+</ul>
+</section>
+<section id="checklist">
+<h2>Checklist<a class="headerlink" href="#checklist" title="Link to this heading"></a></h2>
+<section id="qdrant-integration-core">
+<h3>1. Qdrant Integration (Core)<a class="headerlink" href="#qdrant-integration-core" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Add Qdrant service to <code class="docutils literal notranslate"><span class="pre">docker-compose.yml</span></code></p></li>
+<li><p>Configure persistent volume (<code class="docutils literal notranslate"><span class="pre">/qdrant/storage</span></code>)</p></li>
+<li><p>Connect API to Qdrant via Docker DNS (<code class="docutils literal notranslate"><span class="pre">qdrant:6333</span></code>)</p></li>
+<li><p>Implement <code class="docutils literal notranslate"><span class="pre">QdrantVectorStore</span></code></p></li>
+<li><p>Ensure collection existence on startup (no auto-recreate)</p></li>
+<li><p>Use Qdrant Query API correctly (<code class="docutils literal notranslate"><span class="pre">query=</span></code> instead of <code class="docutils literal notranslate"><span class="pre">query_vector=</span></code>)</p></li>
+<li><p>Enforce valid Qdrant point IDs (UUID or unsigned integer)</p></li>
+</ul>
+</section>
+<section id="persistence-safety">
+<h3>2. Persistence &amp; Safety<a class="headerlink" href="#persistence-safety" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Verify vector data survives <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">compose</span> <span class="pre">down</span></code> / <code class="docutils literal notranslate"><span class="pre">up</span></code></p></li>
+<li><p>Guard destructive operations (e.g. <code class="docutils literal notranslate"><span class="pre">clear()</span></code>) behind an environment flag</p></li>
+<li><p>Document collection recreation requirements (embedding size changes)</p></li>
+</ul>
+</section>
+<section id="search-pipeline">
+<h3>3. Search Pipeline<a class="headerlink" href="#search-pipeline" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Store chunk payloads in Qdrant (content, document_id, metadata)</p></li>
+<li><p>Implement vector similarity search via Qdrant</p></li>
+<li><p>Improve search result formatting (scores, snippets)</p></li>
+<li><p>Define default search limits and pagination strategy</p></li>
+</ul>
+</section>
+<section id="testing-strategy">
+<h3>4. Testing Strategy<a class="headerlink" href="#testing-strategy" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Unit tests for vector store abstraction</p></li>
+<li><p>Qdrant-backed integration tests</p></li>
+<li><p>Decide whether tests auto-start Qdrant or require manual startup</p></li>
+<li><p>Clearly mark Qdrant-dependent tests (e.g. <code class="docutils literal notranslate"><span class="pre">&#64;integration</span></code>)</p></li>
+</ul>
+</section>
+<section id="cli-hardening">
+<h3>5. CLI Hardening<a class="headerlink" href="#cli-hardening" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>CLI uses Docker DNS for API access (<code class="docutils literal notranslate"><span class="pre">api:8000</span></code>)</p></li>
+<li><p>CLI uses same data mount as API (<code class="docutils literal notranslate"><span class="pre">LOSEME_DATA_DIR</span></code>)</p></li>
+<li><p>CLI prints meaningful output when no search results are found</p></li>
+<li><p>CLI provides clear feedback for ingestion counts and errors</p></li>
+</ul>
+</section>
+<section id="documentation">
+<h3>6. Documentation<a class="headerlink" href="#documentation" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Docker-based installation documented</p></li>
+<li><p>Qdrant persistence model documented</p></li>
+<li><p>Phase 2 architecture overview added</p></li>
+<li><p>Operational notes included (resetting Qdrant, migrations)</p></li>
+</ul>
+</section>
+</section>
+<section id="non-goals-out-of-scope-for-phase-2">
+<h2>Non-Goals (Out of Scope for Phase 2)<a class="headerlink" href="#non-goals-out-of-scope-for-phase-2" title="Link to this heading"></a></h2>
+<p>The following are explicitly deferred to later phases:</p>
+<ul class="simple">
+<li><p>Hybrid (BM25 + vector) search</p></li>
+<li><p>Reranking or relevance models</p></li>
+<li><p>Authentication or multi-user support</p></li>
+<li><p>Production orchestration (Kubernetes, Helm, etc.)</p></li>
+</ul>
+</section>
+<section id="exit-criteria">
+<h2>Exit Criteria<a class="headerlink" href="#exit-criteria" title="Link to this heading"></a></h2>
+<p>Phase 2 is considered complete when:</p>
+<ul class="simple">
+<li><p>Qdrant is the default vector backend</p></li>
+<li><p>Vector data is persistent and safe across restarts</p></li>
+<li><p>End-to-end search works via API and CLI</p></li>
+<li><p>Documentation reflects actual system behaviour</p></li>
+<li><p>Tests clearly distinguish unit vs integration concerns</p></li>
+</ul>
+</section>
+<section id="notes">
+<h2>Notes<a class="headerlink" href="#notes" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Changing embedding dimensions requires <strong>manual collection recreation</strong></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">compose</span> <span class="pre">down</span> <span class="pre">-v</span></code> is the only operation that deletes vector data</p></li>
+<li><p>Phase 3 should focus on search quality, ranking, and retrieval improvements</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

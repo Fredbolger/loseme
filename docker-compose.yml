@@ -9,6 +9,8 @@ services:
       - "8000:8000"
     environment:
       - LOSEME_DATA_DIR=/data
+      - QDRANT_URL=http://qdrant:6333
+      - LOSEME_DEVICE_ID:"MasterMind"
     volumes:
       - .:/app
       - ${LOSEME_DATA_DIR:-./data}:/data:ro
@@ -28,6 +30,11 @@ services:
     working_dir: /app
     environment:
       PYTHONPATH: /app
+      QDRANT_URL: http://qdrant:6333
+      ALLOW_VECTOR_CLEAR: "1"
+      LOSEME_DEVICE_ID: "MasterMind"
+    depends_on:
+      - qdrant
     command: pytest -v
 
   cli:

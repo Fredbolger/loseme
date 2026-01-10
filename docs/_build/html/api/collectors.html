@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Pipeline" href="pipeline.html" />
-    <link rel="prev" title="Phase 1: Checklist" href="../phase1_checklist.html" /> 
+    <link rel="prev" title="Phase 1 – Semantic Memory" href="../phase1.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -45,10 +45,7 @@
               <p class="caption" role="heading"><span class="caption-text">Overview</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../architecture.html">Architecture</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../phase1_overview.html">Phase 1: Semantic Memory MVP</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../phase1_architecture.html">Phase 1: Architecture</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../phase1_architecture.html#phase-1-work-package-overview">Phase 1: Work Package Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../phase1_checklist.html">Phase 1: Checklist</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../phase1.html">Phase 1 – Semantic Memory</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
@@ -97,11 +94,14 @@
 <span id="filesystem-collector"></span><h2>Filesystem Collector<a class="headerlink" href="#module-collectors.filesystem.filesystem_source" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="collectors.filesystem.filesystem_source.FilesystemIngestionSource">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">collectors.filesystem.filesystem_source.</span></span><span class="sig-name descname"><span class="pre">FilesystemIngestionSource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scope</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/collectors/filesystem/filesystem_source.html#FilesystemIngestionSource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#collectors.filesystem.filesystem_source.FilesystemIngestionSource" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">collectors.filesystem.filesystem_source.</span></span><span class="sig-name descname"><span class="pre">FilesystemIngestionSource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scope</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extractor_registry</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/collectors/filesystem/filesystem_source.html#FilesystemIngestionSource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#collectors.filesystem.filesystem_source.FilesystemIngestionSource" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>scope</strong> (<em>IndexingScope</em>)</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scope</strong> (<em>IndexingScope</em>)</p></li>
+<li><p><strong>extractor_registry</strong> (<em>ExtractorRegistry</em>)</p></li>
+</ul>
 </dd>
 </dl>
 <dl class="py method">
@@ -127,7 +127,7 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="../phase1_checklist.html" class="btn btn-neutral float-left" title="Phase 1: Checklist" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../phase1.html" class="btn btn-neutral float-left" title="Phase 1 – Semantic Memory" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="pipeline.html" class="btn btn-neutral float-right" title="Pipeline" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

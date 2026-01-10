@@ -42,10 +42,7 @@
               <p class="caption" role="heading"><span class="caption-text">Overview</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Architecture</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../phase1_overview.html">Phase 1: Semantic Memory MVP</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../phase1_architecture.html">Phase 1: Architecture</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../phase1_architecture.html#phase-1-work-package-overview">Phase 1: Work Package Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../phase1_checklist.html">Phase 1: Checklist</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../phase1.html">Phase 1 – Semantic Memory</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -124,12 +121,12 @@
         <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">            CREATE TABLE IF NOT EXISTS processed_documents (</span>
-<span class="sd">                run_id TEXT NOT NULL,</span>
-<span class="sd">                document_id TEXT NOT NULL,</span>
-<span class="sd">                content_hash TEXT,</span>
-<span class="sd">                PRIMARY KEY (run_id, document_id),</span>
-<span class="sd">                FOREIGN KEY (run_id) REFERENCES indexing_runs(id)</span>
-<span class="sd">                    ON DELETE CASCADE</span>
+<span class="sd">            run_id TEXT NOT NULL,</span>
+<span class="sd">            source_instance_id TEXT NOT NULL,</span>
+<span class="sd">            content_hash TEXT NOT NULL,</span>
+<span class="sd">            PRIMARY KEY (run_id, source_instance_id, content_hash),</span>
+<span class="sd">            FOREIGN KEY (run_id) REFERENCES indexing_runs(id)</span>
+<span class="sd">                ON DELETE CASCADE</span>
 <span class="sd">            );</span>
 <span class="sd">            &quot;&quot;&quot;</span>
         <span class="p">)</span></div>

@@ -37,12 +37,12 @@ def init_db() -> None:
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS processed_documents (
-                run_id TEXT NOT NULL,
-                document_id TEXT NOT NULL,
-                content_hash TEXT,
-                PRIMARY KEY (run_id, document_id),
-                FOREIGN KEY (run_id) REFERENCES indexing_runs(id)
-                    ON DELETE CASCADE
+            run_id TEXT NOT NULL,
+            source_instance_id TEXT NOT NULL,
+            content_hash TEXT NOT NULL,
+            PRIMARY KEY (run_id, source_instance_id, content_hash),
+            FOREIGN KEY (run_id) REFERENCES indexing_runs(id)
+                ON DELETE CASCADE
             );
             """
         )

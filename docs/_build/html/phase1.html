@@ -18,7 +18,9 @@
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Collectors" href="api/collectors.html" />
+    <link rel="prev" title="Architecture" href="architecture.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -41,12 +43,25 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Overview</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
-<li class="toctree-l1"><a class="reference internal" href="phase1_overview.html">Phase 1: Semantic Memory MVP</a></li>
-<li class="toctree-l1"><a class="reference internal" href="phase1_architecture.html">Phase 1: Architecture</a></li>
-<li class="toctree-l1"><a class="reference internal" href="phase1_architecture.html#phase-1-work-package-overview">Phase 1: Work Package Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="phase1_checklist.html">Phase 1: Checklist</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Phase 1 – Semantic Memory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#phase-1-goal-definition-of-done">Phase 1 Goal (Definition of Done)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#phase-1-architecture-concrete">Phase 1 Architecture (Concrete)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#repository-infrastructure-setup">Repository &amp; Infrastructure Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#core-data-model">Core Data Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#filesystem-collector">Filesystem Collector</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#chunking-module">Chunking Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#embedding-module">Embedding Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#storage-layer">Storage Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#api-layer">API Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cli-client">CLI Client</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#integration-validation">Integration &amp; Validation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#suggested-task-distribution">Suggested Task Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#phase-1-exit-criteria">Phase 1 Exit Criteria</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#what-comes-next">What Comes Next</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -90,7 +105,7 @@ It is written so tasks can be distributed among contributors and tracked via Git
 <p>By the end of Phase 1, the system must:</p>
 <ul class="simple">
 <li><p>Ingest local <strong>text-based files</strong> (Markdown, TXT, PDF)</p></li>
-<li><p>Chunk their content meaningfully</p></li>
+<li><p>Chunk their content (for now just trivial)</p></li>
 <li><p>Generate embeddings locally (CPU)</p></li>
 <li><p>Store embeddings in a vector database</p></li>
 <li><p>Expose a <strong>search API</strong></p></li>
@@ -108,44 +123,28 @@ It is written so tasks can be distributed among contributors and tracked via Git
 </section>
 <section id="phase-1-architecture-concrete">
 <h2>Phase 1 Architecture (Concrete)<a class="headerlink" href="#phase-1-architecture-concrete" title="Link to this heading"></a></h2>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Filesystem → Collector → Chunker → Embedder → Vector DB
-                                    ↓
-                                 Metadata DB
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Filesystem → Collector → DocumentExtractos → Chunker → Embedder → Vector DB
+                                                          ↓
+                                                      Metadata DB
 
 CLI → API → Vector DB + Metadata DB
 </pre></div>
 </div>
-</section>
-<section id="work-package-overview">
-<h2>Work Package Overview<a class="headerlink" href="#work-package-overview" title="Link to this heading"></a></h2>
-<p>Phase 1 is divided into the following work packages:</p>
-<ol class="arabic simple">
-<li><p>Repository &amp; Infrastructure Setup</p></li>
-<li><p>Core Data Model</p></li>
-<li><p>Filesystem Collector</p></li>
-<li><p>Chunking Module</p></li>
-<li><p>Embedding Module</p></li>
-<li><p>Storage Layer</p></li>
-<li><p>API Layer</p></li>
-<li><p>CLI Client</p></li>
-<li><p>Integration &amp; Validation</p></li>
-</ol>
-<p>Each package can be worked on mostly independently.</p>
 </section>
 <section id="repository-infrastructure-setup">
 <h2>Repository &amp; Infrastructure Setup<a class="headerlink" href="#repository-infrastructure-setup" title="Link to this heading"></a></h2>
 <p><strong>Goal:</strong> Create a reproducible development environment that works the same on all machines.</p>
 <p><strong>Tasks:</strong></p>
 <ul class="simple">
-<li><p>[ ] Create Git repository</p></li>
-<li><p>[ ] Add top-level README.md</p></li>
+<li><p>[x] Create Git repository</p></li>
+<li><p>[x] Add top-level README.md</p></li>
 <li><p>[x] Create base folder structure</p></li>
 <li><p>[x] Add <cite>.gitignore</cite></p></li>
 <li><p>[x] Create <cite>docker-compose.yml</cite></p></li>
-<li><p>[ ] Add API Dockerfile</p></li>
-<li><p>[ ] Add Qdrant service</p></li>
-<li><p>[ ] Add SQLite volume</p></li>
-<li><p>[ ] Verify <cite>docker-compose up</cite> works</p></li>
+<li><p>[x] Add API Dockerfile</p></li>
+<li><p>[x] Add Qdrant service</p></li>
+<li><p>[x] Add SQLite volume</p></li>
+<li><p>[x] Verify <cite>docker-compose up</cite> works</p></li>
 </ul>
 <p><strong>Acceptance Criteria:</strong></p>
 <ul class="simple">
@@ -159,11 +158,11 @@ CLI → API → Vector DB + Metadata DB
 <p><strong>Goal:</strong> Define the canonical internal representation for documents and chunks.</p>
 <p><strong>Tasks:</strong></p>
 <ul class="simple">
-<li><p>[ ] Define <cite>Document</cite> schema</p></li>
-<li><p>[ ] Define <cite>Chunk</cite> schema</p></li>
-<li><p>[ ] Define metadata fields (source, path, timestamps)</p></li>
-<li><p>[ ] Define device identifier strategy</p></li>
-<li><p>[ ] Add Pydantic models</p></li>
+<li><p>[x] Define <cite>Document</cite> schema</p></li>
+<li><p>[x] Define <cite>Chunk</cite> schema</p></li>
+<li><p>[x] Define metadata fields (source, path, timestamps)</p></li>
+<li><p>[x] Define device identifier strategy</p></li>
+<li><p>[x] Add Pydantic models</p></li>
 </ul>
 <p><strong>Acceptance Criteria:</strong></p>
 <ul class="simple">
@@ -176,16 +175,15 @@ CLI → API → Vector DB + Metadata DB
 <p><strong>Goal:</strong> Load text-based files from disk and convert them into normalized documents.</p>
 <p><strong>Tasks:</strong></p>
 <ul class="simple">
-<li><p>[ ] Walk directory tree</p></li>
+<li><p>[x] Walk directory tree</p></li>
 <li><p>[ ] Filter supported file types (<cite>.md</cite>, <cite>.txt</cite>, <cite>.pdf</cite>)</p></li>
-<li><p>[ ] Extract raw text</p></li>
-<li><p>[ ] Capture metadata (path, modified time)</p></li>
-<li><p>[ ] Assign document IDs</p></li>
-<li><p>[ ] Return standardized <cite>Document</cite> objects</p></li>
+<li><p>[x] Extract raw text</p></li>
+<li><p>[x] Capture metadata (path, modified time)</p></li>
+<li><p>[x] Assign document IDs</p></li>
+<li><p>[x] Return standardized <cite>Document</cite> objects</p></li>
 </ul>
 <p><strong>Notes:</strong></p>
 <ul class="simple">
-<li><p>PDF parsing can be imperfect — acceptable in Phase 1</p></li>
 <li><p>Errors must not crash ingestion</p></li>
 </ul>
 <p><strong>Acceptance Criteria:</strong></p>
@@ -196,13 +194,14 @@ CLI → API → Vector DB + Metadata DB
 </section>
 <section id="chunking-module">
 <h2>Chunking Module<a class="headerlink" href="#chunking-module" title="Link to this heading"></a></h2>
-<p><strong>Goal:</strong> Split documents into semantically meaningful chunks suitable for embeddings.</p>
+<p><strong>Goal:</strong> Split documents into semantically meaningful chunks suitable for embeddings.
+This is currently delayed into Phase 2.</p>
 <p><strong>Tasks:</strong></p>
 <ul class="simple">
 <li><p>[ ] Define chunk size (500–700 tokens)</p></li>
 <li><p>[ ] Implement paragraph-based splitting</p></li>
 <li><p>[ ] Add overlap (10–20%)</p></li>
-<li><p>[ ] Assign chunk IDs</p></li>
+<li><p>[x] Assign chunk IDs</p></li>
 <li><p>[ ] Preserve document references</p></li>
 </ul>
 <p><strong>Acceptance Criteria:</strong></p>
@@ -234,10 +233,10 @@ CLI → API → Vector DB + Metadata DB
 <p>### Vector Database (Qdrant)</p>
 <p><strong>Tasks:</strong></p>
 <ul class="simple">
-<li><p>[ ] Create Qdrant collection</p></li>
-<li><p>[ ] Define vector size</p></li>
-<li><p>[ ] Store chunk embeddings</p></li>
-<li><p>[ ] Attach metadata payload</p></li>
+<li><p>[x] Create Qdrant collection</p></li>
+<li><p>[x] Define vector size</p></li>
+<li><p>[x] Store chunk embeddings</p></li>
+<li><p>[x] Attach metadata payload</p></li>
 </ul>
 <p><strong>Acceptance Criteria:</strong></p>
 <ul class="simple">
@@ -246,10 +245,10 @@ CLI → API → Vector DB + Metadata DB
 <p>### Metadata Database (SQLite)</p>
 <p><strong>Tasks:</strong></p>
 <ul class="simple">
-<li><p>[ ] Define tables for documents and chunks</p></li>
-<li><p>[ ] Store file paths and timestamps</p></li>
-<li><p>[ ] Store source and device info</p></li>
-<li><p>[ ] Implement basic queries</p></li>
+<li><p>[x] Define tables for documents and chunks</p></li>
+<li><p>[x] Store file paths and timestamps</p></li>
+<li><p>[x] Store source and device info</p></li>
+<li><p>[x] Implement basic queries</p></li>
 </ul>
 <p><strong>Acceptance Criteria:</strong></p>
 <ul class="simple">
@@ -267,12 +266,12 @@ CLI → API → Vector DB + Metadata DB
 </ul>
 <p><strong>Tasks:</strong></p>
 <ul class="simple">
-<li><p>[ ] Setup FastAPI app</p></li>
-<li><p>[ ] Add Pydantic request/response models</p></li>
-<li><p>[ ] Wire ingestion pipeline</p></li>
-<li><p>[ ] Implement vector search</p></li>
+<li><p>[x] Setup FastAPI app</p></li>
+<li><p>[x] Add Pydantic request/response models</p></li>
+<li><p>[x] Wire ingestion pipeline</p></li>
+<li><p>[x] Implement vector search</p></li>
 <li><p>[ ] Add basic metadata filtering</p></li>
-<li><p>[ ] Return ranked results</p></li>
+<li><p>[x] Return ranked results</p></li>
 </ul>
 <p><strong>Acceptance Criteria:</strong></p>
 <ul class="simple">
@@ -285,9 +284,9 @@ CLI → API → Vector DB + Metadata DB
 <p><strong>Goal:</strong> Provide a simple user interface for Phase 1.</p>
 <p><strong>Tasks:</strong></p>
 <ul class="simple">
-<li><p>[ ] Create CLI using Typer</p></li>
-<li><p>[ ] Add <cite>ingest</cite> command</p></li>
-<li><p>[ ] Add <cite>search</cite> command</p></li>
+<li><p>[x] Create CLI using Typer</p></li>
+<li><p>[x] Add <cite>ingest</cite> command</p></li>
+<li><p>[x] Add <cite>search</cite> command</p></li>
 <li><p>[ ] Display results clearly</p></li>
 <li><p>[ ] Handle API connection errors</p></li>
 </ul>
@@ -337,6 +336,7 @@ CLI → API → Vector DB + Metadata DB
 <p>Phase 2 will introduce:</p>
 <ul class="simple">
 <li><p>Local LLM summaries</p></li>
+<li><p>Basic chunking</p></li>
 <li><p>Tag extraction</p></li>
 <li><p>Better filtering</p></li>
 <li><p>Quality improvements</p></li>
@@ -348,7 +348,10 @@ CLI → API → Vector DB + Metadata DB
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="architecture.html" class="btn btn-neutral float-left" title="Architecture" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api/collectors.html" class="btn btn-neutral float-right" title="Collectors" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 

@@ -21,7 +21,11 @@ def search(req: SearchRequest):
     store = get_vector_store()
 
     query_vector = embedder.embed(req.query)
-    results = store.query(query_vector, top_k=req.top_k)
+    results = store.search(query_vector, top_k=req.top_k)
+
+    # Print the results for debugging
+    for r in results:
+        print(f"Chunk ID: {r[0]}, Score: {r[1]}, Metadata: {r[2]}")
 
     return {
         "results": [

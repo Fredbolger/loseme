@@ -18,7 +18,8 @@ RUN pip install \
     pytest \
     pytest-mock \
     httpx \
-    typer
+    typer \
+    qdrant-client>=1.7.0
 
 # 🔑 Ensure consistent imports everywhere
 ENV PYTHONPATH=/app

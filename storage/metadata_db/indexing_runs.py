@@ -83,6 +83,8 @@ def create_run(
         scope=scope,
         status="running",
         start_time=datetime.fromisoformat(now),
+        updated_at=datetime.fromisoformat(now),
+        last_document_id=None,
     )
 
 
@@ -148,13 +150,13 @@ def update_status(run_id: str, status: str) -> None:
     )
 
 
-def update_checkpoint(run_id: str, document_id: str) -> None:
+def update_checkpoint(run_id: str, source_instance_id: str) -> None:
     execute(
         """
         UPDATE indexing_runs
         SET last_document_id = ?, updated_at = ?
         WHERE id = ?
         """,
-        (document_id, _now(), run_id),
+        (source_instance_id, _now(), run_id),
     )
 

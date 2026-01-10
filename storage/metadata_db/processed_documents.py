@@ -1,23 +1,23 @@
 from storage.metadata_db.db import execute, fetch_all, fetch_one
 
-
-def mark_processed(run_id: str, document_id: str, content_hash: str):
+def mark_processed(run_id: str, source_instance_id: str, content_hash: str):
     execute(
         """
-        INSERT OR REPLACE INTO processed_documents
-        (run_id, document_id, content_hash)
+        INSERT OR IGNORE INTO processed_documents
+        (run_id, source_instance_id, content_hash)
         VALUES (?, ?, ?)
         """,
-        (run_id, document_id, content_hash)
+        (run_id, source_instance_id, content_hash),
     )
 
-def is_processed(run_id: str, document_id: str, content_hash: str) -> bool:
+
+def is_processed(run_id: str, source_instance_id: str, content_hash: str) -> bool:
     row = fetch_one(
         """
         SELECT content_hash FROM processed_documents
-        WHERE run_id = ? AND document_id = ?
+        WHERE run_id = ? AND source_instance_id = ?
         """,
-        (run_id, document_id),
+        (run_id, source_instance_id),
     )
     return row is not None and row["content_hash"] == content_hash
 
@@ -29,11 +29,11 @@ def get_all_processed(run_id: str) -> set[str]:
     """
     rows = fetch_all(
         """
-        SELECT document_id
+        SELECT source_instance_id
         FROM processed_documents
         WHERE run_id = ?
         """,
         (run_id,),
     )
-    return {row["document_id"] for row in rows}
+    return {row["source_instance_id"] for row in rows}
 

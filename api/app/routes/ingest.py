@@ -6,6 +6,10 @@ from typing import Iterable
 
 from collectors.filesystem.filesystem_source import FilesystemIngestionSource
 from src.domain.models import Document, IndexingScope
+from src.core.wiring import build_extractor_registry
+
+
+registry = build_extractor_registry()
 
 def get_data_root() -> Path:
     return Path(
@@ -42,7 +46,8 @@ def ingest_filesystem(req: FilesystemIngestRequest):
         raise HTTPException(status_code=400, detail="Path does not exist")
 
     scope = IndexingScope(directories=[root],include_patterns=include_patterns, exclude_patterns=exclude_patterns)
-    source = FilesystemIngestionSource(scope=scope)
+    
+    source = FilesystemIngestionSource(scope=scope, extractor_registry=registry)
     documents = list(source.list_documents())
 
     return {
