@@ -9,8 +9,13 @@ class VectorStore(ABC):
     """
 
     @abstractmethod
-    def add_vectors(self, chunks: List[Chunk], vectors: List[List[float]]) -> None:
-        """Add chunks and their embeddings to the vector store."""
+    def add(self, chunks: Chunk, vector: List[float]) -> None:
+        """Add a single chunk and its embedding to the store.
+
+        Args:
+            chunk: The chunk to store
+            vector: The embedding vector for this chunk
+        """
         pass
 
     @abstractmethod

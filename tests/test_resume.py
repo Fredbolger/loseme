@@ -6,7 +6,7 @@ from storage.metadata_db.db import init_db
 from storage.metadata_db.indexing_runs import create_run, load_latest_run
 from storage.metadata_db.processed_documents import mark_processed, is_processed
 from src.domain.models import IndexingScope
-from src.domain.ids import make_logical_document_id, make_source_instance_id
+from src.domain.ids import make_source_instance_id
 
 
 @pytest.fixture
@@ -26,50 +26,68 @@ def test_document_not_reprocessed(setup_db):
 
     device_id = "test-device"
 
-    # Stable document identity
+    # First document
     doc_path = Path("/docs/test_doc.md")
-
-    # Canonical extracted text hash
     content = "This is a test document."
-    source_instance_id = make_source_instance_id(
-            source_type="filesystem",
-            device_id=device_id,
-            source_path=doc_path
-    )
-    doc_id = make_logical_document_id(content)
+    content_checksum = hash_content(content)
 
-    # Mark document version as processed
-    mark_processed(run.id, source_instance_id, doc_id)
+    source_instance_id = make_source_instance_id(
+        source_type="filesystem",
+        device_id=device_id,
+        source_path=doc_path,
+    )
+
+    # Mark document as already processed
+    mark_processed(run.id, source_instance_id, content_checksum)
 
     # Reload run as if resuming
     resumed_run = load_latest_run("filesystem", scope)
 
     # Same document + same content must be recognized
-    assert is_processed(resumed_run.id, source_instance_id, doc_id)
+    assert is_processed(
+        resumed_run.id,
+        source_instance_id,
+        content_checksum,
+    )
 
-    # Simulate indexing loop
+    # Second (new) document
     other_doc_path = Path("/docs/another_doc.md")
     other_content = "dummy content"
-    other_source_instance_id = make_source_instance_id(
-            source_type="filesystem",
-            device_id=device_id,
-            source_path=other_doc_path
-    )
-    other_doc_id = make_logical_document_id(other_content)
+    other_checksum = hash_content(other_content)
 
+    other_source_instance_id = make_source_instance_id(
+        source_type="filesystem",
+        device_id=device_id,
+        source_path=other_doc_path,
+    )
+
+    # Simulated indexing candidates:
+    # (source_instance_id, content_checksum)
     documents_to_index = [
-            (source_instance_id, doc_id),  # same document, same content
-            (other_source_instance_id, other_doc_id),  # new document
+        (source_instance_id, content_checksum),          # already processed
+        (other_source_instance_id, other_checksum),      # new document
     ]
-    # We now have two documents to consider with different content
-    # but only one should be processed. because the first one was already processed.
 
     processed_docs = []
-    for d_id, d_hash in documents_to_index:
-        if not is_processed(resumed_run.id, d_id, d_hash):
-            processed_docs.append(d_id)
+    for sid, checksum in documents_to_index:
+        if not is_processed(resumed_run.id, sid, checksum):
+            processed_docs.append(sid)
 
-    # Assertions
-    assert len(processed_docs) == 1  # Only the new document should be processed
+    # Only the new document should be processed
+    assert len(processed_docs) == 1
     assert processed_docs[0] == other_source_instance_id
+
+
+def test_resume_uses_source_instance_and_checksum(setup_db):
+    scope = IndexingScope(directories=[Path("/docs")])
+    run = create_run("filesystem", scope)
+
+    source_instance_id = "src-1"
+    checksum_v1 = "hash-v1"
+    checksum_v2 = "hash-v2"
+
+    mark_processed(run.id, source_instance_id, checksum_v1)
+
+    assert is_processed(run.id, source_instance_id, checksum_v1)
+    assert not is_processed(run.id, source_instance_id, checksum_v2)
 

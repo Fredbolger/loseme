@@ -10,6 +10,12 @@ RUN apt-get update && \
 # Copy entire repository
 COPY . /app
 
+RUN pip install --upgrade pip wheel setuptools
+
+RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+RUN pip install "transformers>=4.35" "tokenizers>=0.15"
+
 # Python dependencies (API runtime)
 RUN pip install \
     fastapi \
@@ -19,10 +25,10 @@ RUN pip install \
     pytest-mock \
     httpx \
     typer \
-    qdrant-client>=1.7.0
+    qdrant-client>=1.7.0\
+    sentence-transformers>=2.6
 
 # 🔑 Ensure consistent imports everywhere
 ENV PYTHONPATH=/app
 
 EXPOSE 8000
-

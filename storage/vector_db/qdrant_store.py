@@ -1,19 +1,20 @@
 import uuid
 import os
+from typing import List, Tuple
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct, VectorParams, Distance
 from qdrant_client.http.exceptions import UnexpectedResponse
 
 from src.domain.models import Chunk
-from storage.vector_db.base import VectorStore
-
+from src.domain.vector_store import VectorStore
 
 COLLECTION = "chunks"
 VECTOR_SIZE = 384  # must match embedding size
-# ⚠️ Changing VECTOR_SIZE requires manual collection recreation
+
 
 def chunk_id_to_uuid(chunk_id: str) -> str:
-        return str(uuid.uuid5(uuid.NAMESPACE_URL, chunk_id))
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, chunk_id))
+
 
 class QdrantVectorStore(VectorStore):
     def __init__(self, client: QdrantClient):
@@ -32,9 +33,10 @@ class QdrantVectorStore(VectorStore):
                 ),
             )
     
-    def add(self, chunk: Chunk, vector: list[float]) -> None:
+    def add(self, chunk: Chunk, vector: List[float]) -> None:
         self._ensure_collection()
-
+        if len(vector) != VECTOR_SIZE:
+            raise ValueError("Vector dimension mismatch")
         self.client.upsert(
             collection_name=COLLECTION,
             points=[
@@ -44,16 +46,24 @@ class QdrantVectorStore(VectorStore):
                     payload={
                         "chunk_id": chunk.id,
                         "document_id": chunk.document_id,
-                        "document_checksum": chunk.document_checksum,
+                        "device_id": chunk.device_id,
                         "index": chunk.index,
-                        "content": chunk.content,
                         "metadata": chunk.metadata,
                     },
                 )
             ],
         )
-
-    def search(self, query_vector: list[float], top_k: int) -> list[Chunk]:
+    def search(
+        self, 
+        query_vector: List[float], 
+        top_k: int
+    ) -> List[Tuple[Chunk, float]]:
+        """
+        Search for similar chunks.
+        
+        Returns:
+            List of (chunk, score) tuples ordered by descending similarity
+        """
         self._ensure_collection()
 
         hits = self.client.query_points(
@@ -62,17 +72,20 @@ class QdrantVectorStore(VectorStore):
             limit=top_k,
         )
 
-        return [
-            Chunk(
+        results = []
+        for hit in hits.points:
+            chunk = Chunk(
                 id=hit.payload["chunk_id"],
                 document_id=hit.payload["document_id"],
-                document_checksum=hit.payload["document_checksum"],
+                device_id=hit.payload["device_id"],
                 index=hit.payload["index"],
-                content=hit.payload["content"],
                 metadata=hit.payload.get("metadata", {}),
             )
-            for hit in hits.points
-        ]
+            # Qdrant returns similarity scores, higher = more similar
+            score = hit.score if hasattr(hit, 'score') else 0.0
+            results.append((chunk, score))
+        
+        return results
 
     def clear(self) -> None:
         if os.environ.get("ALLOW_VECTOR_CLEAR", "false").lower() != "1":
@@ -80,4 +93,16 @@ class QdrantVectorStore(VectorStore):
 
         self.client.delete_collection(COLLECTION)
         self._ensure_collection()
+    
+    def dimension(self) -> int:
+        return VECTOR_SIZE
 
+    def query(self, vector: List[float], top_k: int = 10) -> List[Tuple[Chunk, float]]:
+        return self.search(vector, top_k)
+
+    def remove_chunks(self, chunk_ids: List[str]) -> None:
+        point_ids = [chunk_id_to_uuid(cid) for cid in chunk_ids]
+        self.client.delete_points(
+            collection_name=COLLECTION,
+            points=point_ids
+        )

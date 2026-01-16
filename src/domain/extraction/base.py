@@ -15,6 +15,8 @@ class DocumentExtractionResult:
 
 
 class DocumentExtractor(ABC):
+    priority: int = 0
+
     @abstractmethod
     def can_extract(self, path: Path) -> bool:
         """Return True if this extractor supports the file"""

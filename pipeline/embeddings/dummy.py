@@ -1,8 +1,11 @@
 # pipeline/embeddings/dummy.py
+from src.domain.embeddings import EmbeddingProvider
+from src.domain.models import Chunk
 from typing import List
 import hashlib
 
-class DummyEmbeddingProvider:
+
+class DummyEmbeddingProvider(EmbeddingProvider):
     """
     Deterministic embedding provider for Phase 1.
     Converts text into a fixed-size vector using hashing.
@@ -12,21 +15,13 @@ class DummyEmbeddingProvider:
     def __init__(self, dimension: int = 384):
         self._dimension = dimension
 
+    def _embed_text(self, text: str) -> List[float]:
+        digest = hashlib.sha256(text.encode("utf-8")).digest()
+        vec = [(digest[i % len(digest)] / 127.5) - 1.0 for i in range(self._dimension)]
+        return vec
+
     def dimension(self) -> int:
         return self._dimension
-
-    def embed(self, text: str) -> List[float]:
-        if not text:
-            return [0.0] * self._dimension
-
-        # Create a stable hash of the text
-        digest = hashlib.sha256(text.encode("utf-8")).digest()
-
-        # Expand hash bytes into floats deterministically
-        vector = [0.0] * self._dimension
-        for i in range(self._dimension):
-            byte = digest[i % len(digest)]
-            # map byte (0-255) to roughly [-1, 1]
-            vector[i] = (byte / 127.5) - 1.0
-
-        return vector
+    
+    def embed_query(self, text: str) -> List[float]:
+        return self._embed_text(text)

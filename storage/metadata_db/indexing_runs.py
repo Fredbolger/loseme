@@ -1,6 +1,5 @@
 import json
 import uuid
-import hashlib
 from datetime import datetime
 from typing import Optional
 from pathlib import Path
@@ -95,45 +94,52 @@ def load_latest_run(
     """
     Load the latest indexing run for a given source type and scope.
     Returns None if no run exists.
+    
+    NOTE: Currently only filters by source_type. Scope matching should be added
+    to prevent resuming runs with different scopes.
     """
-    row = fetch_one(
+    # First, try to find a run with matching scope
+    rows = fetch_all(
         """
         SELECT *
         FROM indexing_runs
         WHERE source_type = ?
-          AND status != 'completed'
+         AND status IN ('pending', 'running', 'interrupted')
         ORDER BY started_at DESC
-        LIMIT 1
         """,
-        (
-            source_type,
-        ),
+        (source_type,),
     )
     
-    if not row:
+    if not rows:
         return None
-
+    
+    # Find first run with matching scope
+    target_scope_json = json.dumps(serialize_scope(scope))
+    
+    for row in rows:
+        stored_scope_json = row["scope_json"]
+        if stored_scope_json == target_scope_json:
+            logger.info(
+                "load_latest_run: source=%s, scope matches â†' resuming run %s",
+                source_type,
+                row["id"],
+            )
+            
+            return IndexingRun(
+                id=row["id"],
+                scope=deserialize_scope(json.loads(stored_scope_json)),
+                status=row["status"],
+                start_time=datetime.fromisoformat(row["started_at"]),
+                updated_at=datetime.fromisoformat(row["updated_at"]),
+                last_document_id=row["last_document_id"],
+            )
+    
     logger.info(
-        "load_latest_run: source=%s → %s",
+        "load_latest_run: source=%s â†' no matching scope found",
         source_type,
-        "FOUND" if row else "NONE",
     )
+    return None
 
-
-    stored_scope = json.loads(row["scope_json"])
-    run_id = row["id"]
-
-    # ✅ Load processed documents for this run from DB
-    processed_docs = get_all_processed(run_id)
-
-    return IndexingRun(
-        id=run_id,
-        scope=deserialize_scope(stored_scope),
-        status=row["status"],
-        start_time=datetime.fromisoformat(row["started_at"]),
-        processed_documents=processed_docs,        # <- checkpoint is now correct
-        last_document_id=row["last_document_id"],  # optional, but recommended
-    )
 
 # ----------------------------
 # Updates
@@ -160,3 +166,9 @@ def update_checkpoint(run_id: str, source_instance_id: str) -> None:
         (source_instance_id, _now(), run_id),
     )
 
+
+# Helper function needed
+def fetch_all(query: str, params: tuple = ()) -> list:
+    """Fetch all rows - import from db module or define here"""
+    from storage.metadata_db.db import fetch_all as _fetch_all
+    return _fetch_all(query, params)

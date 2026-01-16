@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field, field_validator
 from typing_extensions import Literal
+from dataclasses import dataclass
 
 class Document(BaseModel):
     id: str
@@ -13,6 +14,7 @@ class Document(BaseModel):
     source_id: str
     device_id: str
     source_path: str
+    docker_path: str
     metadata: Dict[str, Any] = Field(default_factory=dict)
     checksum: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -53,9 +55,8 @@ class Document(BaseModel):
 class Chunk(BaseModel):
     id: str
     document_id: str
-    document_checksum: str
+    device_id: str
     index: int
-    content: str
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
     @field_validator('id', 'document_id')
@@ -63,15 +64,10 @@ class Chunk(BaseModel):
         if not v:
             raise ValueError('IDs must not be empty')
         return v
-    @field_validator('content')
-    def content_must_not_be_empty(cls, v):
-        if not v.strip():
-            raise ValueError('Chunk content must not be empty')
-        return v
-    @field_validator('document_checksum')
-    def document_checksum_must_not_be_empty(cls, v):
+    @field_validator('device_id')
+    def device_id_must_not_be_empty(cls, v):
         if not v:
-            raise ValueError('document_checksum must not be empty')
+            raise ValueError('device_id must not be empty')
         return v
     @field_validator('index')
     def index_must_be_non_negative(cls, v):
@@ -109,4 +105,10 @@ class IndexingRun(BaseModel):
         if not v:
             raise ValueError('IndexingRun id must not be empty')
         return v
+
+class FilesystemIngestRequest(BaseModel):
+    directories: list[str] = []
+    recursive: bool = True
+    include_patterns: list[str] = []
+    exclude_patterns: list[str] = []
 

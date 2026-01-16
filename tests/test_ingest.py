@@ -38,7 +38,7 @@ def test_ingest_filesystem_success():
     response = client.post(
         "/ingest/filesystem",
         json={
-            "path": str(ingest_dir),
+            "directories": [str(ingest_dir)],
             "recursive": True,
             "include_patterns": [],
             "exclude_patterns": [],
@@ -48,8 +48,7 @@ def test_ingest_filesystem_success():
     assert response.status_code == 200
 
     data = response.json()
-    assert data["status"] == "ok"
-    assert data["documents_ingested"] == 2
+    assert data["status"] == "running"
 
 """
 def test_ingest_filesystem_invalid_path():

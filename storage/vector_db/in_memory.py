@@ -2,48 +2,56 @@ from typing import List, Tuple
 import math
 
 from src.domain.models import Chunk
+from storage.vector_db.base import VectorStore
 
-class InMemoryVectorStore:
+
+class InMemoryVectorStore(VectorStore):
     """
     Minimal in-memory vector store.
     Intended for Phase 1 end-to-end validation only.
     """
 
     def __init__(self, dimension: int):
-        self.dimension = dimension
-        self._vectors: List[Tuple[str, List[float], dict]] = []
+        self._dimension = dimension
+        self._data: List[Tuple[Chunk, List[float]]] = []
 
     def add(self, chunk: Chunk, vector: List[float]) -> None:
         """
         Adds a chunk and its vector to the store.
         """
-        if len(vector) != self.dimension:
-            raise ValueError("Vector dimension mismatch")
-
-        self._vectors.append(
-            (
-                chunk.id,
-                vector,
-                {
-                    "document_id": chunk.document_id,
-                    **chunk.metadata,
-                },
+        if len(vector) != self._dimension:
+            raise ValueError(
+                f"Vector dimension mismatch: expected {self._dimension}, "
+                f"got {len(vector)}"
             )
-        )
 
-    def query(self, query_vector: List[float], top_k: int = 5) -> List[Tuple[str, float, dict]]:
-        """
-        Queries the store for the top_k most similar vectors.
+        # Replace if chunk with same ID already exists
+        self._data = [(c, v) for c, v in self._data if c.id != chunk.id]
+        self._data.append((chunk, vector))
 
+    def search(
+        self, 
+        query_vector: List[float], 
+        top_k: int
+    ) -> List[Tuple[Chunk, float]]:
         """
-        if len(query_vector) != self.dimension:
-            raise ValueError("Query vector dimension mismatch")
+        Search for the top_k most similar chunks.
+        
+        Returns:
+            List of (chunk, score) tuples ordered by descending similarity
+        """
+        if len(query_vector) != self._dimension:
+            raise ValueError(
+                f"Query vector dimension mismatch: expected {self._dimension}, "
+                f"got {len(query_vector)}"
+            )
 
         scored = []
-        for chunk_id, vector, metadata in self._vectors:
+        for chunk, vector in self._data:
             score = self._cosine_similarity(query_vector, vector)
-            scored.append((chunk_id, score, metadata))
+            scored.append((chunk, score))
 
+        # Sort by score descending
         scored.sort(key=lambda x: x[1], reverse=True)
         return scored[:top_k]
 
@@ -60,4 +68,7 @@ class InMemoryVectorStore:
         """
         Clears the vector store.
         """
-        self._vectors.clear()
+        self._data.clear()
+    
+    def dimension(self) -> int:
+        return self._dimension

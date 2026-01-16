@@ -36,6 +36,22 @@ def init_db() -> None:
         )
         conn.execute(
             """
+            CREATE TABLE IF NOT EXISTS documents (
+            document_id TEXT PRIMARY KEY,
+            logical_checksum TEXT NOT NULL,
+            source_type TEXT NOT NULL,
+            source_instance_id TEXT NOT NULL,
+            device_id TEXT NOT NULL,
+            source_path TEXT NOT NULL,
+            docker_path TEXT NOT NULL,
+            metadata_json TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+            );
+            """
+        )
+        conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS processed_documents (
             run_id TEXT NOT NULL,
             source_instance_id TEXT NOT NULL,
@@ -92,3 +108,12 @@ def log_active_schema() -> None:
     for i in indexes:
         logger.info("INDEX %s: %s", i["name"], i["sql"])
 
+def get_document(document_id: str) -> Iterator[sqlite3.Row]:
+    """
+    Retrieves a document by its ID.
+    """
+    query = "SELECT * FROM documents WHERE id = ?"
+    with get_connection() as conn:
+        cur = conn.execute(query, (document_id,))
+        for row in cur:
+            yield row

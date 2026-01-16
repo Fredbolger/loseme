@@ -2,6 +2,8 @@ from pathlib import Path
 from src.domain.extraction.base import DocumentExtractor, DocumentExtractionResult
 
 class PlainTextExtractor(DocumentExtractor):
+    priority: int = 10
+
     def can_extract(self, path: Path) -> bool:
         return path.suffix.lower() in {".txt", ".md", ".rst"}
 

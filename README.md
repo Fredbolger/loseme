@@ -1,18 +1,18 @@
-# Semantic Memory
+# Local Semantic Memory
 
 **Local-first semantic search over personal data**
 
 ## What is this?
 
-Semantic Memory is a privacy-preserving system that lets you search your personal files by *meaning*, not just filenames or keywords. It runs entirely on your own devices—no cloud, no data leaks.
+Local Semantic Memory is a privacy-preserving system that lets you search your personal files by *meaning*, not just filenames or keywords. It runs entirely on your own devices.
 
-Think of it as a personal knowledge base that understands what your documents are about, making everything you've ever written instantly searchable by concept.
+Think of it as a personal knowledge base that understands what your documents are about, making everything you've ever written/mailed/developed easily searchable by content.
 
-## Current Status: Phase 1 (MVP)
+## Current Status: Phase 1
 
 This implementation includes:
 
-- **Filesystem ingestion**: Index text files (`.txt`, `.md`, `.rst`)
+- **Filesystem ingestion**: Index plain text files (`.txt`, `.md`)
 - **Local embeddings**: Deterministic vector generation (no external APIs)
 - **Persistent vector database**: Qdrant-based semantic search
 - **Resumable indexing**: Smart checkpointing to handle interruptions
@@ -29,9 +29,9 @@ Filesystem → Extraction → Chunking → Embedding → Vector DB → Search
 
 ### Key Design Decisions
 
-1. **Local-first**: All processing happens on your machine. No data leaves your network.
+1. **Local-first**: All processing happens on your machine. Data should not leave your control.
 
-2. **Multi-device aware**: The system tracks which device indexed which files, enabling future cross-device search without syncing entire files—only metadata and embeddings are shared.
+2. **Multi-device aware**: The system tracks which device indexed which files, enabling future cross-device search without syncing entire files-only metadata and embeddings are shared.
 
 3. **Content-based identity**: Documents are identified by their content hash, not file path. This means the same document on different devices or paths is recognized as identical.
 
@@ -46,7 +46,7 @@ Filesystem → Extraction → Chunking → Embedding → Vector DB → Search
 docker-compose up -d
 
 # Ingest a directory
-docker-compose run cli ingest /data/my-documents
+python -m clients.cli.main ingest /data/my-documents
 
 # Search semantically
 docker-compose run cli search "machine learning concepts" --top-k 5
@@ -54,9 +54,9 @@ docker-compose run cli search "machine learning concepts" --top-k 5
 
 ## How It Works
 
-1. **Ingestion**: Files are discovered, filtered, and their text extracted
-2. **Chunking**: Documents are split into semantic chunks (500 chars with 50 char overlap)
-3. **Embedding**: Each chunk is converted to a 384-dimensional vector
+1. **Ingestion**: Files are discovered (based on currently implemented collectors), filtered, and their text extracted (based on the currently implemented extractors)
+2. **Chunking**: Documents are split into semantic chunks (e.g., 500 tokens with 50 token overlap)
+3. **Embedding**: Each chunk is converted to a vector using a local embedding model (e.g., Sentence Transformers)
 4. **Storage**: Vectors are stored in Qdrant, metadata in SQLite
 5. **Search**: Query text is embedded and similar chunks are retrieved via cosine similarity
 
@@ -64,10 +64,13 @@ docker-compose run cli search "machine learning concepts" --top-k 5
 
 ```
 semantic-memory/
+
+├── src/              # Main source code
 ├── api/              # FastAPI server
 ├── collectors/       # Data source connectors (filesystem)
 ├── pipeline/         # Processing stages (chunking, embeddings)
 ├── storage/          # Vector DB and metadata DB
+├── scripts/          # Indexing and maintenance scripts
 ├── clients/          # CLI and future UI clients
 └── tests/            # Comprehensive test suite
 ```
@@ -90,10 +93,8 @@ semantic-memory/
 
 ## Design Principles
 
-- **Privacy over convenience**: Your data stays yours
-- **Incremental progress**: Build working features step by step
-- **Meaning over structure**: Semantic understanding, not rigid organization
-- **Local-first always**: Cloud is optional, never required
+- **Privacy over convenience**: Private data should always stay private
+- **Incremental progress**: Build working features step by step and enable easy improvements
 
 ## Contributing
 

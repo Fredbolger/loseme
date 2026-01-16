@@ -10,11 +10,12 @@ services:
     environment:
       - LOSEME_DATA_DIR=/data
       - QDRANT_URL=http://qdrant:6333
-      - LOSEME_DEVICE_ID:"MasterMind"
+      - LOSEME_DEVICE_ID=MasterMind
+      - LOSEME_SOURCE_ROOT_HOST=/run/media/ben/data/Nextcloud/Home/H_Projects/loseme/data/
     volumes:
       - .:/app
       - ${LOSEME_DATA_DIR:-./data}:/data:ro
-    command: uvicorn api.app.main:app --host 0.0.0.0 --port 8000
+    command: uvicorn api.app.main:app --host 0.0.0.0 --port 8000 --log-level info --reload
 
   qdrant:
     image: qdrant/qdrant
@@ -35,22 +36,7 @@ services:
       LOSEME_DEVICE_ID: "MasterMind"
     depends_on:
       - qdrant
-    command: pytest -v
-
-  cli:
-    build:
-      context: .
-      dockerfile: api/Dockerfile
-    depends_on:
-      - api
-    environment:
-      - LOSEME_DATA_DIR=/data
-      - API_URL=http://api:8000
-    volumes:
-      - .:/app
-      - ${LOSEME_DATA_DIR:-./data}:/data:ro
-    entrypoint: ["python", "-m", "clients.cli.main"]
-
+    command: pytest -v -s  -o log_cli_level=DEBUG
   
   docs:
     build:
