@@ -12,12 +12,11 @@ def upsert_document(doc: Document) -> None:
             source_instance_id,
             device_id,
             source_path,
-            docker_path,
             metadata_json,
             created_at,
             updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(document_id) DO UPDATE SET
             source_path = excluded.source_path,
             metadata_json = excluded.metadata_json,
@@ -30,7 +29,6 @@ def upsert_document(doc: Document) -> None:
             doc.source_id,
             doc.device_id,
             doc.source_path,
-            doc.docker_path,
             json.dumps(doc.metadata),
             doc.created_at.isoformat(),
             doc.updated_at.isoformat(),

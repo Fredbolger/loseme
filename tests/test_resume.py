@@ -45,7 +45,6 @@ def test_document_not_reprocessed(setup_db):
 
     # Same document + same content must be recognized
     assert is_processed(
-        resumed_run.id,
         source_instance_id,
         content_checksum,
     )
@@ -70,7 +69,7 @@ def test_document_not_reprocessed(setup_db):
 
     processed_docs = []
     for sid, checksum in documents_to_index:
-        if not is_processed(resumed_run.id, sid, checksum):
+        if not is_processed(sid, checksum):
             processed_docs.append(sid)
 
     # Only the new document should be processed
@@ -88,6 +87,6 @@ def test_resume_uses_source_instance_and_checksum(setup_db):
 
     mark_processed(run.id, source_instance_id, checksum_v1)
 
-    assert is_processed(run.id, source_instance_id, checksum_v1)
-    assert not is_processed(run.id, source_instance_id, checksum_v2)
+    assert is_processed(source_instance_id, checksum_v1)
+    assert not is_processed(source_instance_id, checksum_v2)
 

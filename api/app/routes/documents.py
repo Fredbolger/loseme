@@ -21,7 +21,7 @@ def get_document(document_id: str):
     document = get_document_from_db(document_id)
     
     if not document:
-        raise HTTPException(status_code=404, detail="Document not found")
+        raise HTTPException(status_code=404, detail=f"Document with ID {document_id} not found.")
     
     return document
 

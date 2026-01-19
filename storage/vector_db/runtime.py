@@ -5,10 +5,9 @@ from storage.vector_db.qdrant_store import QdrantVectorStore
 from pipeline.embeddings.sentence_transformer import (
     SentenceTransformerEmbeddingProvider,
 )
-from src.domain.embeddings import EmbeddingProvider
+from src.core.wiring import build_embedding_provider
 
 _vector_store = None
-_embedding: EmbeddingProvider = SentenceTransformerEmbeddingProvider()
 
 def get_vector_store():
     global _vector_store
@@ -20,4 +19,4 @@ def get_vector_store():
     return _vector_store
 
 def get_embedding_provider():
-    return _embedding
+    return build_embedding_provider()

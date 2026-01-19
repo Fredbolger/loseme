@@ -166,7 +166,6 @@ def update_checkpoint(run_id: str, source_instance_id: str) -> None:
         (source_instance_id, _now(), run_id),
     )
 
-
 # Helper function needed
 def fetch_all(query: str, params: tuple = ()) -> list:
     """Fetch all rows - import from db module or define here"""

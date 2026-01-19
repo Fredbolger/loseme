@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from api.app.main import app
 from src.domain.models import Document
 from src.domain.ids import make_logical_document_id, make_source_instance_id
+from collectors.filesystem import filesystem_source
 
 # -------------------------------------------------------------------
 # Test setup: enforce Docker-like ingestion root
@@ -20,12 +21,17 @@ DATA_ROOT.mkdir(parents=True, exist_ok=True)
 
 client = TestClient(app)
 
+filesystem_source.LOSEME_DATA_DIR = DATA_ROOT
+filesystem_source.LOSEME_SOURCE_ROOT_HOST = DATA_ROOT
+
 # -------------------------------------------------------------------
 # Tests
 # -------------------------------------------------------------------
 
 
 def test_ingest_filesystem_success():
+    print("IN DOCKER:", Path("/.dockerenv").exists())
+
     ingest_dir = DATA_ROOT / "docs"
     ingest_dir.mkdir(exist_ok=True)
 
@@ -50,35 +56,6 @@ def test_ingest_filesystem_success():
     data = response.json()
     assert data["status"] == "running"
 
-"""
-def test_ingest_filesystem_invalid_path():
-    response = client.post(
-        "/ingest/filesystem",
-        json={"path": "/does/not/exist"},
-    )
-
-    assert response.status_code == 400
-
-def test_ingest_filesystem_no_documents():
-    empty_dir = DATA_ROOT / "empty"
-    empty_dir.mkdir(exist_ok=True)
-
-    with patch(
-        "src.domain.ingestion.FilesystemIngestionSource.list_documents",
-        return_value=[],
-    ):
-        response = client.post(
-            "/ingest/filesystem",
-            json={
-                "path": str(empty_dir),
-                "recursive": True,
-                "include_patterns": [],
-                "exclude_patterns": [],
-            },
-        )
-
-    assert response.status_code == 200
-    data = response.json()
-    assert data["status"] == "ok"
-    assert data["documents_ingested"] == 0
-"""
+if __name__ == "__main__":
+    test_ingest_filesystem_success()
+    print("Test passed.")

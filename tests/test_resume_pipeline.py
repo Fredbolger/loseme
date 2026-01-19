@@ -8,14 +8,20 @@ from src.domain.models import IndexingScope
 from api.app.services.ingestion import ingest_filesystem_scope, IngestionCancelled
 from src.domain.ids import make_source_instance_id
 
+from collectors.filesystem import filesystem_source
+
 def test_resume_does_not_reindex_processed_documents(tmp_path):
     init_db()
 
     # Arrange
     doc_path = tmp_path / "doc.md"
     doc_path.write_text("hello world")
+        
+    filesystem_source.LOSEME_DATA_DIR = tmp_path
+    filesystem_source.LOSEME_SOURCE_ROOT_HOST = tmp_path
 
     scope = IndexingScope(directories=[tmp_path])
+
 
     # API creates the run
     run = create_run("filesystem", scope)
@@ -43,6 +49,9 @@ def test_resume_reindexes_on_content_change(tmp_path):
 
     doc_path = tmp_path / "doc.md"
     doc_path.write_text("v1")
+    
+    filesystem_source.LOSEME_DATA_DIR = tmp_path
+    filesystem_source.LOSEME_SOURCE_ROOT_HOST = tmp_path
 
     scope = IndexingScope(directories=[tmp_path])
     run = create_run("filesystem", scope)
@@ -67,6 +76,9 @@ def test_resume_processes_unprocessed_documents(tmp_path):
 
     scope = IndexingScope(directories=[tmp_path])
     run = create_run("filesystem", scope)
+    
+    filesystem_source.LOSEME_DATA_DIR = tmp_path
+    filesystem_source.LOSEME_SOURCE_ROOT_HOST = tmp_path
 
     # Initial document
     doc1 = tmp_path / "doc1.md"
@@ -95,6 +107,9 @@ def test_resume_after_cancelled_run(tmp_path):
 
     scope = IndexingScope(directories=[tmp_path])
     run = create_run("filesystem", scope)
+    
+    filesystem_source.LOSEME_DATA_DIR = tmp_path
+    filesystem_source.LOSEME_SOURCE_ROOT_HOST = tmp_path
 
     # Create documents
     for i in range(3):

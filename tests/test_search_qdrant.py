@@ -2,7 +2,7 @@ import pytest
 import os 
 from storage.vector_db.qdrant_store import QdrantVectorStore
 from storage.vector_db.runtime import get_vector_store
-from src.domain.models import Chunk
+from src.domain.models import Chunk, Document
 from pipeline.embeddings.sentence_transformer import SentenceTransformerEmbeddingProvider
 
 device_id = os.getenv("LOSEME_DEVICE_ID")
@@ -29,3 +29,6 @@ def test_search_qdrant_returns_results():
     assert len(results) == 1
     # test that the result[0][0] is the same chunk we added
     assert results[0][0].id == chunk.id
+
+    # Clean up
+    store.clear()

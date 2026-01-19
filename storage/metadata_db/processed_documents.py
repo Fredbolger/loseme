@@ -19,15 +19,19 @@ def unmark_processed(run_id: str, source_instance_id: str, content_checksum: str
         (run_id, source_instance_id, content_checksum),
     )
 
-def is_processed(run_id: str, source_instance_id: str, content_checksum: str) -> bool:
+def is_processed(source_instance_id: str, content_checksum: str) -> bool:
+    """
+    Returns True if a document with this checksum and source_instance_id
+    has ever been processed (regardless of run).
+    """
     row = fetch_one(
         """
-        SELECT content_hash FROM processed_documents
-        WHERE run_id = ?
-         AND source_instance_id = ?
-         AND content_hash = ?
+        SELECT content_hash
+        FROM processed_documents
+        WHERE source_instance_id = ?
+          AND content_hash = ?
         """,
-        (run_id, source_instance_id, content_checksum),
+        (source_instance_id, content_checksum),
     )
     return row is not None and row["content_hash"] == content_checksum
 

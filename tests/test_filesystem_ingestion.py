@@ -12,6 +12,21 @@ from collectors.filesystem.filesystem_source import FilesystemIngestionSource
 from src.domain.models import IndexingScope
 from src.domain.extraction.registry import ExtractorRegistry
 from src.domain.extraction.plaintext import PlainTextExtractor
+import pytest
+
+@pytest.fixture(autouse=True)
+def fake_loseme_paths(tmp_path, monkeypatch):
+    fake_data_dir = tmp_path
+    fake_host_root = tmp_path
+
+    monkeypatch.setattr(
+        "collectors.filesystem.filesystem_source.LOSEME_DATA_DIR",
+        fake_data_dir,
+    )
+    monkeypatch.setattr(
+        "collectors.filesystem.filesystem_source.LOSEME_SOURCE_ROOT_HOST",
+        fake_host_root,
+    )
 
 def test_filesystem_excludes_paths(tmp_path):
     # Arrange: create real files on disk

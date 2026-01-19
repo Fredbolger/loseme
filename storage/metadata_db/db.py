@@ -2,13 +2,13 @@ import sqlite3
 from pathlib import Path
 from typing import Iterator
 
-DB_PATH = Path(__file__).parent / "indexing.db"
-
+DB_PATH = Path("/var/lib/loseme/metadata/metadata.db")
 
 def get_connection() -> sqlite3.Connection:
     """
     Returns a SQLite connection and ensures foreign keys are enabled.
     """
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)  # <-- ensure directory exists
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON;")
@@ -43,7 +43,6 @@ def init_db() -> None:
             source_instance_id TEXT NOT NULL,
             device_id TEXT NOT NULL,
             source_path TEXT NOT NULL,
-            docker_path TEXT NOT NULL,
             metadata_json TEXT NOT NULL,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL

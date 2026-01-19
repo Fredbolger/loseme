@@ -26,7 +26,10 @@ RUN pip install \
     httpx \
     typer \
     qdrant-client>=1.7.0\
-    sentence-transformers>=2.6
+    sentence-transformers>=2.6\
+    einops \
+    pypdf\
+    bs4
 
 # 🔑 Ensure consistent imports everywhere
 ENV PYTHONPATH=/app

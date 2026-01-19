@@ -34,13 +34,13 @@ def test_document_not_reprocessed(setup_db):
     resumed_run = load_latest_run("filesystem", scope)
     
     # The document should be marked as processed
-    assert is_processed(str(resumed_run.id), str(doc_id), str(content_hash))
+    assert is_processed(str(doc_id), str(content_hash))
     
     # Simulate iterating over documents
     documents_to_index = [doc_id, "/docs/another_doc.md"]
     processed_docs = []
     for doc in documents_to_index:
-        if not is_processed(str(resumed_run.id), str(doc), str(content_hash)):
+        if not is_processed(str(doc), str(content_hash)):
             processed_docs.append(doc)
 
     # The already-processed document should be skipped

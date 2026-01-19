@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Iterable
 
 from collectors.filesystem.filesystem_source import FilesystemIngestionSource
-from src.domain.models import Document, IndexingScope, FilesystemIngestRequest
+from src.domain.models import Document, IndexingScope, FilesystemIngestRequest, ThunderbirdIngestRequest
 from src.domain.ids import make_source_instance_id
 from src.core.wiring import build_extractor_registry
 from storage.metadata_db.indexing_runs import create_run, update_status, update_checkpoint
@@ -43,5 +43,4 @@ def ingest_filesystem(req: FilesystemIngestRequest, bg: BackgroundTasks):
         "run_id": run.id,
         "status": "running",
     }
-
 

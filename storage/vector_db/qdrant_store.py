@@ -6,11 +6,11 @@ from qdrant_client.models import PointStruct, VectorParams, Distance
 from qdrant_client.http.exceptions import UnexpectedResponse
 
 from src.domain.models import Chunk
+from src.core.wiring import build_embedding_provider
 from src.domain.vector_store import VectorStore
 
 COLLECTION = "chunks"
-VECTOR_SIZE = 384  # must match embedding size
-
+VECTOR_SIZE = build_embedding_provider().dimension()
 
 def chunk_id_to_uuid(chunk_id: str) -> str:
     return str(uuid.uuid5(uuid.NAMESPACE_URL, chunk_id))

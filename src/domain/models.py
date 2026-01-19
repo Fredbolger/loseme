@@ -4,22 +4,35 @@ import hashlib
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, Dict, Any, List
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing_extensions import Literal
 from dataclasses import dataclass
 
+from src.domain.ids import make_source_instance_id, make_thunderbird_source_id
+
+
 class Document(BaseModel):
     id: str
-    source_type: Literal['filesystem']
+    source_type: Literal["filesystem", "thunderbird"]
     source_id: str
     device_id: str
     source_path: str
-    docker_path: str
     metadata: Dict[str, Any] = Field(default_factory=dict)
     checksum: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    
+
+
+    def __init__(self, **data):
+        if (
+            "source_id" not in data
+            and "source_type" in data
+            and "source_path" in data
+            and "device_id" in data
+        ):
+            data["source_id"] = make_source_instance_id(...)
+        super().__init__(**data)
+
 
     @field_validator('id')
     def id_must_not_be_empty(cls, v):
@@ -35,8 +48,8 @@ class Document(BaseModel):
 
     @field_validator('source_type')
     def source_type_must_be_valid(cls, v):
-        if v != 'filesystem':
-            raise ValueError("source_type must be 'filesystem'")
+        if v not in ["filesystem", "thunderbird"]:
+            raise ValueError('source_type must be either "filesystem" or "thunderbird"')
         return v
 
     @field_validator('source_path')
@@ -51,6 +64,31 @@ class Document(BaseModel):
             raise ValueError('device_id must not be empty')
         return v
 
+class EmailDocument(Document):
+    mbox_path: str
+    message_id: str
+    text: str
+
+    @model_validator(mode="before")
+    @classmethod
+    def build_thunderbird_ids(cls, data: dict):
+        if data.get("source_type") != "thunderbird":
+            return data
+
+        required = ("device_id", "mbox_path", "message_id")
+        if not all(k in data for k in required):
+            raise ValueError("Thunderbird EmailDocument missing required fields")
+
+        data["source_id"] = make_thunderbird_source_id(
+            device_id=data["device_id"],
+            mbox_path=data["mbox_path"],
+            message_id=data["message_id"],
+        )
+
+        # logical but honest source_path
+        data["source_path"] = f"{Path(data['mbox_path']).name}/{data['message_id']}"
+
+        return data
 
 class Chunk(BaseModel):
     id: str
@@ -112,3 +150,7 @@ class FilesystemIngestRequest(BaseModel):
     include_patterns: list[str] = []
     exclude_patterns: list[str] = []
 
+class ThunderbirdIngestRequest(BaseModel):
+    mbox_paths: list[str] = []
+    include_patterns: list[str] = []
+    exclude_patterns: list[str] = []

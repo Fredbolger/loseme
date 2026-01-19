@@ -45,3 +45,11 @@ def make_chunk_id(
     name = f"{document_id}:{document_checksum}:{index}"
     return hashlib.sha256(name.encode("utf-8")).hexdigest()
 
+def make_thunderbird_source_id(
+    device_id: str,
+    mbox_path: str,
+    message_id: str,
+) -> str:
+    return hashlib.sha256(
+        f"thunderbird:{device_id}:{mbox_path}:{message_id}".encode("utf-8")
+    ).hexdigest()

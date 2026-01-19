@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: api/Dockerfile
+    image: loseme-api:latest
     ports:
       - "8000:8000"
     environment:
@@ -12,9 +13,14 @@ services:
       - QDRANT_URL=http://qdrant:6333
       - LOSEME_DEVICE_ID=MasterMind
       - LOSEME_SOURCE_ROOT_HOST=/run/media/ben/data/Nextcloud/Home/H_Projects/loseme/data/
+      - LOSEME_CHUNKER=semantic
+      - LOSEME_EMBEDDING_MODEL=nomic-ai/nomic-embed-text-v1
     volumes:
       - .:/app
       - ${LOSEME_DATA_DIR:-./data}:/data:ro
+      - metadata:/var/lib/loseme/metadata
+      - /home/ben/.thunderbird/1ln9s74m.default-release/ImapMail/secureimap.t-online.de:/app/data/email
+
     command: uvicorn api.app.main:app --host 0.0.0.0 --port 8000 --log-level info --reload
 
   qdrant:
@@ -22,10 +28,10 @@ services:
     ports:
       - "6333:6333"
     volumes:
-      - qdrant_data:/qdrant/storage
+      - qdrant_data:/var/lib/loseme/qdrant
 
   test:
-    build: ./api
+    image: loseme-api:latest
     volumes:
       - .:/app
     working_dir: /app
@@ -34,8 +40,11 @@ services:
       QDRANT_URL: http://qdrant:6333
       ALLOW_VECTOR_CLEAR: "1"
       LOSEME_DEVICE_ID: "MasterMind"
+      LOSEME_DATA_DIR: "/data"
+      LOSEME_SOURCE_ROOT_HOST: /run/media/ben/data/Nextcloud/Home/H_Projects/loseme/data/
     depends_on:
       - qdrant
+      - api
     command: pytest -v -s  -o log_cli_level=DEBUG
   
   docs:
@@ -48,4 +57,5 @@ services:
 
 volumes:
   qdrant_data:
+  metadata:
 

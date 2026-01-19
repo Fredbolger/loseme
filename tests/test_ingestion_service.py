@@ -5,6 +5,7 @@ from storage.metadata_db.db import init_db
 from storage.metadata_db.indexing_runs import load_latest_run, create_run
 from src.domain.models import IndexingScope
 from api.app.services.ingestion import ingest_filesystem_scope
+from collectors.filesystem import filesystem_source
 
 
 def hash_content(text: str) -> str:
@@ -18,6 +19,9 @@ def test_ingestion_service_is_resumable(tmp_path):
     doc_path = tmp_path / "doc.md"
     content = "hello world"
     doc_path.write_text(content)
+    
+    filesystem_source.LOSEME_DATA_DIR = tmp_path
+    filesystem_source.LOSEME_SOURCE_ROOT_HOST = tmp_path
 
     scope = IndexingScope(directories=[tmp_path])
     run = create_run("filesystem", scope)

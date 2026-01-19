@@ -7,10 +7,16 @@ import warnings
 
 app = typer.Typer(no_args_is_help=True)
 API_URL = os.environ.get("API_URL")
+LOSEME_SOURCE_ROOT_HOST = os.environ.get("LOSEME_SOURCE_ROOT_HOST")
 
 if API_URL is None:
     warnings.warn("API_URL environment variable is not set. Defaulting to 'http://localhost:8000'.", UserWarning)
     API_URL = "http://localhost:8000"
+
+if LOSEME_SOURCE_ROOT_HOST is None:
+    warnings.warn("LOSEME_SOURCE_ROOT_HOST environment variable is not set. Defaulting to '/host_data'.", UserWarning)
+    LOSEME_SOURCE_ROOT_HOST = "/run/media/ben/data/Nextcloud/Home/H_Projects/loseme/data/"
+
 
 @app.command()
 def ingest(path: str):
@@ -61,12 +67,13 @@ def search(query: str, top_k: int = 10, interactive: bool = False):
 
     for i, (doc, score, count) in enumerate(documents, start=1):
         typer.echo(
-            f"{i}) {doc['docker_path']}  score={score:.3f}  chunks={count}"
+            f"{i}) {doc['source_path']}  score={score:.3f}  chunks={count}"
         )
 
     choice = typer.prompt("Open document", type=int)
     selected = documents[choice - 1][0]
-    open_path(selected["source_path"])
+    logical_path = os.path.join(LOSEME_SOURCE_ROOT_HOST, selected["source_path"].lstrip("/"))
+    open_path(logical_path)
 
 
 @app.command()
@@ -74,7 +81,7 @@ def get_document(document_id: str):
     """Retrieve document metadata by document ID."""
     r = httpx.get(f"{API_URL}/documents/{document_id}")
     if r.status_code == 404:
-        typer.echo("Document not found")
+        typer.echo(f"Document with ID {document_id} not found.")
         raise typer.Exit(code=1)
     r.raise_for_status()
     document = r.json()

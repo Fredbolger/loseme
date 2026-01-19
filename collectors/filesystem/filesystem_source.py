@@ -65,10 +65,8 @@ class FilesystemIngestionSource:
         
             extracted = self.extractor_registry.extract(path)
             if extracted is None:
+                logger.debug(f"No extractor found for path {path}, skipping.")
                 continue
-
-            # This is running inside the docker container, but we want to store the absolute path on the host
-            host_path = LOSEME_SOURCE_ROOT_HOST / path.relative_to(LOSEME_DATA_DIR)
 
             document_checksum = hashlib.sha256(
                    extracted.text.strip().encode("utf-8")
@@ -79,7 +77,7 @@ class FilesystemIngestionSource:
             )
             source_instance_id = make_source_instance_id(
                     source_type="filesystem",
-                    source_path=host_path,
+                    source_path=path,
                     device_id=device_id,
             )
 
@@ -89,8 +87,7 @@ class FilesystemIngestionSource:
                         source_type="filesystem",
                         source_id=source_instance_id,
                         device_id=device_id,
-                        source_path=str(host_path),
-                        docker_path=str(path),
+                        source_path=str(path),
                         checksum=document_checksum,
                         created_at=datetime.fromtimestamp(path.stat().st_ctime),
                         updated_at=datetime.fromtimestamp(path.stat().st_mtime),
