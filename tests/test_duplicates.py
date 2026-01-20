@@ -4,7 +4,7 @@ from pathlib import Path
 from storage.metadata_db.db import init_db
 from storage.metadata_db.indexing_runs import create_run, load_latest_run
 from storage.metadata_db.processed_documents import mark_processed, is_processed
-from src.domain.models import IndexingScope
+from src.domain.models import FilesystemIndexingScope
 
 @pytest.fixture
 def setup_db():
@@ -21,7 +21,7 @@ def test_document_not_reprocessed(setup_db):
     is skipped in a new run.
     """
     # Create scope and run
-    scope = IndexingScope(directories=[Path("/docs")])
+    scope = FilesystemIndexingScope(type='filesystem',directories=[Path("/docs")])
     run = create_run("filesystem", scope)
     
     # Simulate first document processing

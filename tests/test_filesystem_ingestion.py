@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 from pathlib import Path
 from unittest.mock import patch
 from collectors.filesystem.filesystem_source import FilesystemIngestionSource
-from src.domain.models import IndexingScope
+from src.domain.models import FilesystemIndexingScope
 from src.domain.extraction.registry import ExtractorRegistry
 from src.domain.extraction.plaintext import PlainTextExtractor
 import pytest
@@ -42,7 +42,8 @@ def test_filesystem_excludes_paths(tmp_path):
     
     # Now two files exist under the paths: root/file1.txt and root/IgnorePath/file2.txt
 
-    scope = IndexingScope(
+    scope = FilesystemIndexingScope(
+        type="filesystem",
         directories=[root],
         include_patterns=[],
         exclude_patterns=["IgnorePath/*"],

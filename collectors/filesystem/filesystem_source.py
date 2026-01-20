@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import List, Optional
 import hashlib
 from datetime import datetime
-from src.domain.models import Document, IndexingScope
+from src.domain.models import Document, FilesystemIndexingScope
 from src.domain.ids import make_logical_document_id, make_source_instance_id
 from src.domain.extraction.registry import ExtractorRegistry
 from fnmatch import fnmatch
@@ -28,7 +28,7 @@ if LOSEME_SOURCE_ROOT_HOST is None:
 
 class FilesystemIngestionSource:
     def __init__(self, 
-                 scope: IndexingScope,
+                 scope: FilesystemIndexingScope,
                  extractor_registry: ExtractorRegistry
                  ):
         self.scope = scope

@@ -1,6 +1,6 @@
 import warnings
 import os
-from src.domain.models import IndexingScope
+from src.domain.models import FilesystemIndexingScope,  ThunderbirdIndexingScope
 from collectors.filesystem.filesystem_source import FilesystemIngestionSource
 from collectors.thunderbird.thunderbird_source import ThunderbirdIngestionSource
 from storage.metadata_db.indexing_runs import create_run, load_latest_run
@@ -34,7 +34,7 @@ class IngestionResult:
 class IngestionCancelled(Exception):
     pass
 
-def ingest_filesystem_scope(scope: IndexingScope, run_id: str, resume: bool = True, stop_after: int | None = None) -> IngestionResult:
+def ingest_filesystem_scope(scope: FilesystemIndexingScope, run_id: str, resume: bool = True, stop_after: int | None = None) -> IngestionResult:
     if stop_after is not None:
         warnings.warn("The 'stop_after' parameter is set, which will intentionally limit the number of documents processed. This is for testing purposes only and should not be used in production.", UserWarning)    
 
@@ -99,3 +99,59 @@ def ingest_filesystem_scope(scope: IndexingScope, run_id: str, resume: bool = Tr
         documents_indexed=documents_indexed
     )
 
+
+def ingest_thunderbird_scope(scope: ThunderbirdIndexingScope, run_id: str, resume: bool = True, stop_after: int | None = None) -> IngestionResult:
+    init_db()
+    logger.info(f"Starting Thunderbird ingestion for scope: {scope} with run_id: {run_id}, resume={resume}")
+
+    source = ThunderbirdIngestionSource(scope)
+    vector_store = get_vector_store()
+    
+    if embedding_provider.dimension() != vector_store.dimension():
+        raise RuntimeError("Embedding dimension mismatch with vector store")
+
+    if resume:
+        run = load_latest_run("thunderbird", scope)
+        if run is None:
+            raise RuntimeError("Resume=True but no previous run exists for the given scope.")
+    else:
+        run = create_run("thunderbird", scope)
+
+    documents_discovered = 0
+    documents_indexed = 0
+    
+    update_status(run_id, "running")
+
+    try:
+        for doc in source.iter_documents():
+            if stop_after is not None and documents_discovered >= stop_after:
+                raise IngestionCancelled("Ingestion stopped after reaching the stop_after limit.")    
+
+            documents_discovered += 1
+            logger.debug(f"Discovered email document with Message-ID {doc.message_id}")
+
+            if is_processed(doc.source_id, doc.checksum):
+                logger.info(f"Email document with Message-ID {doc.message_id} already processed with same checksum, skipping.")
+                continue
+             
+            upsert_document(doc)
+            
+            chunks, chunk_texts = chunker.chunk(doc,doc.text)
+            embeddings = [embedding_provider.embed_query(text) for text in chunk_texts]
+            for chunk, embedding in zip(chunks, embeddings):
+                vector_store.add(chunk, embedding)
+
+            mark_processed(run_id, doc.source_id, doc.checksum)
+            documents_indexed += 1
+        update_status(run_id, "completed")
+        logger.info(f"Thunderbird ingestion run {run_id} completed successfully. Discovered {documents_discovered} documents, indexed {documents_indexed} documents.")
+    except Exception:
+        update_status(run_id, "interrupted")
+        raise
+    
+    return IngestionResult(
+        run_id=run_id,
+        status="completed",
+        documents_discovered=documents_discovered,
+        documents_indexed=documents_indexed
+    )

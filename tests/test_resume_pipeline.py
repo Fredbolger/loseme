@@ -4,7 +4,7 @@ import pytest
 from storage.metadata_db.db import init_db
 from storage.metadata_db.processed_documents import is_processed, mark_processed, get_all_processed
 from storage.metadata_db.indexing_runs import load_latest_run, create_run, update_status
-from src.domain.models import IndexingScope
+from src.domain.models import FilesystemIndexingScope
 from api.app.services.ingestion import ingest_filesystem_scope, IngestionCancelled
 from src.domain.ids import make_source_instance_id
 
@@ -20,7 +20,7 @@ def test_resume_does_not_reindex_processed_documents(tmp_path):
     filesystem_source.LOSEME_DATA_DIR = tmp_path
     filesystem_source.LOSEME_SOURCE_ROOT_HOST = tmp_path
 
-    scope = IndexingScope(directories=[tmp_path])
+    scope = FilesystemIndexingScope(type="filesystem",directories=[tmp_path])
 
 
     # API creates the run
@@ -53,7 +53,7 @@ def test_resume_reindexes_on_content_change(tmp_path):
     filesystem_source.LOSEME_DATA_DIR = tmp_path
     filesystem_source.LOSEME_SOURCE_ROOT_HOST = tmp_path
 
-    scope = IndexingScope(directories=[tmp_path])
+    scope = FilesystemIndexingScope(type = "filesystem", directories=[tmp_path])
     run = create_run("filesystem", scope)
 
     ingest_filesystem_scope(scope, run.id, resume=False)
@@ -74,7 +74,7 @@ def test_resume_processes_unprocessed_documents(tmp_path):
 
     init_db()
 
-    scope = IndexingScope(directories=[tmp_path])
+    scope = FilesystemIndexingScope(type="filesystem", directories=[tmp_path])
     run = create_run("filesystem", scope)
     
     filesystem_source.LOSEME_DATA_DIR = tmp_path
@@ -105,7 +105,7 @@ def test_resume_processes_unprocessed_documents(tmp_path):
 def test_resume_after_cancelled_run(tmp_path):
     init_db()
 
-    scope = IndexingScope(directories=[tmp_path])
+    scope = FilesystemIndexingScope(type="filesystem",directories=[tmp_path])
     run = create_run("filesystem", scope)
     
     filesystem_source.LOSEME_DATA_DIR = tmp_path

@@ -114,9 +114,30 @@ class Chunk(BaseModel):
         return v
 
 class IndexingScope(BaseModel):
-    directories: list[Path] = []
-    include_patterns: list[str] = []
-    exclude_patterns: list[str] = []
+    """ 
+    Abstract base class for indexing scopes.
+    Based on the type field in the dictionary, the appropriate subclass will be instantiated.
+    """
+    type: str
+
+    @classmethod
+    def deserialize(cls, data: dict) -> "IndexingScope":
+        scope_type = data.get("type")
+
+        if scope_type == "filesystem":
+            return FilesystemIndexingScope.deserialize(data)
+
+        if scope_type == "thunderbird":
+            return ThunderbirdIndexingScope.deserialize(data)
+
+        raise ValueError(f"Unknown scope type: {scope_type}")
+
+class FilesystemIndexingScope(IndexingScope):
+    type: Literal["filesystem"] = "filesystem"
+
+    directories: list[Path] = Field(default_factory=list)
+    include_patterns: list[str] = Field(default_factory=list)
+    exclude_patterns: list[str] = Field(default_factory=list)
 
     def normalized(self) -> dict:
         return {
@@ -129,6 +150,40 @@ class IndexingScope(BaseModel):
         normalized_json = json.dumps(self.normalized(), sort_keys=True)
         return hashlib.sha256(normalized_json.encode()).hexdigest()
 
+    def serialize(self) -> dict:
+        return {
+            "type": self.type,
+            "directories": [str(p) for p in self.directories],
+            "include_patterns": self.include_patterns,
+            "exclude_patterns": self.exclude_patterns,
+        }
+
+    @classmethod
+    def deserialize(cls, data: dict) -> "FilesystemIndexingScope":
+        return cls(
+            directories=[Path(p) for p in data["directories"]],
+            include_patterns=data.get("include_patterns", []),
+            exclude_patterns=data.get("exclude_patterns", []),
+        )
+
+class ThunderbirdIndexingScope(IndexingScope):
+    type: Literal["thunderbird"] = "thunderbird"
+    mbox_path: str
+    ignore_patterns: Optional[List[dict]] = None
+
+    def serialize(self) -> dict:
+        return {
+            "type": self.type,
+            "mbox_path": self.mbox_path,
+            "ignore_patterns": self.ignore_patterns,
+        }
+
+    @classmethod
+    def deserialize(cls, data: dict) -> "ThunderbirdIndexingScope":
+        return cls(
+            mbox_path=data["mbox_path"],
+            ignore_patterns=data.get("ignore_patterns"),
+        )
 
 class IndexingRun(BaseModel):
     id: str

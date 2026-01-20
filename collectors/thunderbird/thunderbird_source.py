@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import List, Optional
 import hashlib
 from datetime import datetime
-from src.domain.models import EmailDocument, IndexingScope
+from src.domain.models import EmailDocument, ThunderbirdIndexingScope
 from src.domain.ids import make_logical_document_id, make_source_instance_id
 from src.domain.extraction.registry import ExtractorRegistry
 from fnmatch import fnmatch
@@ -13,80 +13,144 @@ import logging
 import warnings
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 device_id = os.environ.get("LOSEME_DEVICE_ID")
 if device_id is None:
     warnings.warn("LOSEME_DEVICE_ID environment variable is not set. Defaulting to 'unknown_device'.", UserWarning)
     device_id = "unknown_device"
 
-LOSEME_DATA_DIR = Path(os.environ.get("LOSEME_DATA_DIR"))
-if LOSEME_DATA_DIR is None:
-    warnings.warn("LOSEME_DATA_DIR environment variable is not set. Defaulting to '/data'.", UserWarning)
+import mailbox
+from email.message import Message
+from pathlib import Path
 
-LOSEME_SOURCE_ROOT_HOST = Path(os.environ.get("LOSEME_SOURCE_ROOT_HOST"))
-if LOSEME_SOURCE_ROOT_HOST is None:
-    warnings.warn("LOSEME_SOURCE_ROOT_HOST environment variable is not set. Defaulting to '/host_data'.", UserWarning)
 
+def extract_email_text(message: Message) -> str:
+    parts = []
+    if message.is_multipart():
+        for part in message.walk():
+            ctype = part.get_content_type()
+            if ctype == "text/plain":
+                try:
+                    parts.append(part.get_payload(decode=True).decode(
+                        part.get_content_charset() or "utf-8", errors="replace"
+                    ))
+                except:
+                    pass
+            elif ctype == "text/html":
+                try:
+                    html_content = part.get_payload(decode=True).decode(
+                        part.get_content_charset() or "utf-8", errors="replace"
+                    )
+                    parts.append(html_to_text_bs(html_content))
+                except:
+                    pass
+    else:
+        ctype = message.get_content_type()
+        if ctype == "text/plain":
+            try:
+                parts.append(message.get_payload(decode=True).decode(
+                    message.get_content_charset() or "utf-8", errors="replace"
+                ))
+            except:
+                pass
+        elif ctype == "text/html":
+            try:
+                html_content = message.get_payload(decode=True).decode(
+                    message.get_content_charset() or "utf-8", errors="replace"
+                )
+                parts.append(html_to_text_bs(html_content))
+            except:
+                pass
+    return "\n".join(parts)
 
 class ThunderbirdIngestionSource:
-    def __init__(self, 
-                 scope: IndexingScope,
-                 extractor_registry: ExtractorRegistry
-                 ):
-        self.scope = scope
-        self.extractor_registry = extractor_registry
+    """
+    Ingestion source for Thunderbird mbox files.
 
-    def list_emails(self, mbox_path: Path) -> List[EmailDocument]:
-        mbox = mailbox.mbox(mbox_path)
-        emails = []
+    Args:
+        scope (ThunderbirdIndexingScope): The indexing scope for Thunderbird.
+        ignore_patterns (Optional[List[dict]]): List of ignore patterns to filter out emails.
+
+    """ 
+
+    def __init__(self, scope: ThunderbirdIndexingScope):
+        self.scope = scope
+        self.mbox_path: Path = scope.mbox_path
+        self.ignore_patterns = scope.ignore_patterns or []
+        self.metadata = {
+            "device_id": device_id,
+            "source_instance_id": make_source_instance_id(
+                source_type="thunderbird",
+                source_path=Path(self.mbox_path),
+                device_id=device_id
+                ),
+        }
+
+    def iter_documents(self):
+        mbox = mailbox.mbox(self.mbox_path)
 
         for message in mbox:
-            subject = str(make_header(decode_header(message.get('subject', "No Subject"))))
-            sender = message.get('from', "Unknown Sender")
-            date = message.get('date')
-            try:
-                date_parsed = datetime.strptime(date, '%a, %d %b %Y %H:%M:%S %z') if date else None
-            except ValueError:
-                date_parsed = None
-
-            # Extract plain text body
-            text = ""
-            if message.is_multipart():
-                parts = []
-                for part in message.walk():
-                    ctype = part.get_content_type()
-                    disp = str(part.get("Content-Disposition") or "")
-                    if ctype == "text/plain" and "attachment" not in disp:
-                        try:
-                            part_payload = part.get_payload(decode=True).decode(
-                                part.get_content_charset() or "utf-8", errors="ignore"
-                            )
-                            parts.append(part_payload)
-                        except:
-                            pass
-                text = "\n".join(parts)
-            else:
-                try:
-                    text = message.get_payload(decode=True).decode(
-                        message.get_content_charset() or "utf-8", errors="ignore"
-                    )
-                except:
-                    text = ""
-
-            logical_document_id = make_logical_document_id(text)
-            email_checksum = hashlib.sha256(text.strip().encode("utf-8")).hexdigest()
-
-            email_doc = EmailDocument(
-                id=logical_document_id,
-                mbox_id=str(message.get('message-id')),
-                mbox_path=str(mbox_path),
-                checksum=email_checksum,
-                metadata={
-                    "subject": subject,
-                    "from": sender,
-                    "date": date_parsed.isoformat() if date_parsed else None,
-                }
+            email_doc = self._build_email_document(
+                message=message,
+                mbox_path=str(self.mbox_path)
             )
-            emails.append(email_doc)
-        return emails 
+            # Filter by metadata ignore patterns
+            if self.ignore_patterns:
+                skip = False
+                for pattern in self.ignore_patterns:
+                    field = pattern.get("field") # e.g. "From", "Subject"
+                    value = pattern.get("value") # e.g. "*@spam.com"
+
+                    if field and value:
+                        field_value = email_doc.metadata.get(field)
+                        if field_value and fnmatch(field_value.lower(), value):
+                            logger.debug(
+                                f"Excluding email with Message-ID {email_doc.message_id} "
+                                f"due to ignore pattern on field '{field}' with value '{value}'."
+                            )
+                            skip = True
+                            break
+                if skip:
+                    continue
+            yield email_doc
+
+    def _build_email_document(
+        self,
+        message: Message,
+        mbox_path: str,
+        ) -> EmailDocument:
+        message_id = message.get("Message-ID")
+        if not message_id:
+            warnings.warn(f"Email message in {mbox_path} is missing Message-ID header. Using fallback ID.", UserWarning)
+            message_id = self._fallback_message_id(message)
+            
+
+        text = extract_email_text(message)
+        checksum = hashlib.sha256(
+                    text.strip().encode("utf-8")
+                    ).hexdigest()
+        doc_id = make_logical_document_id(
+                text=text,
+        )
+
+        return EmailDocument(
+            id=doc_id,
+            source_type="thunderbird",
+            device_id=self.metadata["device_id"],
+            mbox_path=mbox_path,
+            message_id=message_id,
+            text=text,
+            checksum=checksum,
+            metadata={
+                **self.metadata,
+                "subject": message.get("Subject"),
+                "from": message.get("From"),
+                "to": message.get("To"),
+                "date": message.get("Date"),
+            },
+        )
+
+    def _fallback_message_id(self, message: Message) -> str:
+        # Fallback to a hash of From, To, Date, Subject if Message-ID is missing
+        unique_string = f"{message.get('From')}|{message.get('To')}|{message.get('Date')}|{message.get('Subject')}"
+        return hashlib.sha256(unique_string.encode("utf-8")).hexdigest()

@@ -5,7 +5,9 @@ from pathlib import Path
 from typing import Iterable
 
 from collectors.filesystem.filesystem_source import FilesystemIngestionSource
-from src.domain.models import Document, IndexingScope, FilesystemIngestRequest, ThunderbirdIngestRequest
+from collectors.thunderbird.thunderbird_source import ThunderbirdIngestionSource
+from src.domain.models import Document, FilesystemIndexingScope, ThunderbirdIndexingScope 
+from src.domain.models import  FilesystemIngestRequest, ThunderbirdIngestRequest
 from src.domain.ids import make_source_instance_id
 from src.core.wiring import build_extractor_registry
 from storage.metadata_db.indexing_runs import create_run, update_status, update_checkpoint
@@ -27,7 +29,8 @@ router = APIRouter(prefix="/ingest", tags=["ingestion"])
 
 @router.post("/filesystem")
 def ingest_filesystem(req: FilesystemIngestRequest, bg: BackgroundTasks):    
-    scope = IndexingScope(
+    scope = FilesystemIndexingScope(
+        type="filesystem",
         directories=[Path(p) for p in req.directories],
         recursive=req.recursive,
         include_patterns=req.include_patterns,
@@ -37,6 +40,22 @@ def ingest_filesystem(req: FilesystemIngestRequest, bg: BackgroundTasks):
     run = create_run("filesystem", scope)
     logger.debug(f"Created ingestion run {run.id} for scope: {scope}")
     bg.add_task(ingest_filesystem_scope, scope, run.id, False)
+
+    return {
+        "accepted": True,
+        "run_id": run.id,
+        "status": "running",
+    }
+
+@router.post("/thunderbird")
+def ingest_thunderbird(req: ThunderbirdIngestRequest, bg: BackgroundTasks):
+    scope = ThunderbirdIndexingScope(
+        type="thunderbird",
+    )
+
+    run = create_run("thunderbird", scope)
+    logger.debug(f"Created ingestion run {run.id} for scope: {scope}")
+    # bg.add_task(ingest_thunderbird_scope, scope, run.id, False)
 
     return {
         "accepted": True,

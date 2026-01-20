@@ -13,35 +13,6 @@ logger = logging.getLogger(__name__)
 def _now() -> str:
     return datetime.utcnow().isoformat()
 
-
-# ----------------------------
-# Scope (de)serialization
-# ----------------------------
-
-def serialize_scope(scope: IndexingScope) -> dict:
-    """
-    Canonical serialization of IndexingScope.
-
-    IMPORTANT:
-    - Paths are resolved to absolute paths
-    - Directories are sorted
-    This guarantees stable equality across runs.
-    """
-    return {
-        "directories": sorted(str(p.resolve()) for p in scope.directories),
-        "include_patterns": sorted(scope.include_patterns),
-        "exclude_patterns": sorted(scope.exclude_patterns),
-    }
-
-
-def deserialize_scope(data: dict) -> IndexingScope:
-    return IndexingScope(
-        directories=[Path(p) for p in data["directories"]],
-        include_patterns=data.get("include_patterns", []),
-        exclude_patterns=data.get("exclude_patterns", []),
-    )
-
-
 # ----------------------------
 # Indexing runs
 # ----------------------------
@@ -69,7 +40,7 @@ def create_run(
         (
             run_id,
             source_type,
-            json.dumps(serialize_scope(scope)),
+            json.dumps(scope.serialize()),
             "running",
             None,
             now,
@@ -114,7 +85,7 @@ def load_latest_run(
         return None
     
     # Find first run with matching scope
-    target_scope_json = json.dumps(serialize_scope(scope))
+    target_scope_json = json.dumps(scope.serialize())
     
     for row in rows:
         stored_scope_json = row["scope_json"]
@@ -127,7 +98,7 @@ def load_latest_run(
             
             return IndexingRun(
                 id=row["id"],
-                scope=deserialize_scope(json.loads(stored_scope_json)),
+                scope=IndexingScope.deserialize(json.loads(stored_scope_json)),
                 status=row["status"],
                 start_time=datetime.fromisoformat(row["started_at"]),
                 updated_at=datetime.fromisoformat(row["updated_at"]),

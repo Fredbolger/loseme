@@ -5,7 +5,7 @@ import hashlib
 from storage.metadata_db.db import init_db
 from storage.metadata_db.indexing_runs import create_run, load_latest_run
 from storage.metadata_db.processed_documents import mark_processed, is_processed
-from src.domain.models import IndexingScope
+from src.domain.models import FilesystemIndexingScope
 from src.domain.ids import make_source_instance_id
 
 
@@ -21,7 +21,7 @@ def hash_content(text: str) -> str:
 
 
 def test_document_not_reprocessed(setup_db):
-    scope = IndexingScope(directories=[Path("/docs")])
+    scope = FilesystemIndexingScope(type="filesystem",directories=[Path("/docs")])
     run = create_run("filesystem", scope)
 
     device_id = "test-device"
@@ -78,7 +78,7 @@ def test_document_not_reprocessed(setup_db):
 
 
 def test_resume_uses_source_instance_and_checksum(setup_db):
-    scope = IndexingScope(directories=[Path("/docs")])
+    scope = FilesystemIndexingScope(type="filesystem",directories=[Path("/docs")])
     run = create_run("filesystem", scope)
 
     source_instance_id = "src-1"
