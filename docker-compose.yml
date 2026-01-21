@@ -10,14 +10,13 @@ services:
       - LOSEME_DATA_DIR=/data
       - QDRANT_URL=http://qdrant:6333
       - LOSEME_DEVICE_ID=MasterMind
-      - LOSEME_SOURCE_ROOT_HOST=/run/media/ben/data/Nextcloud/Home/H_Projects/loseme/data/
+      - LOSEME_SOURCE_ROOT_HOST=/run/media/loseme/data
       - LOSEME_CHUNKER=semantic
       - LOSEME_EMBEDDING_MODEL=nomic-ai/nomic-embed-text-v1
     volumes:
       - .:/app
       - ./data:/data:ro
       - metadata:/var/lib/loseme/metadata
-      - /home/ben/.thunderbird/1ln9s74m.default-release/ImapMail/secureimap.t-online.de:/app/data/email:ro
 
     command: uvicorn api.app.main:app --host 0.0.0.0 --port 8000 --log-level info --reload
 
@@ -42,7 +41,6 @@ services:
     volumes:
       - .:/app
       - metadata_test:/var/lib/loseme/metadata
-      - /home/ben/.thunderbird/1ln9s74m.default-release/ImapMail/secureimap.t-online.de:/app/data/email:ro
     working_dir: /app
     environment:
       PYTHONPATH: /app
@@ -50,7 +48,7 @@ services:
       ALLOW_VECTOR_CLEAR: "1"
       LOSEME_DEVICE_ID: "MasterMind"
       LOSEME_DATA_DIR: "/data"
-      LOSEME_SOURCE_ROOT_HOST: /run/media/ben/data/Nextcloud/Home/H_Projects/loseme/data/
+      LOSEME_SOURCE_ROOT_HOST: /run/media/loseme/data/
       LOSEME_CHUNKER: semantic
       LOSEME_EMBEDDING_MODEL: nomic-ai/nomic-embed-text-v1
     depends_on:
