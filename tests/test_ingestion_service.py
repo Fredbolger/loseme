@@ -2,7 +2,7 @@ from pathlib import Path
 import hashlib
 
 from storage.metadata_db.db import init_db
-from storage.metadata_db.indexing_runs import load_latest_run, create_run
+from storage.metadata_db.indexing_runs import load_latest_run_by_scope, create_run
 from src.domain.models import FilesystemIndexingScope
 from api.app.services.ingestion import ingest_filesystem_scope
 from collectors.filesystem import filesystem_source
@@ -39,6 +39,6 @@ def test_ingestion_service_is_resumable(tmp_path):
     assert result2.documents_indexed == 0
 
     # Ensure run continuity
-    run = load_latest_run("filesystem", scope)
+    run = load_latest_run_by_scope(scope)
     assert run is not None
 

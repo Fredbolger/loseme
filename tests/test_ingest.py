@@ -29,7 +29,7 @@ filesystem_source.LOSEME_SOURCE_ROOT_HOST = DATA_ROOT
 # -------------------------------------------------------------------
 
 
-def test_ingest_filesystem_success():
+def test_ingest_filesystem_success(setup_db):
     print("IN DOCKER:", Path("/.dockerenv").exists())
 
     ingest_dir = DATA_ROOT / "docs"

@@ -1,9 +1,9 @@
 import warnings
 import os
-from src.domain.models import FilesystemIndexingScope,  ThunderbirdIndexingScope
+from src.domain.models import FilesystemIndexingScope,  ThunderbirdIndexingScope, IndexingScope, IngestionSource
 from collectors.filesystem.filesystem_source import FilesystemIngestionSource
 from collectors.thunderbird.thunderbird_source import ThunderbirdIngestionSource
-from storage.metadata_db.indexing_runs import create_run, load_latest_run
+from storage.metadata_db.indexing_runs import create_run, load_latest_run_by_scope, is_stop_requested, load_latest_interrupted, set_run_resume, load_run_by_id
 from storage.metadata_db.processed_documents import is_processed, mark_processed
 from storage.metadata_db.db import init_db
 from src.core.wiring import build_extractor_registry, build_chunker, build_embedding_provider
@@ -34,104 +34,55 @@ class IngestionResult:
 class IngestionCancelled(Exception):
     pass
 
-def ingest_filesystem_scope(scope: FilesystemIndexingScope, run_id: str, resume: bool = True, stop_after: int | None = None) -> IngestionResult:
+def ingest_scope(scope: IndexingScope, run_id: str, resume: bool = False, stop_after: int | None = None) -> IngestionResult:
     if stop_after is not None:
-        warnings.warn("The 'stop_after' parameter is set, which will intentionally limit the number of documents processed. This is for testing purposes only and should not be used in production.", UserWarning)    
+        warnings.warn("The 'stop_after' parameter is set, which will intentionally limit the number of documents processed. This is for testing purposes only and should not be used in production.", UserWarning)
 
     init_db()
-    logger.info(f"Starting ingestion for scope: {scope} with run_id: {run_id}, resume={resume}")
+    
+    run = None
 
-    source = FilesystemIngestionSource(scope, extractor_registry)
+    if resume:
+        run = load_latest_interrupted(scope.type)
+        if run:
+            run_id = run.id
+            logger.info(f"Resuming {scope.type} ingestion from interrupted run {run_id} for scope: {scope}")
+            set_run_resume(run_id)
+        else:
+            logger.info(f"No interrupted {scope.type} ingestion run found for scope: {scope}.")
+            raise RuntimeError("resume=True but no interrupted run to resume from.")
+
+    if run_id is None:
+        raise ValueError("run_id must be provided when resume is False")
+   
+    if run is None:
+        run = load_run_by_id(run_id)
+
+    logger.info(f"Starting {scope.type} ingestion for scope: {scope} with run_id: {run_id}, resume={resume}")
+    
+    def stop_requested() -> bool:
+        return is_stop_requested(run_id)
+
+    source = IngestionSource.from_scope(scope, stop_requested)
     vector_store = get_vector_store()
     
     if embedding_provider.dimension() != vector_store.dimension():
         raise RuntimeError("Embedding dimension mismatch with vector store")
 
-    if resume:
-        run = load_latest_run("filesystem", scope)
-        if run is None:
-            raise RuntimeError("Resume=True but no previous run exists for the given scope.")
-    else:
-        run = create_run("filesystem", scope)
-
-    documents_discovered = len(list(source.list_documents()))
-    documents_indexed = 0
-    
-    update_status(run_id, "running")
-
-    try:
-        for idx, doc in enumerate(source.list_documents()):
-            logger.debug(f"Discovered document at {doc.source_path}")
-            if stop_after is not None and idx >= stop_after:
-                raise IngestionCancelled("Ingestion stopped after reaching the stop_after limit.")    
-                #logger.info(f"Stopping ingestion after {stop_after} documents as per stop_after limit.")
-
-            if is_processed(doc.source_id, doc.checksum):
-                logger.info(f"Document at {doc.source_path} already processed with same checksum, skipping.")
-                continue
-             
-            logical_path = Path(base_path).joinpath(doc.source_path.lstrip("/"))
-            document_extraction = extractor_registry.extract(logical_path)
-            upsert_document(doc)
-            
-            chunks, chunk_texts = chunker.chunk(doc,document_extraction.text)
-            # If the emebedding provider supports document embedding, use it here
-            if hasattr(embedding_provider, "embed_document"):
-                logger.debug("Using instruction based document embedding.")
-                embeddings = [embedding_provider.embed_document(text) for text in chunk_texts]
-            else:
-                embeddings = [embedding_provider.embed_query(text) for text in chunk_texts]
-            for chunk, embedding in zip(chunks, embeddings):
-                vector_store.add(chunk, embedding)
-
-            mark_processed(run_id, doc.source_id, doc.checksum)
-            documents_indexed += 1
-        update_status(run_id, "completed")
-        logger.info(f"Ingestion run {run_id} completed successfully. Discovered {documents_discovered} documents, indexed {documents_indexed} documents.")
-    except Exception:
-        update_status(run_id, "interrupted")
-        raise
-    
-    return IngestionResult(
-        run_id=run_id,
-        status="completed",
-        documents_discovered=documents_discovered,
-        documents_indexed=documents_indexed
-    )
-
-
-def ingest_thunderbird_scope(scope: ThunderbirdIndexingScope, run_id: str, resume: bool = True, stop_after: int | None = None) -> IngestionResult:
-    init_db()
-    logger.info(f"Starting Thunderbird ingestion for scope: {scope} with run_id: {run_id}, resume={resume}")
-
-    source = ThunderbirdIngestionSource(scope)
-    vector_store = get_vector_store()
-    
-    if embedding_provider.dimension() != vector_store.dimension():
-        raise RuntimeError("Embedding dimension mismatch with vector store")
-
-    if resume:
-        run = load_latest_run("thunderbird", scope)
-        if run is None:
-            raise RuntimeError("Resume=True but no previous run exists for the given scope.")
-    else:
-        run = create_run("thunderbird", scope)
-
-    documents_discovered = 0
-    documents_indexed = 0
+    documents_discovered = run.discovered_document_count
+    documents_indexed = run.indexed_document_count
     
     update_status(run_id, "running")
 
     try:
         for doc in source.iter_documents():
-            if stop_after is not None and documents_discovered >= stop_after:
+            if stop_after is not None and documents_indexed >= stop_after:
                 raise IngestionCancelled("Ingestion stopped after reaching the stop_after limit.")    
-
             documents_discovered += 1
-            logger.debug(f"Discovered email document with Message-ID {doc.message_id}")
+            logger.debug(f"Discovered document with ID {doc.id}")
 
             if is_processed(doc.source_id, doc.checksum):
-                logger.info(f"Email document with Message-ID {doc.message_id} already processed with same checksum, skipping.")
+                logger.info(f"Document with ID {doc.id} already processed with same checksum, skipping.")
                 continue
              
             upsert_document(doc)
@@ -143,15 +94,37 @@ def ingest_thunderbird_scope(scope: ThunderbirdIndexingScope, run_id: str, resum
 
             mark_processed(run_id, doc.source_id, doc.checksum)
             documents_indexed += 1
-        update_status(run_id, "completed")
-        logger.info(f"Thunderbird ingestion run {run_id} completed successfully. Discovered {documents_discovered} documents, indexed {documents_indexed} documents.")
-    except Exception:
+
+        if stop_requested():
+            update_status(run_id, "interrupted")
+            logger.info(f"Thunderbird ingestion run {run_id} stopped. Discovered {documents_discovered} documents, indexed {documents_indexed} documents.")
+            return IngestionResult(
+                run_id=run_id,
+                status="interrupted",
+                documents_discovered=documents_discovered,
+                documents_indexed=documents_indexed
+            )
+
+        else:
+            update_status(run_id, "completed")
+            logger.info(f"Thunderbird ingestion run {run_id} completed successfully. Discovered {documents_discovered} documents, indexed {documents_indexed} documents.")
+        
+            return IngestionResult(
+                run_id=run_id,
+                status="completed",
+                documents_discovered=documents_discovered,
+                documents_indexed=documents_indexed
+            )
+
+    except IngestionCancelled:
         update_status(run_id, "interrupted")
+        return IngestionResult(
+            run_id=run_id,
+            status="interrupted",
+            documents_discovered=documents_discovered,
+            documents_indexed=documents_indexed
+        )
+
+    except Exception:
+        update_status(run_id, "failed")
         raise
-    
-    return IngestionResult(
-        run_id=run_id,
-        status="completed",
-        documents_discovered=documents_discovered,
-        documents_indexed=documents_indexed
-    )

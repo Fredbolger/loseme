@@ -8,14 +8,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Storage &mdash; Vector DB Project 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
 
   
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="../_static/documentation_options.js?v=01f34227"></script>
-      <script src="../_static/doctools.js?v=9bcbadda"></script>
-      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -60,6 +60,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#storage.metadata_db.db.fetch_all"><code class="docutils literal notranslate"><span class="pre">fetch_all()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#storage.metadata_db.db.log_active_schema"><code class="docutils literal notranslate"><span class="pre">log_active_schema()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#storage.metadata_db.db.get_document"><code class="docutils literal notranslate"><span class="pre">get_document()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#storage.metadata_db.db.delete_database"><code class="docutils literal notranslate"><span class="pre">delete_database()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vector-db">Vector DB</a></li>
@@ -188,6 +189,17 @@ Safe to call multiple times.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Iterator</em>[<em>Row</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="storage.metadata_db.db.delete_database">
+<span class="sig-prename descclassname"><span class="pre">storage.metadata_db.db.</span></span><span class="sig-name descname"><span class="pre">delete_database</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/storage/metadata_db/db.html#delete_database"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.metadata_db.db.delete_database" title="Link to this definition"></a></dt>
+<dd><p>Deletes the database file. Use with caution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>

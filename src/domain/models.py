@@ -17,6 +17,7 @@ class Document(BaseModel):
     source_id: str
     device_id: str
     source_path: str
+    text: str
     metadata: Dict[str, Any] = Field(default_factory=dict)
     checksum: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -67,7 +68,6 @@ class Document(BaseModel):
 class EmailDocument(Document):
     mbox_path: str
     message_id: str
-    text: str
 
     @model_validator(mode="before")
     @classmethod
@@ -192,11 +192,25 @@ class IndexingRun(BaseModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     status: Literal['pending', 'running', 'completed', 'interrupted']
     last_document_id: Optional[str] = None
+    discovered_document_count: int = 0
+    indexed_document_count: int = 0
+    stop_requested: bool = False
 
     @field_validator('id')
     def id_must_not_be_empty(cls, v):
         if not v:
             raise ValueError('IndexingRun id must not be empty')
+        return v
+
+
+class GenericIngestRequest(BaseModel):
+    type: str  # "filesystem" | "thunderbird"
+    data: Dict[str, Any]  # whatever extra parameters
+
+    @field_validator('type')
+    def type_must_be_valid(cls, v):
+        if v not in ["filesystem", "thunderbird"]:
+            raise ValueError('type must be either "filesystem" or "thunderbird"')
         return v
 
 class FilesystemIngestRequest(BaseModel):
@@ -206,6 +220,26 @@ class FilesystemIngestRequest(BaseModel):
     exclude_patterns: list[str] = []
 
 class ThunderbirdIngestRequest(BaseModel):
-    mbox_paths: list[str] = []
-    include_patterns: list[str] = []
-    exclude_patterns: list[str] = []
+    mbox_path: str = "" 
+    ignore_patterns: Optional[List[dict]] = None
+
+class IngestionSource(BaseModel):
+    scope: Any  # Could be IndexingScope or subclass
+    should_stop: Callable[[], bool]
+
+    def iter_documents(self) -> List[Any]:
+        """Yield documents for ingestion. Must be implemented by subclasses."""
+        raise NotImplementedError
+
+    @classmethod
+    def from_scope(cls, scope: Any, should_stop: Callable[[], bool]) -> "IngestionSource":
+        """Factory to return the correct subclass based on scope type."""
+        from collectors.filesystem.filesystem_source import FilesystemIngestionSource
+        from collectors.thunderbird.thunderbird_source import ThunderbirdIngestionSource
+
+        if scope.__class__.__name__ == "FilesystemIndexingScope":
+            return FilesystemIngestionSource(scope=scope, should_stop=should_stop)
+        elif scope.__class__.__name__ == "ThunderbirdIndexingScope":
+            return ThunderbirdIngestionSource(scope=scope, should_stop=should_stop)
+        else:
+            raise ValueError(f"No ingestion source for scope type: {type(scope)}")

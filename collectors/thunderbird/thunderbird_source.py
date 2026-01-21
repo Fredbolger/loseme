@@ -1,9 +1,10 @@
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Callable
+from pydantic import PrivateAttr
 import hashlib
 from datetime import datetime
-from src.domain.models import EmailDocument, ThunderbirdIndexingScope
+from src.domain.models import EmailDocument, ThunderbirdIndexingScope, IngestionSource
 from src.domain.ids import make_logical_document_id, make_source_instance_id
 from src.domain.extraction.registry import ExtractorRegistry
 from fnmatch import fnmatch
@@ -63,7 +64,7 @@ def extract_email_text(message: Message) -> str:
                 pass
     return "\n".join(parts)
 
-class ThunderbirdIngestionSource:
+class ThunderbirdIngestionSource(IngestionSource):
     """
     Ingestion source for Thunderbird mbox files.
 
@@ -72,24 +73,43 @@ class ThunderbirdIngestionSource:
         ignore_patterns (Optional[List[dict]]): List of ignore patterns to filter out emails.
 
     """ 
+    _mbox_path: Path = PrivateAttr()
+    _ignore_patterns: List[dict] = PrivateAttr()
+    _metadata: dict = PrivateAttr()
 
-    def __init__(self, scope: ThunderbirdIndexingScope):
+    def __init__(self, scope: ThunderbirdIndexingScope, should_stop: Callable[[], bool]): 
+        super().__init__(scope=scope, should_stop=should_stop)
         self.scope = scope
-        self.mbox_path: Path = scope.mbox_path
-        self.ignore_patterns = scope.ignore_patterns or []
-        self.metadata = {
+        self._mbox_path = scope.mbox_path
+        self._ignore_patterns = scope.ignore_patterns or []
+        self.should_stop = should_stop
+        self._metadata = {
             "device_id": device_id,
             "source_instance_id": make_source_instance_id(
                 source_type="thunderbird",
-                source_path=Path(self.mbox_path),
+                source_path=Path(self._mbox_path),
                 device_id=device_id
                 ),
         }
+    
+    @property
+    def mbox_path(self) -> Path:
+        return self._mbox_path
 
-    def iter_documents(self):
+    @property
+    def ignore_patterns(self) -> List[dict]:
+        return self._ignore_patterns
+    @property
+    def metadata(self) -> dict:
+        return self._metadata
+
+    def iter_documents(self) -> List[EmailDocument]:
         mbox = mailbox.mbox(self.mbox_path)
 
         for message in mbox:
+            if self.should_stop():
+                logger.info("Stop requested, terminating Thunderbird ingestion source.")
+                break
             email_doc = self._build_email_document(
                 message=message,
                 mbox_path=str(self.mbox_path)

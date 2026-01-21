@@ -4,9 +4,9 @@ import numpy as np
 from src.domain.models import Document, Chunk
 from src.domain.embeddings import EmbeddingProvider
 from src.domain.ids import make_chunk_id
-from pipeline.embeddings.sentence_transformer import (
-    SentenceTransformerEmbeddingProvider,
-)
+#from pipeline.embeddings.sentence_transformer import (
+#    SentenceTransformerEmbeddingProvider,
+#)
 
 
 class SemanticChunker:

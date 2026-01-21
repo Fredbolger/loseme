@@ -17,8 +17,10 @@ logging.getLogger("transformers_modules").setLevel(logging.WARNING)
 
 from src.domain.models import EmailDocument, ThunderbirdIndexingScope
 from collectors.thunderbird.thunderbird_source import ThunderbirdIngestionSource
-from api.app.services.ingestion import ingest_thunderbird_scope
+from api.app.services.ingestion import ingest_thunderbird_scope, IngestionCancelled
 from storage.metadata_db.indexing_runs import create_run
+from storage.metadata_db.processed_documents import get_all_processed
+from storage.metadata_db.db import delete_database
 
 def test_email_document_constructor_sets_thunderbird_ids():
     doc = EmailDocument(
@@ -43,10 +45,10 @@ def test_email_document_constructor_sets_thunderbird_ids():
     assert doc.source_id is not None
     assert doc.source_id != ""
     assert doc.source_path == "Inbox/<abc123@example.com>"
+    
 
 def test_thunderbird_source_type():
     mbox_path = "/app/data/email/INBOX"
-    #ignore_patterns = [{"field": "from", "value":"*google.com*"}]
     scope = ThunderbirdIndexingScope(type ="thunderbird", mbox_path=mbox_path)
     assert scope.type == "thunderbird"
     assert scope.mbox_path == mbox_path
@@ -56,6 +58,7 @@ def test_thunderbird_source_type():
     
     idx = 0
     for email in source.iter_documents():
+        logger.info(f"Email {idx}: source_id={email.source_id}, subject={email.metadata.get('subject')}")
         assert email.text is not None
         if idx >= 2:
             break
@@ -90,7 +93,7 @@ def test_thunderbird_ignore_pattern():
         if idx_with_ignore >= 2:
             break
 
-def test_thunderbird_ingestion_service():
+def test_thunderbird_ingestion_service(setup_db):
     scope = ThunderbirdIndexingScope(
         type="thunderbird",
         mbox_path="/app/data/email/INBOX"
@@ -98,10 +101,26 @@ def test_thunderbird_ingestion_service():
 
     run = create_run("thunderbird", scope)
     logger.info(f"Created run: {run}")
-    ingestion_result = ingest_thunderbird_scope(scope, run.id, resume=False, stop_after=5)
+    with pytest.raises(IngestionCancelled):
+        ingestion_result = ingest_thunderbird_scope(scope, run.id, resume=False, stop_after=5)
+    
+    # Resume run
+    with pytest.raises(IngestionCancelled):
+        ingest_thunderbird_scope(scope, run.id, resume=True, stop_after=10)
+
+    # We should now have discovered a total of 15 documents
+    # (5 from the first run, 10 from the resumed run)
+    # query all processed documents from the db
+    all_processed = get_all_processed(run.id)
+    
+    logger.info(f"Proccesed documents are:\n{all_processed}")
+    assert len(all_processed) == 15
 
 if __name__ == "__main__":
     test_email_document_constructor_sets_thunderbird_ids()
     test_thunderbird_source_type()
     test_thunderbird_ignore_pattern()
-    test_thunderbird_ingestion_service()
+    from conftest import *
+    init_db()
+    test_thunderbird_ingestion_service(None)
+    clear_all()

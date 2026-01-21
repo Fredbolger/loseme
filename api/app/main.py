@@ -21,11 +21,13 @@ app = FastAPI(
     )
 # Setup logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     stream=sys.stdout,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 )
 logger = logging.getLogger("api")  # Any name
+# mute httpx logger
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 app.include_router(ingest_router)
 app.include_router(health_router)

@@ -2,18 +2,9 @@ import pytest
 import hashlib
 from pathlib import Path
 from storage.metadata_db.db import init_db
-from storage.metadata_db.indexing_runs import create_run, load_latest_run
+from storage.metadata_db.indexing_runs import create_run, load_latest_run_by_scope, 
 from storage.metadata_db.processed_documents import mark_processed, is_processed
 from src.domain.models import FilesystemIndexingScope
-
-@pytest.fixture
-def setup_db():
-    """
-    Initialize a fresh database for testing.
-    """
-    init_db()
-    yield
-    # optional cleanup if needed
 
 def test_document_not_reprocessed(setup_db):
     """
@@ -31,7 +22,7 @@ def test_document_not_reprocessed(setup_db):
     mark_processed(str(run.id), str(doc_id), str(content_hash))
 
     # Reload run as if resuming
-    resumed_run = load_latest_run("filesystem", scope)
+    resumed_run = load_latest_run_by_scope(scope)
     
     # The document should be marked as processed
     assert is_processed(str(doc_id), str(content_hash))

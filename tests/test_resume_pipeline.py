@@ -1,17 +1,18 @@
 from pathlib import Path
 import pytest
 
-from storage.metadata_db.db import init_db
+from storage.metadata_db.db import init_db, delete_database
 from storage.metadata_db.processed_documents import is_processed, mark_processed, get_all_processed
-from storage.metadata_db.indexing_runs import load_latest_run, create_run, update_status
+from storage.metadata_db.indexing_runs import load_latest_run_by_scope, create_run, update_status
 from src.domain.models import FilesystemIndexingScope
 from api.app.services.ingestion import ingest_filesystem_scope, IngestionCancelled
 from src.domain.ids import make_source_instance_id
 
 from collectors.filesystem import filesystem_source
 
-def test_resume_does_not_reindex_processed_documents(tmp_path):
-    init_db()
+
+
+def test_resume_does_not_reindex_processed_documents(tmp_path, setup_db):
 
     # Arrange
     doc_path = tmp_path / "doc.md"
@@ -33,7 +34,7 @@ def test_resume_does_not_reindex_processed_documents(tmp_path):
     update_status(run.id, "interrupted")
 
     # Sanity: run is NOT completed
-    resumed = load_latest_run("filesystem", scope)
+    resumed = load_latest_run_by_scope(scope)
     assert resumed is not None
     assert resumed.id == run.id
 
@@ -44,9 +45,7 @@ def test_resume_does_not_reindex_processed_documents(tmp_path):
     processed = get_all_processed(run.id)
     assert len(processed) == 1
 
-def test_resume_reindexes_on_content_change(tmp_path):
-    init_db()
-
+def test_resume_reindexes_on_content_change(tmp_path, setup_db):
     doc_path = tmp_path / "doc.md"
     doc_path.write_text("v1")
     
@@ -64,16 +63,13 @@ def test_resume_reindexes_on_content_change(tmp_path):
     result = ingest_filesystem_scope(scope, run.id, resume=True)
     assert result.documents_indexed == 1
 
-def test_resume_processes_unprocessed_documents(tmp_path):
+def test_resume_processes_unprocessed_documents(tmp_path, setup_db):
     """
     Resume semantics:
     - Same run
     - Existing processed documents are skipped
     - Newly added documents ARE indexed
     """
-
-    init_db()
-
     scope = FilesystemIndexingScope(type="filesystem", directories=[tmp_path])
     run = create_run("filesystem", scope)
     
@@ -102,9 +98,7 @@ def test_resume_processes_unprocessed_documents(tmp_path):
     assert result_2.documents_discovered == 2
     assert result_2.documents_indexed == 1
 
-def test_resume_after_cancelled_run(tmp_path):
-    init_db()
-
+def test_resume_after_cancelled_run(tmp_path, setup_db):
     scope = FilesystemIndexingScope(type="filesystem",directories=[tmp_path])
     run = create_run("filesystem", scope)
     
@@ -125,4 +119,3 @@ def test_resume_after_cancelled_run(tmp_path):
     # All docs discovered, remaining indexed
     assert result.documents_discovered == 3
     assert result.documents_indexed == 2
-
