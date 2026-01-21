@@ -30,7 +30,10 @@ def init_db() -> None:
                 status TEXT NOT NULL,
                 last_document_id TEXT,
                 started_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL
+                updated_at TEXT NOT NULL,
+                discovered_document_count INTEGER NOT NULL DEFAULT 0,
+                indexed_document_count INTEGER NOT NULL DEFAULT 0,
+                stop_requested INTEGER NOT NULL DEFAULT 0
             );
             """
         )
@@ -116,3 +119,10 @@ def get_document(document_id: str) -> Iterator[sqlite3.Row]:
         cur = conn.execute(query, (document_id,))
         for row in cur:
             yield row
+
+def delete_database() -> None:
+    """
+    Deletes the database file. Use with caution.
+    """
+    if DB_PATH.exists():
+        DB_PATH.unlink()

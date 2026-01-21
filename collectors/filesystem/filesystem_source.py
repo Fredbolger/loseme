@@ -1,11 +1,12 @@
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Callable
 import hashlib
 from datetime import datetime
 from src.domain.models import Document, FilesystemIndexingScope
 from src.domain.ids import make_logical_document_id, make_source_instance_id
-from src.domain.extraction.registry import ExtractorRegistry
+from src.domain.ingestion import IngestionSource
+from src.core.wiring import build_extractor_registry
 from fnmatch import fnmatch
 import logging
 import warnings
@@ -26,82 +27,14 @@ LOSEME_SOURCE_ROOT_HOST = Path(os.environ.get("LOSEME_SOURCE_ROOT_HOST"))
 if LOSEME_SOURCE_ROOT_HOST is None:
     warnings.warn("LOSEME_SOURCE_ROOT_HOST environment variable is not set. Defaulting to '/host_data'.", UserWarning)
 
-class FilesystemIngestionSource:
+class FilesystemIngestionSource(IngestionSource):
     def __init__(self, 
                  scope: FilesystemIndexingScope,
-                 extractor_registry: ExtractorRegistry
+                 should_stop: Optional[Callable[[], bool]] = None
                  ):
         self.scope = scope
-        self.extractor_registry = extractor_registry
-
-    def list_documents(self) -> List[Document]:
-        """
-        List all documents in the scope, optionally starting after a given document ID.
-        """
-        docs = []
-
-        assert device_id is not None, "LOSEME_DEVICE_ID environment variable must be set."
-        
-        logger.debug(f"files are: {list(self._walk_files())}")
-        for root, path in self._walk_files():
-            rel_path = path.relative_to(root).as_posix()
-            
-            logger.debug(f"Checking path {path} with relative path {rel_path}.")
-            logger.debug(f"Exclude patterns: {self.scope.exclude_patterns}")
-
-            if self.scope.exclude_patterns and any(
-                fnmatch(rel_path, pattern) for pattern in self.scope.exclude_patterns
-            ):
-                logger.debug(f"Excluding path {path} due to exclude patterns.")
-                continue
-
-            if self.scope.include_patterns and not any(
-                fnmatch(rel_path, pattern) for pattern in self.scope.include_patterns
-            ):
-                logger.debug(f"Excluding path {path} due to include patterns.")
-                continue
-
-            logger.debug(f"Including path {path}.")
-        
-            extracted = self.extractor_registry.extract(path)
-            if extracted is None:
-                logger.debug(f"No extractor found for path {path}, skipping.")
-                continue
-
-            document_checksum = hashlib.sha256(
-                   extracted.text.strip().encode("utf-8")
-                   ).hexdigest()
-
-            doc_id = make_logical_document_id(
-                    text=extracted.text,
-            )
-            source_instance_id = make_source_instance_id(
-                    source_type="filesystem",
-                    source_path=path,
-                    device_id=device_id,
-            )
-
-            docs.append(
-                    Document(
-                        id=doc_id,
-                        source_type="filesystem",
-                        source_id=source_instance_id,
-                        device_id=device_id,
-                        source_path=str(path),
-                        checksum=document_checksum,
-                        created_at=datetime.fromtimestamp(path.stat().st_ctime),
-                        updated_at=datetime.fromtimestamp(path.stat().st_mtime),
-                        metadata={
-                            **extracted.metadata,
-                            "relative_path": rel_path,
-                            "size": path.stat().st_size,
-                            "content_type": extracted.content_type,
-                        },
-                    )
-            )
-
-
-        return docs
+        self.extractor_registry = build_extractor_registry()
+        self.should_stop = should_stop
 
     def _walk_files(self):
         """
@@ -124,3 +57,65 @@ class FilesystemIngestionSource:
                     all_files.append((root, path))
 
         return sorted(all_files, key=lambda x: str(x[1]))
+
+    def iter_documents(self) -> List[Document]:
+        """ 
+        Iterate over documents in the scope. This should not simply recycle list_documents()
+        but actually yield documents one by one for memory efficiency.
+        """
+        for root_path in self.scope.directories:
+
+            root = Path(root_path)
+            for path in root.rglob("*"):
+                if self.should_stop():
+                    logger.info("Stop requested, terminating filesystem ingestion source.")
+                    break
+
+                if path.is_file():
+                    rel_path = path.relative_to(root).as_posix()
+                    
+                    if self.scope.exclude_patterns and any(
+                        fnmatch(rel_path, pattern) for pattern in self.scope.exclude_patterns
+                    ):
+                        continue
+
+                    if self.scope.include_patterns and not any(
+                        fnmatch(rel_path, pattern) for pattern in self.scope.include_patterns
+                    ):
+                        continue
+
+                    extracted = self.extractor_registry.extract(path)
+                    if extracted is None:
+                        continue
+
+                    document_checksum = hashlib.sha256(
+                           extracted.text.strip().encode("utf-8")
+                           ).hexdigest()
+
+                    doc_id = make_logical_document_id(
+                            text=extracted.text,
+                    )
+                    source_instance_id = make_source_instance_id(
+                            source_type="filesystem",
+                            source_path=path,
+                            device_id=device_id,
+                    )
+
+                    yield Document(
+                        id=doc_id,
+                        source_type="filesystem",
+                        source_id=source_instance_id,
+                        device_id=device_id,
+                        source_path=str(path),
+                        text=extracted.text,
+                        checksum=document_checksum,
+                        created_at=datetime.fromtimestamp(path.stat().st_ctime),
+                        updated_at=datetime.fromtimestamp(path.stat().st_mtime),
+                        metadata={
+                            **extracted.metadata,
+                            "relative_path": rel_path,
+                            "size": path.stat().st_size,
+                            "content_type": extracted.content_type,
+                        },
+                    )
+

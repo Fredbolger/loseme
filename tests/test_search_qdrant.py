@@ -3,22 +3,20 @@ import os
 from storage.vector_db.qdrant_store import QdrantVectorStore
 from storage.vector_db.runtime import get_vector_store
 from src.domain.models import Chunk, Document
-from pipeline.embeddings.sentence_transformer import SentenceTransformerEmbeddingProvider
+from src.core.wiring import build_embedding_provider
+from storage.vector_db.runtime import get_vector_store
 
 device_id = os.getenv("LOSEME_DEVICE_ID")
 
-def test_search_qdrant_returns_results():
+def test_search_qdrant_returns_results(setup_db):
     store = get_vector_store()
-    store.clear()
 
-    embedder = SentenceTransformerEmbeddingProvider()
+    embedder = build_embedding_provider()
 
     chunk = Chunk(
         id="c1",
         document_id="d1",
-        #document_checksum="checksum1",
         device_id=device_id,
-        #source_path="/path/to/doc1.txt",
         index=0,
     )
 
@@ -29,6 +27,3 @@ def test_search_qdrant_returns_results():
     assert len(results) == 1
     # test that the result[0][0] is the same chunk we added
     assert results[0][0].id == chunk.id
-
-    # Clean up
-    store.clear()

@@ -8,14 +8,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Domain &mdash; Vector DB Project 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
 
   
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="../_static/documentation_options.js?v=01f34227"></script>
-      <script src="../_static/doctools.js?v=9bcbadda"></script>
-      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -52,6 +52,10 @@
 <li class="toctree-l1"><a class="reference internal" href="pipeline.html">Pipeline</a></li>
 <li class="toctree-l1"><a class="reference internal" href="storage.html">Storage</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Domain</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#src.domain.ingestion.IngestionSource"><code class="docutils literal notranslate"><span class="pre">IngestionSource</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#src.domain.ingestion.IngestionSource.list_documents"><code class="docutils literal notranslate"><span class="pre">IngestionSource.list_documents()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#src.domain.vector_store.VectorStore"><code class="docutils literal notranslate"><span class="pre">VectorStore</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#src.domain.vector_store.VectorStore.add"><code class="docutils literal notranslate"><span class="pre">VectorStore.add()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#src.domain.vector_store.VectorStore.query"><code class="docutils literal notranslate"><span class="pre">VectorStore.query()</span></code></a></li>
@@ -88,16 +92,38 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="module-src.domain.vector_store">
-<span id="domain"></span><h1>Domain<a class="headerlink" href="#module-src.domain.vector_store" title="Link to this heading"></a></h1>
+  <section id="module-src.domain.ingestion">
+<span id="domain"></span><h1>Domain<a class="headerlink" href="#module-src.domain.ingestion" title="Link to this heading"></a></h1>
 <dl class="py class">
+<dt class="sig sig-object py" id="src.domain.ingestion.IngestionSource">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">src.domain.ingestion.</span></span><span class="sig-name descname"><span class="pre">IngestionSource</span></span><a class="reference internal" href="../_modules/src/domain/ingestion.html#IngestionSource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.domain.ingestion.IngestionSource" title="Link to this definition"></a></dt>
+<dd><p>Abstract interface for any pull-based ingestion source.
+Implementations should list items within the given scope and return Document objects.
+Ingestion should be incremental, resumable, and traceable.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="src.domain.ingestion.IngestionSource.list_documents">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">list_documents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scope</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/domain/ingestion.html#IngestionSource.list_documents"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.domain.ingestion.IngestionSource.list_documents" title="Link to this definition"></a></dt>
+<dd><p>Return a list of identifiers/paths for all documents in the scope.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>scope</strong> (<em>IndexingScope</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>List</em>[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class" id="module-src.domain.vector_store">
 <dt class="sig sig-object py" id="src.domain.vector_store.VectorStore">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.domain.vector_store.</span></span><span class="sig-name descname"><span class="pre">VectorStore</span></span><a class="reference internal" href="../_modules/src/domain/vector_store.html#VectorStore"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.domain.vector_store.VectorStore" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">src.domain.vector_store.</span></span><span class="sig-name descname"><span class="pre">VectorStore</span></span><a class="reference internal" href="../_modules/src/domain/vector_store.html#VectorStore"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.domain.vector_store.VectorStore" title="Link to this definition"></a></dt>
 <dd><p>Abstract interface for storing embeddings and associated metadata.
 Supports storing vectors, querying by vector similarity, and incremental updates.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="src.domain.vector_store.VectorStore.add">
-<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chunks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/domain/vector_store.html#VectorStore.add"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.domain.vector_store.VectorStore.add" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chunks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/domain/vector_store.html#VectorStore.add"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.domain.vector_store.VectorStore.add" title="Link to this definition"></a></dt>
 <dd><p>Add a single chunk and its embedding to the store.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -115,7 +141,7 @@ Supports storing vectors, querying by vector similarity, and incremental updates
 
 <dl class="py method">
 <dt class="sig sig-object py" id="src.domain.vector_store.VectorStore.query">
-<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vector</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/domain/vector_store.html#VectorStore.query"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.domain.vector_store.VectorStore.query" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vector</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/domain/vector_store.html#VectorStore.query"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.domain.vector_store.VectorStore.query" title="Link to this definition"></a></dt>
 <dd><p>Return top_k chunks most similar to the given vector, with similarity scores.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -132,7 +158,7 @@ Supports storing vectors, querying by vector similarity, and incremental updates
 
 <dl class="py method">
 <dt class="sig sig-object py" id="src.domain.vector_store.VectorStore.remove_chunks">
-<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">remove_chunks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chunk_ids</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/domain/vector_store.html#VectorStore.remove_chunks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.domain.vector_store.VectorStore.remove_chunks" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">remove_chunks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chunk_ids</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/domain/vector_store.html#VectorStore.remove_chunks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.domain.vector_store.VectorStore.remove_chunks" title="Link to this definition"></a></dt>
 <dd><p>Remove chunks by ID from the store.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -146,7 +172,7 @@ Supports storing vectors, querying by vector similarity, and incremental updates
 
 <dl class="py method">
 <dt class="sig sig-object py" id="src.domain.vector_store.VectorStore.clear">
-<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/domain/vector_store.html#VectorStore.clear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.domain.vector_store.VectorStore.clear" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/domain/vector_store.html#VectorStore.clear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.domain.vector_store.VectorStore.clear" title="Link to this definition"></a></dt>
 <dd><p>Clear all vectors from the store.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -157,7 +183,7 @@ Supports storing vectors, querying by vector similarity, and incremental updates
 
 <dl class="py method">
 <dt class="sig sig-object py" id="src.domain.vector_store.VectorStore.dimension">
-<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dimension</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/domain/vector_store.html#VectorStore.dimension"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.domain.vector_store.VectorStore.dimension" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">dimension</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/domain/vector_store.html#VectorStore.dimension"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.domain.vector_store.VectorStore.dimension" title="Link to this definition"></a></dt>
 <dd><p>Return the embedding dimensionality the store expects.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>

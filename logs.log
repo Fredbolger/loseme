@@ -1,0 +1,1444 @@
+2026-01-21 10:54:48,736 [INFO] api: API initialized with routers.
+2026-01-21 10:54:48,737 [INFO] api: Starting up the API...
+2026-01-21 10:54:57,085 [INFO] api: API initialized with routers.
+2026-01-21 10:54:57,086 [INFO] api: Starting up the API...
+2026-01-21 10:57:05,673 [INFO] api: Shutting down the API...
+2026-01-21 10:57:13,715 [INFO] api: API initialized with routers.
+2026-01-21 10:57:13,716 [INFO] api: Starting up the API...
+2026-01-21 10:57:21,578 [INFO] api: API initialized with routers.
+2026-01-21 10:57:21,579 [INFO] api: Starting up the API...
+2026-01-21 10:57:56,688 [DEBUG] api.app.routes.ingest: Created ingestion run 3baf54a1-da31-4692-b40d-1602a5a1b726 for scope: type='thunderbird' mbox_path='/app/data/email/INBOX' ignore_patterns=[]
+INFO:     172.18.0.1:52498 - "POST /ingest/thunderbird HTTP/1.1" 200 OK
+2026-01-21 10:57:56,689 [INFO] api.app.services.ingestion: Starting Thunderbird ingestion for scope: type='thunderbird' mbox_path='/app/data/email/INBOX' ignore_patterns=[] with run_id: 3baf54a1-da31-4692-b40d-1602a5a1b726, resume=False
+2026-01-21 10:57:56,713 [DEBUG] httpcore.connection: connect_tcp.started host='qdrant' port=6333 local_address=None timeout=5.0 socket_options=None
+2026-01-21 10:57:56,714 [DEBUG] httpcore.connection: connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x7f9ba1077b50>
+2026-01-21 10:57:56,714 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:56,714 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:56,714 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:57:56,714 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:56,714 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:56,714 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-encoding', b'gzip'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:56 GMT')])
+2026-01-21 10:57:56,715 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:57:56,715 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:56,715 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:56,715 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:56,715 [DEBUG] httpcore.connection: close.started
+2026-01-21 10:57:56,715 [DEBUG] httpcore.connection: close.complete
+2026-01-21 10:57:56,717 [DEBUG] httpcore.connection: connect_tcp.started host='qdrant' port=6333 local_address=None timeout=5.0 socket_options=None
+2026-01-21 10:57:56,718 [DEBUG] httpcore.connection: connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x7f9b804ee210>
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 404, b'Not Found', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:56 GMT')])
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:56,718 [INFO] storage.vector_db.qdrant_store: Creating Qdrant collection 'chunks' with vector size 768
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:56,719 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:56,719 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:56,719 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:56,758 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:56 GMT')])
+2026-01-21 10:57:56,758 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:56,758 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:56,758 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:56,758 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:58,486 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <fChBcfWDTBO0emZBmdpfDA@geopod-ismtpd-11>
+2026-01-21 10:57:58,505 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <6591f2935ac6a_aed2d7c8838e5@lowworker-5bb45d594d-lm89z.mail>
+2026-01-21 10:57:58,648 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:58,648 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:58,648 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:57:58,648 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:58,648 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:58,649 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:58,649 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:57:58,649 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:58,649 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:58,649 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:58,650 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:58,650 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:58,650 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:58,650 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:58,650 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:58,660 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:58,660 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:58,660 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:58,660 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:58,660 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:58,667 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <-7GsO7OYS9uDuPO0a2ZCRg@notifications.google.com>
+2026-01-21 10:57:58,992 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:58,992 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:58,992 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:57:58,992 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:58,992 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:58,994 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:58,994 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,005 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:59,005 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,005 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:59,005 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:59,005 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:59,012 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <6593df8d5b7bb_94d7c81357df@lowworker-645b48f7b8-szbj7.mail>
+2026-01-21 10:57:59,246 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:59,246 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:59,246 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:57:59,246 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:59,246 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,257 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:59,257 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,257 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:59,257 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:59,257 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:59,263 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <6593e03f506b2_74d7c8886f6@lowworker-645b48f7b8-gn9mj.mail>
+2026-01-21 10:57:59,406 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:59,406 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:59,406 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:57:59,406 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:59,406 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,417 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:59,417 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,417 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:59,417 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:59,417 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:59,425 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <E5-zucueinc-nr243/2/244-02i3s8m3@artegic.net>
+2026-01-21 10:57:59,436 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <INX.1719bfcd6f42a9f1c87fe370101.9337.7f0977.2d0364.18ccb4038a8353@bounce.1und1.de>
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:59 GMT')])
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:59,532 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,532 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:59,532 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,532 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:59,532 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,533 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:59 GMT')])
+2026-01-21 10:57:59,533 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,533 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:59,533 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:59,533 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:59,536 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <INXCOM3.jpc.x.mwkkkjasyz3tl5fkaojq.hjim6uk2fber3mky733ttfphxu@hello.jpc.de>
+2026-01-21 10:58:00,422 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:00,422 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:00,422 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:00,422 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:00,422 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:00,423 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:59 GMT')])
+2026-01-21 10:58:00,423 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:00,423 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:00,423 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:00,423 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:00,423 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,424 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:00,424 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,424 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:00,424 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,434 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:59 GMT')])
+2026-01-21 10:58:00,434 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,435 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:00,435 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:00,435 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:00,442 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <1681670366.143191.1704253405626@cskuttermwbappigeon01.mw.server.lan>
+2026-01-21 10:58:00,914 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:00,914 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:00,914 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:00,914 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:00,914 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:58:00 GMT')])
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,917 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:58:00 GMT')])
+2026-01-21 10:58:00,917 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,917 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:00,917 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:00,917 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:00,921 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <1704262780932-6980660229403154#1@cscorp.server.lan>
+2026-01-21 10:58:02,277 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:58:01 GMT')])
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:02,279 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:02,279 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:02,279 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:02,280 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:02,280 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:02,290 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:58:01 GMT')])
+2026-01-21 10:58:02,290 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:02,290 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:02,290 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:02,290 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:02,298 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <210533530.115152.1704288853792@bue-buchungsbestaetigung-55d86894d-rpdkv>
+2026-01-21 10:58:02,308 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <C6.CE.42735.C7265956@ccg01mail03>
+2026-01-21 10:58:02,314 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <5C.23.37232.88795956@ccg13mail02>
+2026-01-21 10:58:02,319 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <E5-58a3jjox-nr273/4/1143-01funvrv@artegic.net>
+2026-01-21 10:58:02,323 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <8eatT-S-Tjy1FLVyqZ59BQ@geopod-ismtpd-11>
+2026-01-21 10:58:08,501 [DEBUG] httpcore.connection: close.started
+2026-01-21 10:58:08,501 [DEBUG] httpcore.connection: close.complete
+2026-01-21 10:58:08,501 [DEBUG] httpcore.connection: connect_tcp.started host='qdrant' port=6333 local_address=None timeout=5.0 socket_options=None
+2026-01-21 10:58:08,502 [DEBUG] httpcore.connection: connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x7f9b747a9210>
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:08,503 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,503 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:08,503 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,503 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:08,503 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,514 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:08,514 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,514 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:08,514 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:08,514 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:08,521 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <0107018cd2419ca9-a4bc4039-1b24-4319-92b7-17c80c35d562-000000@eu-central-1.amazonses.com>
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:08,862 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,862 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:08,862 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,862 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:08,862 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,873 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:08,873 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,873 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:08,873 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:08,873 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:08,881 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <re-pM7_5FVBXQsDx57b7CbbFt0ospjK6Ofj-5OFQ5CXV-5ODU8429-15MLP0T@news.formblitz.de>
+2026-01-21 10:58:08,893 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <1443032828.231516.1704359884988@cskuttermwbspigeon04.mw.server.lan>
+2026-01-21 10:58:09,186 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,186 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,186 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,186 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,186 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,186 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:09,186 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,189 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:09,189 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,189 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,189 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,189 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,195 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <643149368.230730.1704359923815@cskuttermwbspigeon03.mw.server.lan>
+2026-01-21 10:58:09,445 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,445 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,445 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,445 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,445 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,456 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:09,456 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,456 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,456 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,456 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,463 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <E5-zucueinc-nr243/2/258-02iem9ur@artegic.net>
+2026-01-21 10:58:09,473 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <E5-zucueinc-nr243/2/204-02ifsl6s@artegic.net>
+2026-01-21 10:58:09,480 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID 
+ <170436895391.2508557.7288060838748219402@pretix-web-3.mgmt.kk.lan>
+2026-01-21 10:58:09,678 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:09 GMT')])
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,680 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,680 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,680 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,680 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,680 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,681 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:09 GMT')])
+2026-01-21 10:58:09,681 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,681 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,681 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,681 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,686 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID 
+ <170436903517.2506302.8236794987854410050@pretix-web-2.mgmt.kk.lan>
+2026-01-21 10:58:09,977 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:09 GMT')])
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,979 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,979 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,979 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,979 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,979 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,988 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:09 GMT')])
+2026-01-21 10:58:09,989 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,989 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,989 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,989 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,996 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <0A6AE192-EE131C4054C-018CABEDCED3-00000000037FBDBA@starship>
+2026-01-21 10:58:10,006 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <E5-53mthl2w-nr273/4/1143-01fwfoyk@artegic.net>
+2026-01-21 10:58:10,013 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <0AB4827D-244FE528986-018CA0A7CDE3-0000000004E5402C@starship>
+2026-01-21 10:58:10,018 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <E5-65ymvmfc-nr273/4/1143-01fxp4xr@artegic.net>
+2026-01-21 10:58:10,022 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <-1618225831.621082.1704539494893@gcp-web-api-dbdf5bdf5-trfxz>
+2026-01-21 10:58:10,026 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <6c411324d3dc98d41948aa46f08ded58@t-online.de>
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:09 GMT')])
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:10,098 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,098 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:10,098 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,098 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:10,098 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,099 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:09 GMT')])
+2026-01-21 10:58:10,099 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,099 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:10,099 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:10,099 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:10,102 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <65996481b0030_41681b5801872158c@nebenan-job-10-3-128-192.mail>
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:10 GMT')])
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:10,928 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,928 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:10,928 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,928 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:10,928 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,939 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:10 GMT')])
+2026-01-21 10:58:10,939 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,939 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:10,939 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:10,939 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:10,945 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <659970892fc8_41801b4405657116@nebenan-job-10-3-129-48.mail>
+2026-01-21 10:58:11,786 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:11 GMT')])
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:11,788 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:11,788 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:11,788 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:11,788 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:11,789 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:11 GMT')])
+2026-01-21 10:58:11,789 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:11,789 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:11,789 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:11,789 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:11,792 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <81_yuQ2rQ_WH9RSOG2ngAg@geopod-ismtpd-26>
+2026-01-21 10:58:18,696 [DEBUG] httpcore.connection: close.started
+2026-01-21 10:58:18,696 [DEBUG] httpcore.connection: close.complete
+2026-01-21 10:58:18,696 [DEBUG] httpcore.connection: connect_tcp.started host='qdrant' port=6333 local_address=None timeout=5.0 socket_options=None
+2026-01-21 10:58:18,696 [DEBUG] httpcore.connection: connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x7f9b747bee10>
+2026-01-21 10:58:18,696 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'content-type', b'application/json'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:18 GMT')])
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:18,698 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:18,698 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:18,698 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:18,698 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:18,698 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:18,710 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'content-type', b'application/json'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:18 GMT')])
+2026-01-21 10:58:18,710 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:18,711 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:18,711 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:18,711 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:18,722 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <1508366094.11330429.1704559365121@lva1-app48176.prod.linkedin.com>
+2026-01-21 10:58:18,728 [INFO] api.app.routes.ingest: Stop requested for ingestion run 3baf54a1-da31-4692-b40d-1602a5a1b726 of type thunderbird
+INFO:     172.18.0.1:52152 - "POST /ingest/stop_latest/thunderbird HTTP/1.1" 200 OK
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'content-type', b'application/json'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:20 GMT')])
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:20,482 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:20,482 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:20,482 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:20,482 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:20,482 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:20,493 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'content-type', b'application/json'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:20 GMT')])
+2026-01-21 10:58:20,493 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:20,493 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:20,493 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:20,493 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:20,498 [INFO] collectors.thunderbird.thunderbird_source: Stop requested, terminating Thunderbird ingestion source.
+2026-01-21 10:58:20,503 [INFO] api.app.services.ingestion: Thunderbird ingestion run 3baf54a1-da31-4692-b40d-1602a5a1b726 completed successfully. Discovered 33 documents, indexed 33 documents.
+2026-01-21 10:59:04,414 [INFO] api: Shutting down the API...
+2026-01-21 10:59:12,465 [INFO] api: API initialized with routers.
+2026-01-21 10:59:12,466 [INFO] api: Starting up the API...
+2026-01-21 10:59:26,610 [INFO] api: Shutting down the API...
+2026-01-21 10:54:48,736 [INFO] api: API initialized with routers.
+2026-01-21 10:54:48,737 [INFO] api: Starting up the API...
+2026-01-21 10:54:57,085 [INFO] api: API initialized with routers.
+2026-01-21 10:54:57,086 [INFO] api: Starting up the API...
+2026-01-21 10:57:05,673 [INFO] api: Shutting down the API...
+2026-01-21 10:57:13,715 [INFO] api: API initialized with routers.
+2026-01-21 10:57:13,716 [INFO] api: Starting up the API...
+2026-01-21 10:57:21,578 [INFO] api: API initialized with routers.
+2026-01-21 10:57:21,579 [INFO] api: Starting up the API...
+2026-01-21 10:57:56,688 [DEBUG] api.app.routes.ingest: Created ingestion run 3baf54a1-da31-4692-b40d-1602a5a1b726 for scope: type='thunderbird' mbox_path='/app/data/email/INBOX' ignore_patterns=[]
+INFO:     172.18.0.1:52498 - "POST /ingest/thunderbird HTTP/1.1" 200 OK
+2026-01-21 10:57:56,689 [INFO] api.app.services.ingestion: Starting Thunderbird ingestion for scope: type='thunderbird' mbox_path='/app/data/email/INBOX' ignore_patterns=[] with run_id: 3baf54a1-da31-4692-b40d-1602a5a1b726, resume=False
+2026-01-21 10:57:56,713 [DEBUG] httpcore.connection: connect_tcp.started host='qdrant' port=6333 local_address=None timeout=5.0 socket_options=None
+2026-01-21 10:57:56,714 [DEBUG] httpcore.connection: connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x7f9ba1077b50>
+2026-01-21 10:57:56,714 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:56,714 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:56,714 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:57:56,714 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:56,714 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:56,714 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-encoding', b'gzip'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:56 GMT')])
+2026-01-21 10:57:56,715 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:57:56,715 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:56,715 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:56,715 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:56,715 [DEBUG] httpcore.connection: close.started
+2026-01-21 10:57:56,715 [DEBUG] httpcore.connection: close.complete
+2026-01-21 10:57:56,717 [DEBUG] httpcore.connection: connect_tcp.started host='qdrant' port=6333 local_address=None timeout=5.0 socket_options=None
+2026-01-21 10:57:56,718 [DEBUG] httpcore.connection: connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x7f9b804ee210>
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 404, b'Not Found', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:56 GMT')])
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:56,718 [INFO] storage.vector_db.qdrant_store: Creating Qdrant collection 'chunks' with vector size 768
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:56,719 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:56,719 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:56,719 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:56,758 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:56 GMT')])
+2026-01-21 10:57:56,758 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:56,758 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:56,758 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:56,758 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:58,486 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <fChBcfWDTBO0emZBmdpfDA@geopod-ismtpd-11>
+2026-01-21 10:57:58,505 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <6591f2935ac6a_aed2d7c8838e5@lowworker-5bb45d594d-lm89z.mail>
+2026-01-21 10:57:58,648 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:58,648 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:58,648 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:57:58,648 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:58,648 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:58,649 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:58,649 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:57:58,649 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:58,649 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:58,649 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:58,650 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:58,650 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:58,650 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:58,650 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:58,650 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:58,660 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:58,660 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:58,660 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:58,660 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:58,660 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:58,667 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <-7GsO7OYS9uDuPO0a2ZCRg@notifications.google.com>
+2026-01-21 10:57:58,992 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:58,992 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:58,992 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:57:58,992 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:58,992 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:58,994 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:58,994 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,005 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:59,005 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,005 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:59,005 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:59,005 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:59,012 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <6593df8d5b7bb_94d7c81357df@lowworker-645b48f7b8-szbj7.mail>
+2026-01-21 10:57:59,246 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:59,246 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:59,246 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:57:59,246 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:59,246 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,257 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:59,257 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,257 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:59,257 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:59,257 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:59,263 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <6593e03f506b2_74d7c8886f6@lowworker-645b48f7b8-gn9mj.mail>
+2026-01-21 10:57:59,406 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:59,406 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:59,406 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:57:59,406 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:59,406 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,417 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:59,417 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,417 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:59,417 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:59,417 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:59,425 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <E5-zucueinc-nr243/2/244-02i3s8m3@artegic.net>
+2026-01-21 10:57:59,436 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <INX.1719bfcd6f42a9f1c87fe370101.9337.7f0977.2d0364.18ccb4038a8353@bounce.1und1.de>
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:59 GMT')])
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:59,532 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,532 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:59,532 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,532 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:59,532 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,533 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:59 GMT')])
+2026-01-21 10:57:59,533 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,533 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:59,533 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:59,533 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:59,536 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <INXCOM3.jpc.x.mwkkkjasyz3tl5fkaojq.hjim6uk2fber3mky733ttfphxu@hello.jpc.de>
+2026-01-21 10:58:00,422 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:00,422 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:00,422 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:00,422 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:00,422 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:00,423 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:59 GMT')])
+2026-01-21 10:58:00,423 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:00,423 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:00,423 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:00,423 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:00,423 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,424 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:00,424 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,424 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:00,424 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,434 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:59 GMT')])
+2026-01-21 10:58:00,434 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,435 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:00,435 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:00,435 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:00,442 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <1681670366.143191.1704253405626@cskuttermwbappigeon01.mw.server.lan>
+2026-01-21 10:58:00,914 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:00,914 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:00,914 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:00,914 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:00,914 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:58:00 GMT')])
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,917 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:58:00 GMT')])
+2026-01-21 10:58:00,917 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,917 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:00,917 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:00,917 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:00,921 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <1704262780932-6980660229403154#1@cscorp.server.lan>
+2026-01-21 10:58:02,277 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:58:01 GMT')])
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:02,279 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:02,279 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:02,279 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:02,280 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:02,280 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:02,290 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:58:01 GMT')])
+2026-01-21 10:58:02,290 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:02,290 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:02,290 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:02,290 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:02,298 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <210533530.115152.1704288853792@bue-buchungsbestaetigung-55d86894d-rpdkv>
+2026-01-21 10:58:02,308 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <C6.CE.42735.C7265956@ccg01mail03>
+2026-01-21 10:58:02,314 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <5C.23.37232.88795956@ccg13mail02>
+2026-01-21 10:58:02,319 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <E5-58a3jjox-nr273/4/1143-01funvrv@artegic.net>
+2026-01-21 10:58:02,323 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <8eatT-S-Tjy1FLVyqZ59BQ@geopod-ismtpd-11>
+2026-01-21 10:58:08,501 [DEBUG] httpcore.connection: close.started
+2026-01-21 10:58:08,501 [DEBUG] httpcore.connection: close.complete
+2026-01-21 10:58:08,501 [DEBUG] httpcore.connection: connect_tcp.started host='qdrant' port=6333 local_address=None timeout=5.0 socket_options=None
+2026-01-21 10:58:08,502 [DEBUG] httpcore.connection: connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x7f9b747a9210>
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:08,503 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,503 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:08,503 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,503 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:08,503 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,514 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:08,514 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,514 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:08,514 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:08,514 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:08,521 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <0107018cd2419ca9-a4bc4039-1b24-4319-92b7-17c80c35d562-000000@eu-central-1.amazonses.com>
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:08,862 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,862 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:08,862 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,862 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:08,862 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,873 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:08,873 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,873 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:08,873 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:08,873 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:08,881 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <re-pM7_5FVBXQsDx57b7CbbFt0ospjK6Ofj-5OFQ5CXV-5ODU8429-15MLP0T@news.formblitz.de>
+2026-01-21 10:58:08,893 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <1443032828.231516.1704359884988@cskuttermwbspigeon04.mw.server.lan>
+2026-01-21 10:58:09,186 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,186 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,186 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,186 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,186 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,186 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:09,186 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,189 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:09,189 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,189 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,189 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,189 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,195 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <643149368.230730.1704359923815@cskuttermwbspigeon03.mw.server.lan>
+2026-01-21 10:58:09,445 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,445 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,445 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,445 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,445 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,456 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:09,456 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,456 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,456 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,456 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,463 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <E5-zucueinc-nr243/2/258-02iem9ur@artegic.net>
+2026-01-21 10:58:09,473 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <E5-zucueinc-nr243/2/204-02ifsl6s@artegic.net>
+2026-01-21 10:58:09,480 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID 
+ <170436895391.2508557.7288060838748219402@pretix-web-3.mgmt.kk.lan>
+2026-01-21 10:58:09,678 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:09 GMT')])
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,680 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,680 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,680 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,680 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,680 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,681 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:09 GMT')])
+2026-01-21 10:58:09,681 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,681 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,681 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,681 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,686 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID 
+ <170436903517.2506302.8236794987854410050@pretix-web-2.mgmt.kk.lan>
+2026-01-21 10:58:09,977 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:09 GMT')])
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,979 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,979 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,979 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,979 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,979 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,988 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:09 GMT')])
+2026-01-21 10:58:09,989 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,989 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,989 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,989 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,996 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <0A6AE192-EE131C4054C-018CABEDCED3-00000000037FBDBA@starship>
+2026-01-21 10:58:10,006 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <E5-53mthl2w-nr273/4/1143-01fwfoyk@artegic.net>
+2026-01-21 10:58:10,013 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <0AB4827D-244FE528986-018CA0A7CDE3-0000000004E5402C@starship>
+2026-01-21 10:58:10,018 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <E5-65ymvmfc-nr273/4/1143-01fxp4xr@artegic.net>
+2026-01-21 10:58:10,022 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <-1618225831.621082.1704539494893@gcp-web-api-dbdf5bdf5-trfxz>
+2026-01-21 10:58:10,026 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <6c411324d3dc98d41948aa46f08ded58@t-online.de>
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:09 GMT')])
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:10,098 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,098 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:10,098 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,098 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:10,098 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,099 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:09 GMT')])
+2026-01-21 10:58:10,099 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,099 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:10,099 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:10,099 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:10,102 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <65996481b0030_41681b5801872158c@nebenan-job-10-3-128-192.mail>
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:10 GMT')])
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:10,928 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,928 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:10,928 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,928 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:10,928 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,939 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:10 GMT')])
+2026-01-21 10:58:10,939 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,939 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:10,939 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:10,939 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:10,945 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <659970892fc8_41801b4405657116@nebenan-job-10-3-129-48.mail>
+2026-01-21 10:58:11,786 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:11 GMT')])
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:11,788 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:11,788 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:11,788 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:11,788 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:11,789 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:11 GMT')])
+2026-01-21 10:58:11,789 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:11,789 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:11,789 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:11,789 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:11,792 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <81_yuQ2rQ_WH9RSOG2ngAg@geopod-ismtpd-26>
+2026-01-21 10:58:18,696 [DEBUG] httpcore.connection: close.started
+2026-01-21 10:58:18,696 [DEBUG] httpcore.connection: close.complete
+2026-01-21 10:58:18,696 [DEBUG] httpcore.connection: connect_tcp.started host='qdrant' port=6333 local_address=None timeout=5.0 socket_options=None
+2026-01-21 10:58:18,696 [DEBUG] httpcore.connection: connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x7f9b747bee10>
+2026-01-21 10:58:18,696 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'content-type', b'application/json'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:18 GMT')])
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:18,698 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:18,698 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:18,698 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:18,698 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:18,698 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:18,710 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'content-type', b'application/json'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:18 GMT')])
+2026-01-21 10:58:18,710 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:18,711 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:18,711 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:18,711 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:18,722 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <1508366094.11330429.1704559365121@lva1-app48176.prod.linkedin.com>
+2026-01-21 10:58:18,728 [INFO] api.app.routes.ingest: Stop requested for ingestion run 3baf54a1-da31-4692-b40d-1602a5a1b726 of type thunderbird
+INFO:     172.18.0.1:52152 - "POST /ingest/stop_latest/thunderbird HTTP/1.1" 200 OK
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'content-type', b'application/json'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:20 GMT')])
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:20,482 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:20,482 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:20,482 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:20,482 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:20,482 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:20,493 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'content-type', b'application/json'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:20 GMT')])
+2026-01-21 10:58:20,493 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:20,493 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:20,493 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:20,493 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:20,498 [INFO] collectors.thunderbird.thunderbird_source: Stop requested, terminating Thunderbird ingestion source.
+2026-01-21 10:58:20,503 [INFO] api.app.services.ingestion: Thunderbird ingestion run 3baf54a1-da31-4692-b40d-1602a5a1b726 completed successfully. Discovered 33 documents, indexed 33 documents.
+2026-01-21 10:59:04,414 [INFO] api: Shutting down the API...
+2026-01-21 10:59:12,465 [INFO] api: API initialized with routers.
+2026-01-21 10:59:12,466 [INFO] api: Starting up the API...
+2026-01-21 10:59:26,610 [INFO] api: Shutting down the API...
+2026-01-21 10:59:34,659 [INFO] api: API initialized with routers.
+2026-01-21 10:59:34,660 [INFO] api: Starting up the API...
+2026-01-21 10:54:48,736 [INFO] api: API initialized with routers.
+2026-01-21 10:54:48,737 [INFO] api: Starting up the API...
+2026-01-21 10:54:57,085 [INFO] api: API initialized with routers.
+2026-01-21 10:54:57,086 [INFO] api: Starting up the API...
+2026-01-21 10:57:05,673 [INFO] api: Shutting down the API...
+2026-01-21 10:57:13,715 [INFO] api: API initialized with routers.
+2026-01-21 10:57:13,716 [INFO] api: Starting up the API...
+2026-01-21 10:57:21,578 [INFO] api: API initialized with routers.
+2026-01-21 10:57:21,579 [INFO] api: Starting up the API...
+2026-01-21 10:57:56,688 [DEBUG] api.app.routes.ingest: Created ingestion run 3baf54a1-da31-4692-b40d-1602a5a1b726 for scope: type='thunderbird' mbox_path='/app/data/email/INBOX' ignore_patterns=[]
+INFO:     172.18.0.1:52498 - "POST /ingest/thunderbird HTTP/1.1" 200 OK
+2026-01-21 10:57:56,689 [INFO] api.app.services.ingestion: Starting Thunderbird ingestion for scope: type='thunderbird' mbox_path='/app/data/email/INBOX' ignore_patterns=[] with run_id: 3baf54a1-da31-4692-b40d-1602a5a1b726, resume=False
+2026-01-21 10:57:56,713 [DEBUG] httpcore.connection: connect_tcp.started host='qdrant' port=6333 local_address=None timeout=5.0 socket_options=None
+2026-01-21 10:57:56,714 [DEBUG] httpcore.connection: connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x7f9ba1077b50>
+2026-01-21 10:57:56,714 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:56,714 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:56,714 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:57:56,714 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:56,714 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:56,714 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-encoding', b'gzip'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:56 GMT')])
+2026-01-21 10:57:56,715 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:57:56,715 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:56,715 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:56,715 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:56,715 [DEBUG] httpcore.connection: close.started
+2026-01-21 10:57:56,715 [DEBUG] httpcore.connection: close.complete
+2026-01-21 10:57:56,717 [DEBUG] httpcore.connection: connect_tcp.started host='qdrant' port=6333 local_address=None timeout=5.0 socket_options=None
+2026-01-21 10:57:56,718 [DEBUG] httpcore.connection: connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x7f9b804ee210>
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 404, b'Not Found', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:56 GMT')])
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:56,718 [INFO] storage.vector_db.qdrant_store: Creating Qdrant collection 'chunks' with vector size 768
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:56,718 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:56,719 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:56,719 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:56,719 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:56,758 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:56 GMT')])
+2026-01-21 10:57:56,758 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:56,758 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:56,758 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:56,758 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:58,486 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <fChBcfWDTBO0emZBmdpfDA@geopod-ismtpd-11>
+2026-01-21 10:57:58,505 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <6591f2935ac6a_aed2d7c8838e5@lowworker-5bb45d594d-lm89z.mail>
+2026-01-21 10:57:58,648 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:58,648 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:58,648 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:57:58,648 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:58,648 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:58,649 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:58,649 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:57:58,649 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:58,649 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:58,649 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:58,650 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:58,650 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:58,650 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:58,650 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:58,650 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:58,660 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:58,660 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:58,660 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:58,660 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:58,660 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:58,667 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <-7GsO7OYS9uDuPO0a2ZCRg@notifications.google.com>
+2026-01-21 10:57:58,992 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:58,992 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:58,992 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:57:58,992 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:58,992 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:58,993 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:58,994 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:58,994 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,005 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:59,005 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,005 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:59,005 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:59,005 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:59,012 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <6593df8d5b7bb_94d7c81357df@lowworker-645b48f7b8-szbj7.mail>
+2026-01-21 10:57:59,246 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:59,246 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:59,246 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:57:59,246 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:59,246 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:59,247 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,257 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:59,257 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,257 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:59,257 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:59,257 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:59,263 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <6593e03f506b2_74d7c8886f6@lowworker-645b48f7b8-gn9mj.mail>
+2026-01-21 10:57:59,406 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:59,406 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:59,406 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:57:59,406 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:59,406 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:59,407 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,417 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:58 GMT')])
+2026-01-21 10:57:59,417 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,417 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:59,417 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:59,417 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:59,425 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <E5-zucueinc-nr243/2/244-02i3s8m3@artegic.net>
+2026-01-21 10:57:59,436 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <INX.1719bfcd6f42a9f1c87fe370101.9337.7f0977.2d0364.18ccb4038a8353@bounce.1und1.de>
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:59 GMT')])
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:59,531 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:59,532 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,532 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:57:59,532 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,532 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:57:59,532 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,533 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:59 GMT')])
+2026-01-21 10:57:59,533 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:57:59,533 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:57:59,533 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:57:59,533 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:57:59,536 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <INXCOM3.jpc.x.mwkkkjasyz3tl5fkaojq.hjim6uk2fber3mky733ttfphxu@hello.jpc.de>
+2026-01-21 10:58:00,422 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:00,422 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:00,422 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:00,422 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:00,422 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:00,423 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:59 GMT')])
+2026-01-21 10:58:00,423 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:00,423 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:00,423 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:00,423 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:00,423 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,424 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:00,424 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,424 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:00,424 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,434 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:57:59 GMT')])
+2026-01-21 10:58:00,434 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,435 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:00,435 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:00,435 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:00,442 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <1681670366.143191.1704253405626@cskuttermwbappigeon01.mw.server.lan>
+2026-01-21 10:58:00,914 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:00,914 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:00,914 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:00,914 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:00,914 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:58:00 GMT')])
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:00,915 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,917 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:58:00 GMT')])
+2026-01-21 10:58:00,917 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:00,917 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:00,917 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:00,917 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:00,921 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <1704262780932-6980660229403154#1@cscorp.server.lan>
+2026-01-21 10:58:02,277 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:58:01 GMT')])
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:02,278 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:02,279 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:02,279 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:02,279 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:02,280 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:02,280 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:02,290 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Wed, 21 Jan 2026 10:58:01 GMT')])
+2026-01-21 10:58:02,290 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:02,290 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:02,290 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:02,290 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:02,298 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <210533530.115152.1704288853792@bue-buchungsbestaetigung-55d86894d-rpdkv>
+2026-01-21 10:58:02,308 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <C6.CE.42735.C7265956@ccg01mail03>
+2026-01-21 10:58:02,314 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <5C.23.37232.88795956@ccg13mail02>
+2026-01-21 10:58:02,319 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <E5-58a3jjox-nr273/4/1143-01funvrv@artegic.net>
+2026-01-21 10:58:02,323 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <8eatT-S-Tjy1FLVyqZ59BQ@geopod-ismtpd-11>
+2026-01-21 10:58:08,501 [DEBUG] httpcore.connection: close.started
+2026-01-21 10:58:08,501 [DEBUG] httpcore.connection: close.complete
+2026-01-21 10:58:08,501 [DEBUG] httpcore.connection: connect_tcp.started host='qdrant' port=6333 local_address=None timeout=5.0 socket_options=None
+2026-01-21 10:58:08,502 [DEBUG] httpcore.connection: connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x7f9b747a9210>
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:08,502 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:08,503 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,503 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:08,503 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,503 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:08,503 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,514 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:08,514 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,514 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:08,514 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:08,514 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:08,521 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <0107018cd2419ca9-a4bc4039-1b24-4319-92b7-17c80c35d562-000000@eu-central-1.amazonses.com>
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:08,861 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:08,862 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,862 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:08,862 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,862 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:08,862 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,873 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:08,873 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:08,873 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:08,873 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:08,873 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:08,881 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <re-pM7_5FVBXQsDx57b7CbbFt0ospjK6Ofj-5OFQ5CXV-5ODU8429-15MLP0T@news.formblitz.de>
+2026-01-21 10:58:08,893 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <1443032828.231516.1704359884988@cskuttermwbspigeon04.mw.server.lan>
+2026-01-21 10:58:09,186 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,186 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,186 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,186 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,186 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,186 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:09,186 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,187 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,189 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:09,189 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,189 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,189 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,189 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,195 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <643149368.230730.1704359923815@cskuttermwbspigeon03.mw.server.lan>
+2026-01-21 10:58:09,445 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,445 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,445 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,445 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,445 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,446 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,456 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:08 GMT')])
+2026-01-21 10:58:09,456 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,456 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,456 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,456 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,463 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <E5-zucueinc-nr243/2/258-02iem9ur@artegic.net>
+2026-01-21 10:58:09,473 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <E5-zucueinc-nr243/2/204-02ifsl6s@artegic.net>
+2026-01-21 10:58:09,480 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID 
+ <170436895391.2508557.7288060838748219402@pretix-web-3.mgmt.kk.lan>
+2026-01-21 10:58:09,678 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:09 GMT')])
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,679 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,680 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,680 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,680 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,680 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,680 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,681 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:09 GMT')])
+2026-01-21 10:58:09,681 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,681 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,681 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,681 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,686 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID 
+ <170436903517.2506302.8236794987854410050@pretix-web-2.mgmt.kk.lan>
+2026-01-21 10:58:09,977 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:09 GMT')])
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,978 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,979 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,979 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:09,979 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,979 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:09,979 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,988 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:09 GMT')])
+2026-01-21 10:58:09,989 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:09,989 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:09,989 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:09,989 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:09,996 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <0A6AE192-EE131C4054C-018CABEDCED3-00000000037FBDBA@starship>
+2026-01-21 10:58:10,006 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <E5-53mthl2w-nr273/4/1143-01fwfoyk@artegic.net>
+2026-01-21 10:58:10,013 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <0AB4827D-244FE528986-018CA0A7CDE3-0000000004E5402C@starship>
+2026-01-21 10:58:10,018 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <E5-65ymvmfc-nr273/4/1143-01fxp4xr@artegic.net>
+2026-01-21 10:58:10,022 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <-1618225831.621082.1704539494893@gcp-web-api-dbdf5bdf5-trfxz>
+2026-01-21 10:58:10,026 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <6c411324d3dc98d41948aa46f08ded58@t-online.de>
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:09 GMT')])
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:10,097 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:10,098 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,098 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:10,098 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,098 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:10,098 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,099 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:09 GMT')])
+2026-01-21 10:58:10,099 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,099 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:10,099 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:10,099 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:10,102 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <65996481b0030_41681b5801872158c@nebenan-job-10-3-128-192.mail>
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:10 GMT')])
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:10,927 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:10,928 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,928 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:10,928 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,928 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:10,928 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,939 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:10 GMT')])
+2026-01-21 10:58:10,939 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:10,939 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:10,939 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:10,939 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:10,945 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <659970892fc8_41801b4405657116@nebenan-job-10-3-129-48.mail>
+2026-01-21 10:58:11,786 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:11 GMT')])
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:11,787 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:11,788 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:11,788 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:11,788 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:11,788 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:11,789 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:11 GMT')])
+2026-01-21 10:58:11,789 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:11,789 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:11,789 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:11,789 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:11,792 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <81_yuQ2rQ_WH9RSOG2ngAg@geopod-ismtpd-26>
+2026-01-21 10:58:18,696 [DEBUG] httpcore.connection: close.started
+2026-01-21 10:58:18,696 [DEBUG] httpcore.connection: close.complete
+2026-01-21 10:58:18,696 [DEBUG] httpcore.connection: connect_tcp.started host='qdrant' port=6333 local_address=None timeout=5.0 socket_options=None
+2026-01-21 10:58:18,696 [DEBUG] httpcore.connection: connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x7f9b747bee10>
+2026-01-21 10:58:18,696 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'content-type', b'application/json'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:18 GMT')])
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:18,697 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:18,698 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:18,698 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:18,698 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:18,698 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:18,698 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:18,710 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'content-type', b'application/json'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:18 GMT')])
+2026-01-21 10:58:18,710 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:18,711 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:18,711 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:18,711 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:18,722 [DEBUG] api.app.services.ingestion: Discovered email document with Message-ID <1508366094.11330429.1704559365121@lva1-app48176.prod.linkedin.com>
+2026-01-21 10:58:18,728 [INFO] api.app.routes.ingest: Stop requested for ingestion run 3baf54a1-da31-4692-b40d-1602a5a1b726 of type thunderbird
+INFO:     172.18.0.1:52152 - "POST /ingest/stop_latest/thunderbird HTTP/1.1" 200 OK
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'GET']>
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'content-type', b'application/json'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:20 GMT')])
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:20,481 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:20,482 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:20,482 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-01-21 10:58:20,482 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:20,482 [DEBUG] httpcore.http11: send_request_body.complete
+2026-01-21 10:58:20,482 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'PUT']>
+2026-01-21 10:58:20,493 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'content-type', b'application/json'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Wed, 21 Jan 2026 10:58:20 GMT')])
+2026-01-21 10:58:20,493 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'PUT']>
+2026-01-21 10:58:20,493 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-01-21 10:58:20,493 [DEBUG] httpcore.http11: response_closed.started
+2026-01-21 10:58:20,493 [DEBUG] httpcore.http11: response_closed.complete
+2026-01-21 10:58:20,498 [INFO] collectors.thunderbird.thunderbird_source: Stop requested, terminating Thunderbird ingestion source.
+2026-01-21 10:58:20,503 [INFO] api.app.services.ingestion: Thunderbird ingestion run 3baf54a1-da31-4692-b40d-1602a5a1b726 completed successfully. Discovered 33 documents, indexed 33 documents.
+2026-01-21 10:59:04,414 [INFO] api: Shutting down the API...
+2026-01-21 10:59:12,465 [INFO] api: API initialized with routers.
+2026-01-21 10:59:12,466 [INFO] api: Starting up the API...
+2026-01-21 10:59:26,610 [INFO] api: Shutting down the API...
+2026-01-21 10:59:34,659 [INFO] api: API initialized with routers.
+2026-01-21 10:59:34,660 [INFO] api: Starting up the API...

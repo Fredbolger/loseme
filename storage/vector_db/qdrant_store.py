@@ -1,5 +1,6 @@
 import uuid
 import os
+import logging
 from typing import List, Tuple
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct, VectorParams, Distance
@@ -11,6 +12,8 @@ from src.domain.vector_store import VectorStore
 
 COLLECTION = "chunks"
 VECTOR_SIZE = build_embedding_provider().dimension()
+
+logger = logging.getLogger(__name__)
 
 def chunk_id_to_uuid(chunk_id: str) -> str:
     return str(uuid.uuid5(uuid.NAMESPACE_URL, chunk_id))
@@ -25,6 +28,7 @@ class QdrantVectorStore(VectorStore):
         try:
             self.client.get_collection(COLLECTION)
         except UnexpectedResponse:
+            logger.info(f"Creating Qdrant collection '{COLLECTION}' with vector size {VECTOR_SIZE}")
             self.client.create_collection(
                 collection_name=COLLECTION,
                 vectors_config=VectorParams(
@@ -36,7 +40,7 @@ class QdrantVectorStore(VectorStore):
     def add(self, chunk: Chunk, vector: List[float]) -> None:
         self._ensure_collection()
         if len(vector) != VECTOR_SIZE:
-            raise ValueError("Vector dimension mismatch")
+            raise ValueError(f"Vector size missmatch: expected {VECTOR_SIZE}, got {len(vector)}")
         self.client.upsert(
             collection_name=COLLECTION,
             points=[
@@ -106,3 +110,8 @@ class QdrantVectorStore(VectorStore):
             collection_name=COLLECTION,
             points=point_ids
         )
+    
+    def delete_collection(self) -> None:
+        if os.environ.get("ALLOW_VECTOR_CLEAR", "false").lower() != "1":
+            raise PermissionError("Deleting the vector store collection is not allowed.")
+        self.client.delete_collection(COLLECTION)
