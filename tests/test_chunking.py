@@ -17,6 +17,7 @@ def test_chunk_ids_deterministic_simple_chunker():
         source_id="src",
         device_id="dev",
         source_path="/x",
+        text="",
         docker_path="/y",
     )
 
@@ -45,6 +46,7 @@ def test_chunk_ids_deterministic_semantic_chunker():
         source_id="src",
         device_id="dev",
         source_path="/x",
+        text="",
         docker_path="/y",
     )
 

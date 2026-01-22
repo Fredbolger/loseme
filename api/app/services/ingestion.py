@@ -47,6 +47,10 @@ def ingest_scope(scope: IndexingScope, run_id: str, resume: bool = False, stop_a
         if run:
             run_id = run.id
             logger.info(f"Resuming {scope.type} ingestion from interrupted run {run_id} for scope: {scope}")
+            if scope.type == "filesystem":
+                # log the direcories
+                for dir in scope.directories:
+                    logger.info(f"Resuming ingestion from directory: {str(dir)}")
             set_run_resume(run_id)
         else:
             logger.info(f"No interrupted {scope.type} ingestion run found for scope: {scope}.")
@@ -97,7 +101,7 @@ def ingest_scope(scope: IndexingScope, run_id: str, resume: bool = False, stop_a
 
         if stop_requested():
             update_status(run_id, "interrupted")
-            logger.info(f"Thunderbird ingestion run {run_id} stopped. Discovered {documents_discovered} documents, indexed {documents_indexed} documents.")
+            logger.info(f"{scope.type} ingestion run {run_id} stopped. Discovered {documents_discovered} documents, indexed {documents_indexed} documents.")
             return IngestionResult(
                 run_id=run_id,
                 status="interrupted",
@@ -107,7 +111,7 @@ def ingest_scope(scope: IndexingScope, run_id: str, resume: bool = False, stop_a
 
         else:
             update_status(run_id, "completed")
-            logger.info(f"Thunderbird ingestion run {run_id} completed successfully. Discovered {documents_discovered} documents, indexed {documents_indexed} documents.")
+            logger.info(f"{scope.type} ingestion run {run_id} completed successfully. Discovered {documents_discovered} documents, indexed {documents_indexed} documents.")
         
             return IngestionResult(
                 run_id=run_id,

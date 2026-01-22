@@ -55,11 +55,11 @@ def test_filesystem_excludes_paths(tmp_path):
  
     source = FilesystemIngestionSource(
             scope=scope,
-            extractor_registry=registry
+            should_stop=lambda: False,
     )
 
     # Act
-    docs = source.list_documents()
+    docs = [doc for doc in source.iter_documents()]
 
     # Assert
     assert len(docs) == 1

@@ -10,7 +10,7 @@ from src.domain.ids import make_source_instance_id
 from src.core.wiring import build_extractor_registry
 from storage.metadata_db.indexing_runs import create_run, update_status, update_checkpoint, load_latest_run_by_scope, request_stop, load_latest_run_by_type, load_latest_interrupted
 from storage.metadata_db.processed_documents import mark_processed, is_processed
-from api.app.services.ingestion import ingest_filesystem_scope, ingest_thunderbird_scope, ingest_scope
+from api.app.services.ingestion import ingest_scope
 from storage.metadata_db.db import init_db
 import logging
 
@@ -24,46 +24,6 @@ def get_data_root() -> Path:
     ).resolve()
 
 router = APIRouter(prefix="/ingest", tags=["ingestion"])
-
-"""
-@router.post("/filesystem")
-def ingest_filesystem(req: FilesystemIngestRequest, bg: BackgroundTasks):    
-    scope = FilesystemIndexingScope(
-        type="filesystem",
-        directories=[Path(p) for p in req.directories],
-        recursive=req.recursive,
-        include_patterns=req.include_patterns,
-        exclude_patterns=req.exclude_patterns,
-    )
-
-    run = create_run("filesystem", scope)
-    logger.debug(f"Created ingestion run {run.id} for scope: {scope}")
-    bg.add_task(ingest_filesystem_scope, scope, run.id, False)
-
-    return {
-        "accepted": True,
-        "run_id": run.id,
-        "status": "running",
-    }
-
-@router.post("/thunderbird")
-def ingest_thunderbird(req: ThunderbirdIngestRequest, bg: BackgroundTasks):
-    scope = ThunderbirdIndexingScope(
-        type="thunderbird",
-        mbox_path=req.mbox_path,
-        ignore_patterns=req.ignore_patterns,
-    )
-
-    run = create_run("thunderbird", scope)
-    logger.debug(f"Created ingestion run {run.id} for scope: {scope}")
-    bg.add_task(ingest_thunderbird_scope, scope, run.id, False)
-
-    return {
-        "accepted": True,
-        "run_id": run.id,
-        "status": "running",
-    }
-"""
 
 @router.post("/")
 def ingest_source(req_data: GenericIngestRequest, bg: BackgroundTasks):
@@ -79,10 +39,14 @@ def ingest_source(req_data: GenericIngestRequest, bg: BackgroundTasks):
             "type": req_data.type,
             **req_data.data
         }
+        
+        logger.debug(f"Constructed data dict for deserialization: {data_dict}")
         scope = IndexingScope.deserialize(data_dict)
+    
     except ValueError as e:
         logger.error(f"Error deserializing indexing scope: {e}")
         raise HTTPException(status_code=400, detail=str(e))
+
     run = create_run(scope.type, scope)
     logger.debug(f"Created ingestion run {run.id} for scope: {scope}") 
     bg.add_task(ingest_scope, scope, run.id, False)
