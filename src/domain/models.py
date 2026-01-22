@@ -10,6 +10,8 @@ from dataclasses import dataclass
 
 from src.domain.ids import make_source_instance_id, make_thunderbird_source_id
 
+import logging
+logger = logging.getLogger(__name__)
 
 class Document(BaseModel):
     id: str
@@ -160,8 +162,23 @@ class FilesystemIndexingScope(IndexingScope):
 
     @classmethod
     def deserialize(cls, data: dict) -> "FilesystemIndexingScope":
+        raw_dirs = data.get("directories", [])
+        logger.debug(f"Deserializing directories: {raw_dirs!r}")
+
+        if isinstance(raw_dirs, (str, Path)):
+            raw_dirs = [raw_dirs]
+
+        if not isinstance(raw_dirs, list):
+            raise ValueError("directories must be a path or list of paths")
+
+        directories = [Path(p) for p in raw_dirs]
+
+        # Guard against character explosion (belt + suspenders)
+        if any(len(str(p)) == 1 for p in directories):
+            raise ValueError(f"Invalid directories value: {raw_dirs!r}")
+        
         return cls(
-            directories=[Path(p) for p in data["directories"]],
+            directories=directories,
             include_patterns=data.get("include_patterns", []),
             exclude_patterns=data.get("exclude_patterns", []),
         )

@@ -3,9 +3,9 @@ from pathlib import Path
 from typing import List, Optional, Callable
 import hashlib
 from datetime import datetime
-from src.domain.models import Document, FilesystemIndexingScope
+from src.domain.models import Document, FilesystemIndexingScope, IngestionSource
 from src.domain.ids import make_logical_document_id, make_source_instance_id
-from src.domain.ingestion import IngestionSource
+from src.domain.extraction.registry import ExtractorRegistry
 from src.core.wiring import build_extractor_registry
 from fnmatch import fnmatch
 import logging
@@ -28,12 +28,14 @@ if LOSEME_SOURCE_ROOT_HOST is None:
     warnings.warn("LOSEME_SOURCE_ROOT_HOST environment variable is not set. Defaulting to '/host_data'.", UserWarning)
 
 class FilesystemIngestionSource(IngestionSource):
+    _extractor_registry: ExtractorRegistry = build_extractor_registry()
+
     def __init__(self, 
                  scope: FilesystemIndexingScope,
                  should_stop: Optional[Callable[[], bool]] = None
                  ):
+        super().__init__(scope = scope, should_stop=should_stop)
         self.scope = scope
-        self.extractor_registry = build_extractor_registry()
         self.should_stop = should_stop
 
     def _walk_files(self):
@@ -57,6 +59,10 @@ class FilesystemIngestionSource(IngestionSource):
                     all_files.append((root, path))
 
         return sorted(all_files, key=lambda x: str(x[1]))
+    
+    @property
+    def extractor_registry(self) -> ExtractorRegistry:
+        return self._extractor_registry
 
     def iter_documents(self) -> List[Document]:
         """ 

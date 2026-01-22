@@ -42,12 +42,15 @@ def test_ingest_filesystem_success(setup_db):
     file2.write_text("Content of file 2")
 
     response = client.post(
-        "/ingest/filesystem",
+        "/ingest/",
         json={
+            "type": "filesystem",
+            "data" : {
             "directories": [str(ingest_dir)],
             "recursive": True,
             "include_patterns": [],
             "exclude_patterns": [],
+            }
         },
     )
 

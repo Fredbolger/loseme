@@ -3,7 +3,7 @@ from pathlib import Path
 import hashlib
 
 from storage.metadata_db.db import init_db
-from storage.metadata_db.indexing_runs import create_run, load_latest_run
+from storage.metadata_db.indexing_runs import create_run, load_latest_run_by_scope
 from storage.metadata_db.processed_documents import mark_processed, is_processed
 from src.domain.models import FilesystemIndexingScope
 from src.domain.ids import make_source_instance_id
@@ -41,7 +41,7 @@ def test_document_not_reprocessed(setup_db):
     mark_processed(run.id, source_instance_id, content_checksum)
 
     # Reload run as if resuming
-    resumed_run = load_latest_run("filesystem", scope)
+    resumed_run = load_latest_run_by_scope( scope)
 
     # Same document + same content must be recognized
     assert is_processed(

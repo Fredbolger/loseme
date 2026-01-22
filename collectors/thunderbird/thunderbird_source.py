@@ -77,7 +77,10 @@ class ThunderbirdIngestionSource(IngestionSource):
     _ignore_patterns: List[dict] = PrivateAttr()
     _metadata: dict = PrivateAttr()
 
-    def __init__(self, scope: ThunderbirdIndexingScope, should_stop: Callable[[], bool]): 
+    def __init__(self, 
+                 scope: ThunderbirdIndexingScope, 
+                 should_stop: Optional[Callable[[], bool]] = None
+                 ):
         super().__init__(scope=scope, should_stop=should_stop)
         self.scope = scope
         self._mbox_path = scope.mbox_path

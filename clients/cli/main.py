@@ -4,6 +4,13 @@ import os
 from collections import defaultdict
 from clients.cli.opening import open_path
 import warnings
+import logging
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
 
 app = typer.Typer(no_args_is_help=True)
 API_URL = os.environ.get("API_URL")
@@ -71,6 +78,8 @@ def ingest(
     type: str,
 ):
     data = parse_kv_args(ctx.args)
+    
+    logger.debug(f"Ingesting with type: {type}, data: {data}")
 
     payload = {
         "type": type,
