@@ -1,7 +1,7 @@
 from typing import List
 from sentence_transformers import SentenceTransformer
 
-from src.domain.embeddings import EmbeddingProvider
+from src.domain.embeddings import EmbeddingProvider, EmbeddingOutput
 from src.domain.models import Chunk
 
 class SentenceTransformerEmbeddingProvider(EmbeddingProvider):
@@ -12,11 +12,11 @@ class SentenceTransformerEmbeddingProvider(EmbeddingProvider):
     def dimension(self) -> int:
         return self._dimension
 
-    def embed_query(self, text: str) -> List[float]:
+    def embed_query(self, text: str) -> EmbeddingOutput:
         embedding = self.model.encode(
             text,
             normalize_embeddings=True,
             show_progress_bar=False,
         )
-        return embedding.tolist()
 
+        output = EmbeddingOutput(dense=embedding.tolist())

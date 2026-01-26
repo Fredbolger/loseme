@@ -91,7 +91,7 @@ def ingest_scope(scope: IndexingScope, run_id: str, resume: bool = False, stop_a
              
             upsert_document(doc)
             
-            chunks, chunk_texts = chunker.chunk(doc,doc.text)
+            chunks, chunk_texts = chunker.chunk(doc, doc.text)
             embeddings = [embedding_provider.embed_query(text) for text in chunk_texts]
             for chunk, embedding in zip(chunks, embeddings):
                 vector_store.add(chunk, embedding)

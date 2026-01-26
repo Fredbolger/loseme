@@ -1,5 +1,5 @@
 from pathlib import Path
-from src.domain.extraction.base import DocumentExtractor, DocumentExtractionResult
+from pipeline.extraction.base import DocumentExtractor, DocumentExtractionResult
 import os
  
 SOURCE_ROOT = os.getenv("LOSEME_SOURCE_ROOT_HOST")

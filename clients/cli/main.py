@@ -2,7 +2,9 @@ import typer
 import httpx
 import os
 from collections import defaultdict
-from clients.cli.opening import open_path
+from clients.cli.opening import open_descriptor
+from storage.metadata_db.document import retrieve_source 
+from src.domain.models import IngestionSource
 import warnings
 import logging
 
@@ -106,6 +108,10 @@ def search(query: str, top_k: int = 10, interactive: bool = False):
         for hit in hits:
             typer.echo(f"Hit is: {hit}")
         return
+    
+    # Log the chunk ids for debugging
+    for hit in hits:    
+        logger.debug(f"Hit chunk_id: {hit['chunk_id']}, document_id: {hit['document_id']}, score: {hit['score']}")
 
     # group by document_id
     grouped = defaultdict(list)
@@ -119,8 +125,8 @@ def search(query: str, top_k: int = 10, interactive: bool = False):
         documents.append((doc, score, len(chunks)))
 
     documents.sort(key=lambda x: x[1], reverse=True)
-    
-    if len(documents) == 0:
+
+    if not documents:
         typer.echo("No documents found.")
         raise typer.Exit(code=0)
 
@@ -131,8 +137,16 @@ def search(query: str, top_k: int = 10, interactive: bool = False):
 
     choice = typer.prompt("Open document", type=int)
     selected = documents[choice - 1][0]
-    logical_path = os.path.join(LOSEME_SOURCE_ROOT_HOST, selected["source_path"].lstrip("/"))
-    open_path(logical_path)
+
+    # ask API how to open
+    r = httpx.get(f"{API_URL}/documents/{selected['document_id']}/open")
+    r.raise_for_status()
+    descriptor = r.json()
+
+    # execute locally
+    from clients.cli.opening import open_descriptor
+    open_descriptor(descriptor)
+
 
 
 @app.command()

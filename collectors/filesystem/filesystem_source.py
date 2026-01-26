@@ -1,11 +1,13 @@
 import os
 from pathlib import Path
-from typing import List, Optional, Callable
+from typing import List, Optional, Callable, Mapping
 import hashlib
 from datetime import datetime
 from src.domain.models import Document, FilesystemIndexingScope, IngestionSource
+from src.domain.opening import OpenDescriptor
 from src.domain.ids import make_logical_document_id, make_source_instance_id
-from src.domain.extraction.registry import ExtractorRegistry
+from storage.metadata_db.document import get_document_by_id
+from pipeline.extraction.registry import ExtractorRegistry
 from src.core.wiring import build_extractor_registry
 from fnmatch import fnmatch
 import logging
@@ -124,4 +126,70 @@ class FilesystemIngestionSource(IngestionSource):
                             "content_type": extracted.content_type,
                         },
                     )
+    
+    def extract_by_document_id(self,
+                             document_id: str
+                               ) -> Optional[Document]:
+        """
+        Extract a single document's content by its document ID.
+        Args:
+            document_id: The unique identifier of the document to extract.
+        Returns:
+            The extracted Document object, or None if extraction fails.
+        """
+
+        try:
+            doc_record = get_document_by_id(document_id)
+            logger.debug(f"Retrieved document record for ID {document_id}: {doc_record}")
+
+            if doc_record is None:
+                raise ValueError(f"Document with ID {document_id} not found in metadata database.")
+                return None
+
+            source_path = Path(doc_record["source_path"])
+            extracted = self.extractor_registry.extract(source_path)
+            if extracted is None:
+                raise ValueError(f"No suitable extractor found for file: {source_path}")
+                return None
+            document_checksum = hashlib.sha256(
+                   extracted.text.strip().encode("utf-8")
+                   ).hexdigest()
+
+            metadata = doc_record.get("metadat_json", {})
+            
+
+            return Document(
+                id=document_id,
+                source_type="filesystem",
+                source_id=doc_record["source_instance_id"],
+                device_id=doc_record["device_id"],
+                source_path=str(source_path),
+                text=extracted.text,
+                checksum=document_checksum,
+                created_at=datetime.fromtimestamp(source_path.stat().st_ctime),
+                updated_at=datetime.fromtimestamp(source_path.stat().st_mtime),
+                metadata={
+                    **metadata,
+                    "relative_path": os.path.relpath(source_path, LOSEME_DATA_DIR),
+                    "size": source_path.stat().st_size,
+                    "content_type": extracted.content_type,
+                },
+            )
+            
+        except Exception as e:
+            logger.error(f"Error extracting document {document_id}: {e}")
+            return None
+    
+    def get_open_descriptor(self, document: dict) -> OpenDescriptor:
+        source_path = document["source_path"]
+        device_id = document["device_id"]
+
+        return OpenDescriptor(
+            source_type="filesystem",
+            target=source_path,   # always relative
+            extra={
+                "device_id": device_id,
+                "docker_root_host": str(LOSEME_SOURCE_ROOT_HOST),
+            },
+        )
 

@@ -12,23 +12,13 @@ services:
       - LOSEME_DEVICE_ID=MasterMind
       - LOSEME_SOURCE_ROOT_HOST=<DOCKER_ROOT>/
       - LOSEME_CHUNKER=semantic
-      - LOSEME_EMBEDDING_MODEL=bge-m3
-      - LOSEME_VECTOR_STORAGE=qdrant-hybrid
-      - HF_HOME=/root/.cache/huggingface
-      - TRANSFORMERS_CACHE=/root/.cache/huggingface
-      - LOSEME_USE_CUDA=true
+      - LOSEME_EMBEDDING_MODEL=nomic-ai/nomic-embed-text-v1
     volumes:
       - .:/app
       - ./data:/app/data:ro
       - metadata:/var/lib/loseme/metadata
-      - <THUNDERBIRD_EMAIL_PATH>:/app/data/email:ro
-      - hf_cache:/root/.cache/huggingface
+      - <THUNDERBIRD_EMAIL_PATH>:ro
     command: uvicorn api.app.main:app --host 0.0.0.0 --port 8000 --log-level info --reload
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: [gpu]
 
   qdrant:
     image: qdrant/qdrant
@@ -51,9 +41,7 @@ services:
     volumes:
       - .:/app
       - metadata_test:/var/lib/loseme/metadata
-      - <THUNDERBIRD_EMAIL_PATH>:/app/data/email:ro
-      - hf_cache:/root/.cache/huggingface
-
+      - <THUNDERBIRD_EMAIL_PATH>:ro
     working_dir: /app
     environment:
       PYTHONPATH: /app
@@ -64,8 +52,6 @@ services:
       LOSEME_SOURCE_ROOT_HOST: <DOCKER_ROOT>/
       LOSEME_CHUNKER: semantic
       LOSEME_EMBEDDING_MODEL: nomic-ai/nomic-embed-text-v1
-      HF_HOME: /root/.cache/huggingface
-      TRANSFORMERS_CACHE: /root/.cache/huggingface
     depends_on:
       - qdrant_test
       - api
@@ -84,5 +70,4 @@ volumes:
   metadata:
   qdrant_data_test:
   metadata_test:
-  hf_cache:
 

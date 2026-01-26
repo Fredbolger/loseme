@@ -7,7 +7,7 @@ from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field, field_validator, model_validator
 from typing_extensions import Literal
 from dataclasses import dataclass
-
+from abc import abstractmethod
 from src.domain.ids import make_source_instance_id, make_thunderbird_source_id
 
 import logging
@@ -94,6 +94,7 @@ class EmailDocument(Document):
 
 class Chunk(BaseModel):
     id: str
+    source_type: Literal["filesystem", "thunderbird"]
     document_id: str
     device_id: str
     index: int
@@ -103,6 +104,11 @@ class Chunk(BaseModel):
     def ids_must_not_be_empty(cls, v):
         if not v:
             raise ValueError('IDs must not be empty')
+        return v
+    @field_validator('source_type')
+    def source_type_must_be_valid(cls, v):
+        if v not in ["filesystem", "thunderbird"]:
+            raise ValueError('source_type must be either "filesystem" or "thunderbird"')
         return v
     @field_validator('device_id')
     def device_id_must_not_be_empty(cls, v):
@@ -247,6 +253,36 @@ class IngestionSource(BaseModel):
     def iter_documents(self) -> List[Any]:
         """Yield documents for ingestion. Must be implemented by subclasses."""
         raise NotImplementedError
+
+
+    @abstractmethod
+    def get_open_descriptor(self, document_id: str) -> OpenDescriptor:
+        """
+        Describe how this document should be opened by a client.
+        Must be pure, no side effects.
+        """
+        raise NotImplementedError
+    
+    @abstractmethod
+    def extract_by_document_id(self, document_id: str) -> Optional[Document]:
+        """
+        Extract the full Document by its ID.
+        Must be implemented by subclasses.
+        """
+        raise NotImplementedError
+
+    # Fallback implementation
+    def extract_by_document_ids(self, document_ids: List[str]) -> List[Document]:
+        """
+        Extract multiple Documents by their IDs.
+        Fallback to calling extract_by_document_id in a loop if not implemented.
+        """
+        documents = []
+        for doc_id in document_ids:
+            doc = self.extract_by_document_id(doc_id)
+            if doc is not None:
+                documents.append(doc)
+        return documents
 
     @classmethod
     def from_scope(cls, scope: Any, should_stop: Callable[[], bool]) -> "IngestionSource":

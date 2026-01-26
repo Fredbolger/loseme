@@ -4,10 +4,6 @@ import numpy as np
 from src.domain.models import Document, Chunk
 from src.domain.embeddings import EmbeddingProvider
 from src.domain.ids import make_chunk_id
-#from pipeline.embeddings.sentence_transformer import (
-#    SentenceTransformerEmbeddingProvider,
-#)
-
 
 class SemanticChunker:
     """
@@ -83,6 +79,7 @@ class SemanticChunker:
         chunks.append(
             Chunk(
                 id=chunk_id,
+                source_type=document.source_type,
                 document_id=document.id,
                 document_checksum=document.checksum,
                 device_id=document.device_id,

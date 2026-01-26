@@ -1,11 +1,6 @@
 import os
 from qdrant_client import QdrantClient
-
-from storage.vector_db.qdrant_store import QdrantVectorStore
-from pipeline.embeddings.sentence_transformer import (
-    SentenceTransformerEmbeddingProvider,
-)
-from src.core.wiring import build_embedding_provider
+from src.core.wiring import build_embedding_provider, build_vector_store
 
 _vector_store = None
 
@@ -15,8 +10,10 @@ def get_vector_store():
         client = QdrantClient(
             url=os.environ.get("QDRANT_URL", "http://qdrant:6333"),
         )
-        _vector_store = QdrantVectorStore(client)
+
+        _vector_store = build_vector_store(client)
     return _vector_store
 
 def get_embedding_provider():
     return build_embedding_provider()
+

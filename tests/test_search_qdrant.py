@@ -15,6 +15,7 @@ def test_search_qdrant_returns_results(setup_db):
 
     chunk = Chunk(
         id="c1",
+        source_type="filesystem",
         document_id="d1",
         device_id=device_id,
         index=0,
