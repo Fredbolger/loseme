@@ -3,7 +3,7 @@ import os
 import logging
 from typing import List, Tuple
 from qdrant_client import QdrantClient
-from qdrant_client.models import PointStruct, VectorParams, Distance
+from qdrant_client.models import PointStruct, VectorParams, Distance, SparseVector, SparseIndexParams, MultiVectorConfig, MultiVectorComparator, SparseVectorParams
 from qdrant_client.http.exceptions import UnexpectedResponse
 
 from src.core.config import EMBEDDING_MODEL
@@ -21,10 +21,11 @@ def chunk_id_to_uuid(chunk_id: str) -> str:
     return str(uuid.uuid5(uuid.NAMESPACE_URL, chunk_id))
 
 
-class QdrantVectorStore(VectorStore):
+class QdrantVectorStoreHybrid(VectorStore):
     def __init__(self, client: QdrantClient):
         self.client = client
         self.model_name = EMBEDDING_MODEL
+        self.model = build_embedding_provider()
         self._ensure_collection()
     
     def _ensure_collection(self) -> None:
@@ -34,17 +35,48 @@ class QdrantVectorStore(VectorStore):
             logger.info(f"Creating Qdrant collection '{COLLECTION}' with vector size {VECTOR_SIZE}")
             self.client.create_collection(
                 collection_name=COLLECTION,
-                vectors_config=VectorParams(
-                    size=VECTOR_SIZE,
+                vectors_config={
+                    "dense": VectorParams(
+                    size=1024,
                     distance=Distance.COSINE,
                 ),
+                    "colbert": VectorParams(
+                        size=1024,
+                        distance=Distance.COSINE,
+                        multivector_config=MultiVectorConfig(
+                            comparator=MultiVectorComparator.MAX_SIM
+                        ),
+                    ),
+                },
+                sparse_vectors_config={
+                    "sparse": SparseVectorParams(
+                        index=SparseIndexParams(
+                            on_disk=True,
+                        ),
+                    ),
+                },
             )
     
     def add(self, chunk: Chunk, embedding: EmbeddingOutput) -> None:
         self._ensure_collection()
-        vector = embedding.dense 
-        if len(vector) != VECTOR_SIZE:
-            raise ValueError(f"Vector size missmatch: expected {VECTOR_SIZE}, got {len(vector)}")
+        dense_vector = embedding.dense  # Assuming embedding.dense is a list of floats
+        if len(dense_vector) != VECTOR_SIZE:
+            raise ValueError(f"Vector size missmatch: expected {VECTOR_SIZE}, got {len(dense_vector)}")
+        if not embedding.dense:
+            raise ValueError("Dense embedding is required for hybrid vector store.")
+        if not embedding.sparse:
+            raise ValueError("Sparse embedding is required for hybrid vector store.")
+        if not embedding.colbert_vec:
+            raise ValueError("Colbert embedding is required for hybrid vector store.")
+
+        qdrant_sparse_vector = self.create_sparse_vector(embedding.sparse)
+        colbert_vector = embedding.colbert_vec  # Assuming colbert is a list of lists
+
+        vector = {
+            "dense": dense_vector,
+            "colbert": colbert_vector,
+            "sparse": qdrant_sparse_vector,
+        }
 
         self.client.upsert(
             collection_name=COLLECTION,
@@ -63,11 +95,36 @@ class QdrantVectorStore(VectorStore):
                 )
             ],
         )
+    
+    def create_sparse_vector(self, sparse_data):
+        """Convert BGE-M3 sparse output to Qdrant sparse vector format"""
+        sparse_indices = []
+        sparse_values = []
+
+        for key, value in sparse_data.items():
+            # Only process positive values
+            if float(value) > 0:
+                # Handle string keys
+                if isinstance(key, str):
+                    if key.isdigit():
+                        key = int(key)
+                    else:
+                        continue
+
+                sparse_indices.append(key)
+                sparse_values.append(float(value))
+
+        return SparseVector(
+            indices=sparse_indices,
+            values=sparse_values
+        )
+
 
     def search(
         self, 
-        query_vector: List[float], 
-        top_k: int
+        query_embedding: EmbeddingOutput,
+        top_k: int,
+        prefetch_limit = 10, 
     ) -> List[Tuple[Chunk, float]]:
         """
         Search for similar chunks.
@@ -75,14 +132,41 @@ class QdrantVectorStore(VectorStore):
         Returns:
             List of (chunk, score) tuples ordered by descending similarity
         """
+        
         self._ensure_collection()
 
-        hits = self.client.query_points(
-            collection_name=COLLECTION,
-            query=query_vector.dense,
-            limit=top_k,
-        )
+        if not query_embedding.dense:
+            raise ValueError("Dense embedding is required for hybrid vector store search.")
+        if not query_embedding.sparse:
+            raise ValueError("Sparse embedding is required for hybrid vector store search.")
+        if not query_embedding.colbert_vec:
+            raise ValueError("Colbert embedding is required for hybrid vector store search.")
 
+        dense_vector = query_embedding.dense
+        sparse_vector = self.create_sparse_vector(query_embedding.sparse)
+        colbert_vector = query_embedding.colbert_vec
+        
+        prefetch = [
+                self.model.Prefetch(
+                    query=sparse_vector,
+                    using="sparse",
+                    limit=prefetch_limit),
+                self.model.Prefetch(
+                    query=dense_vector,
+                    using="dense",
+                    limit=prefetch_limit),
+                ]
+
+        # perform re-ranking with colbert vectors
+        hits = self.client.query_points(
+                collection_name=COLLECTION,
+                prefetch=prefetch,
+                query=colbert_vector,
+                using="colbert",
+                with_payload=True,
+                limit=top_k,
+            )
+    
         results = []
         for hit in hits.points:
             chunk = Chunk(
@@ -93,11 +177,10 @@ class QdrantVectorStore(VectorStore):
                 index=hit.payload["index"],
                 metadata=hit.payload.get("metadata", {}),
             )
-            # Qdrant returns similarity scores, higher = more similar
-            score = hit.score if hasattr(hit, 'score') else 0.0
+            score = hit.score if hit.score is not None else 0.0
             results.append((chunk, score))
         
-        return results
+        return results        
 
     def clear(self) -> None:
         if os.environ.get("ALLOW_VECTOR_CLEAR", "false").lower() != "1":

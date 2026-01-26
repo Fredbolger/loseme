@@ -17,3 +17,8 @@ def setup_db():
     init_db()
     yield
     clear_all()
+
+@pytest.fixture
+def set_embedding_model_env(monkeypatch):
+    monkeypatch.setenv("EMBEDDING_MODEL", "bge-m3")
+    return "EMBEDDING_MODEL"

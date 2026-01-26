@@ -1,6 +1,7 @@
 import json
+from typing import Optional, Tuple
 from storage.metadata_db.db import execute, fetch_one
-from src.domain.models import Document
+from src.domain.models import Document, IndexingScope, IngestionSource
 
 def upsert_document(doc: Document) -> None:
     execute(
@@ -35,10 +36,40 @@ def upsert_document(doc: Document) -> None:
         ),
     )
 
-def get_document(document_id: str):
+def get_document_by_id(document_id: str) -> Optional[dict]:
     row = fetch_one(
         "SELECT * FROM documents WHERE document_id = ?",
         (document_id,),
     )
     return dict(row) if row else None
 
+def retrieve_source(document_id: str) -> Optional[Tuple[str, IndexingScope]]:
+    """
+    Retrieve the source type and indexing scope that produced a document.
+
+    Uses the most recent indexing run that processed the document's
+    source_instance_id + logical_checksum.
+    """
+    row = fetch_one(
+        """
+        SELECT
+            r.source_type AS source_type,
+            r.scope_json AS scope_json
+        FROM documents d
+        JOIN processed_documents p
+          ON p.source_instance_id = d.source_instance_id
+         AND p.content_hash = d.logical_checksum
+        JOIN indexing_runs r
+          ON r.id = p.run_id
+        WHERE d.document_id = ?
+        ORDER BY r.started_at DESC
+        LIMIT 1
+        """,
+        (document_id,),
+    )
+
+    if row is None:
+        return None
+
+    scope = IndexingScope.deserialize(json.loads(row["scope_json"]))
+    return row["source_type"], scope

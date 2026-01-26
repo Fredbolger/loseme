@@ -10,8 +10,8 @@ from pathlib import Path
 from unittest.mock import patch
 from collectors.filesystem.filesystem_source import FilesystemIngestionSource
 from src.domain.models import FilesystemIndexingScope
-from src.domain.extraction.registry import ExtractorRegistry
-from src.domain.extraction.plaintext import PlainTextExtractor
+from pipeline.extraction.registry import ExtractorRegistry
+from pipeline.extraction.plaintext import PlainTextExtractor
 import pytest
 
 @pytest.fixture(autouse=True)

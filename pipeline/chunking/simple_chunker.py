@@ -36,7 +36,7 @@ class SimpleTextChunker:
             chunks.append(
                 Chunk(
                     id=chunk_id,
-                    
+                    source_type=document.source_type,
                     document_id=document.id,
                     document_checksum=document.checksum,
                     device_id=document.device_id,

@@ -8,6 +8,8 @@ from storage.vector_db.runtime import (
     get_embedding_provider,
 )
 
+from src.core.wiring import build_cross_encoding_provider
+
 router = APIRouter(prefix="/search", tags=["search"])
 
 
@@ -40,6 +42,7 @@ def search(req: SearchRequest) -> SearchResponse:
         Search results with chunks, scores, and metadata
     """
     embedder = get_embedding_provider()
+    #reranker = build_cross_encoding_provider()
     store = get_vector_store()
 
     # Embed the query
@@ -47,6 +50,9 @@ def search(req: SearchRequest) -> SearchResponse:
 
     # Search returns List[Tuple[Chunk, float]]
     results = store.search(query_vector, top_k=req.top_k)
+
+    query = req.query    
+    # Rerank results using cross-encoder
 
     # Transform to response format
     search_results = []

@@ -13,8 +13,13 @@ COPY . /app
 RUN pip install --upgrade pip wheel setuptools
 
 RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+#RUN pip install torch torchvision torchaudio \
+#    --index-url https://download.pytorch.org/whl/cu121
 
-RUN pip install "transformers>=4.35" "tokenizers>=0.15"
+RUN pip install "transformers>=4.41" "tokenizers>=0.15"
+
+RUN pip install "FlagEmbedding==1.3.2"
+
 
 # Python dependencies (API runtime)
 RUN pip install \

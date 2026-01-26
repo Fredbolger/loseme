@@ -1,5 +1,5 @@
 from pathlib import Path
-from src.domain.extraction.base import DocumentExtractor, DocumentExtractionResult
+from pipeline.extraction.base import DocumentExtractor, DocumentExtractionResult
 from pypdf import PdfReader
 
 class PDFExtractor(DocumentExtractor):

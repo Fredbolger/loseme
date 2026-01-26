@@ -5,8 +5,10 @@ from pydantic import PrivateAttr
 import hashlib
 from datetime import datetime
 from src.domain.models import EmailDocument, ThunderbirdIndexingScope, IngestionSource
+from src.domain.opening import OpenDescriptor
 from src.domain.ids import make_logical_document_id, make_source_instance_id
-from src.domain.extraction.registry import ExtractorRegistry
+from pipeline.extraction.registry import ExtractorRegistry
+from storage.metadata_db.document import get_document_by_id
 from fnmatch import fnmatch
 from email.header import decode_header, make_header
 import mailbox
@@ -177,3 +179,75 @@ class ThunderbirdIngestionSource(IngestionSource):
         # Fallback to a hash of From, To, Date, Subject if Message-ID is missing
         unique_string = f"{message.get('From')}|{message.get('To')}|{message.get('Date')}|{message.get('Subject')}"
         return hashlib.sha256(unique_string.encode("utf-8")).hexdigest()
+
+    def get_open_descriptor(self, email_document: dict) -> OpenDescriptor:
+        return OpenDescriptor(
+            source_type="thunderbird",
+            target=email_document["source_path"],
+        )
+
+    def extract_by_document_id(self,
+                             document_id: str
+                               ) -> Optional[EmailDocument]:
+        """
+        Extract a single email document's content by its document ID.
+        """
+
+        doc_record = get_document_by_id(document_id)
+
+        if doc_record is None:
+            raise ValueError(f"Document with ID {document_id} not found in metadata database.")
+            return None
+
+        logger.debug(f"Retrieved document record for ID {document_id}: {doc_record}")
+
+        mbox_path = self.mbox_path
+        mbox = mailbox.mbox(mbox_path)
+        
+        logger.debug(f"Searching for document ID {document_id} in mbox {mbox_path}.")
+    
+        for message in mbox:
+            email_doc = self._build_email_document(
+                message=message,
+                mbox_path=str(mbox_path)
+            )
+            if email_doc.id == document_id:
+                return email_doc
+
+        raise ValueError(f"Document with ID {document_id} not found in mbox {mbox_path}.")
+        return None
+    
+    def extract_by_document_ids(self,
+                                 document_ids: List[str]
+                                   ) -> List[EmailDocument]:
+        """
+        Extract multiple email documents' content by their document IDs.
+        """
+
+        doc_records = [get_document_by_id(doc_id) for doc_id in document_ids]
+        found_doc_ids = {doc['document_id'] for doc in doc_records if doc is not None}
+
+        logger.debug(f"Retrieved document records for IDs {document_ids}: {doc_records}")
+
+        mbox_path = self.mbox_path
+        mbox = mailbox.mbox(mbox_path)
+        
+        logger.debug(f"Searching for document IDs {document_ids} in mbox {mbox_path}.")
+
+        extracted_documents = []
+
+        for message in mbox:
+            email_doc = self._build_email_document(
+                message=message,
+                mbox_path=str(mbox_path)
+            )
+            if email_doc.id in found_doc_ids:
+                extracted_documents.append(email_doc)
+                if len(extracted_documents) == len(found_doc_ids):
+                    break
+
+        if len(extracted_documents) < len(found_doc_ids):
+            missing_ids = found_doc_ids - {doc.id for doc in extracted_documents}
+            logger.warning(f"Documents with IDs {missing_ids} not found in mbox {mbox_path}.")
+
+        return extracted_documents

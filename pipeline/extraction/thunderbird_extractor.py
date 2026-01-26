@@ -1,5 +1,5 @@
 from pathlib import Path
-from src.domain.extraction.base import DocumentExtractor, DocumentExtractionResult
+from pipeline.extraction.base import DocumentExtractor, DocumentExtractionResult
 from email.header import decode_header, make_header
 import mailbox
 from bs4 import BeautifulSoup

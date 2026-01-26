@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Optional, List
-from .base import DocumentExtractor, DocumentExtractionResult
+from pipeline.extraction.base import DocumentExtractor, DocumentExtractionResult
 import logging
 
 logger = logging.getLogger(__name__)
