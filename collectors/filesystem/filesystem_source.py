@@ -21,13 +21,6 @@ if device_id is None:
     warnings.warn("LOSEME_DEVICE_ID environment variable is not set. Defaulting to 'unknown_device'.", UserWarning)
     device_id = "unknown_device"
 
-LOSEME_DATA_DIR = Path(os.environ.get("LOSEME_DATA_DIR"))
-if LOSEME_DATA_DIR is None:
-    warnings.warn("LOSEME_DATA_DIR environment variable is not set. Defaulting to '/data'.", UserWarning)
-
-LOSEME_SOURCE_ROOT_HOST = Path(os.environ.get("LOSEME_SOURCE_ROOT_HOST"))
-if LOSEME_SOURCE_ROOT_HOST is None:
-    warnings.warn("LOSEME_SOURCE_ROOT_HOST environment variable is not set. Defaulting to '/host_data'.", UserWarning)
 
 class FilesystemIngestionSource(IngestionSource):
     _extractor_registry: ExtractorRegistry = build_extractor_registry()
@@ -189,7 +182,7 @@ class FilesystemIngestionSource(IngestionSource):
             target=source_path,   # always relative
             extra={
                 "device_id": device_id,
-                "docker_root_host": str(LOSEME_SOURCE_ROOT_HOST),
+                #"docker_root_host": str(LOSEME_SOURCE_ROOT_HOST),
             },
         )
 

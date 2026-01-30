@@ -32,6 +32,7 @@ def create_run(
         """
         INSERT INTO indexing_runs (
             id,
+            celery_task_id,
             source_type,
             scope_json,
             status,
@@ -42,7 +43,7 @@ def create_run(
             indexed_document_count,
             stop_requested
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, 0)
+        VALUES (?, 0, ?, ?, ?, ?, ?, ?, 0, 0, 0)
         """,
         (
             run_id,
@@ -57,6 +58,7 @@ def create_run(
 
     return IndexingRun(
         id=run_id,
+        celery_task_id="0",
         scope=scope,
         status="running",
         start_time=datetime.fromisoformat(now),
@@ -107,6 +109,7 @@ def load_latest_run_by_scope(
             
             return IndexingRun(
                 id=row["id"],
+                celery_task_id=row["celery_task_id"],
                 scope=IndexingScope.deserialize(json.loads(stored_scope_json)),
                 status=row["status"],
                 start_time=datetime.fromisoformat(row["started_at"]),
@@ -148,6 +151,7 @@ def load_latest_run_by_type(
 
     return IndexingRun(
         id=row["id"],
+        celery_task_id=row["celery_task_id"],
         scope=IndexingScope.deserialize(json.loads(row["scope_json"])),
         status=row["status"],
         start_time=datetime.fromisoformat(row["started_at"]),
@@ -217,6 +221,7 @@ def show_runs(truncate_completed: bool = True) -> list[IndexingRun]:
         runs.append(
             IndexingRun(
                 id=row["id"],
+                celery_task_id=row["celery_task_id"],
                 scope=IndexingScope.deserialize(json.loads(row["scope_json"])),
                 status=row["status"],
                 start_time=datetime.fromisoformat(row["started_at"]),
@@ -285,6 +290,7 @@ def load_latest_interrupted(
 
     return IndexingRun(
         id=row["id"],
+        celery_task_id=row["celery_task_id"],
         scope=IndexingScope.deserialize(json.loads(row["scope_json"])),
         status=row["status"],
         start_time=datetime.fromisoformat(row["started_at"]),
@@ -316,6 +322,7 @@ def load_run_by_id(
 
     return IndexingRun(
         id=row["id"],
+        celery_task_id =row["celery_task_id"],
         scope=IndexingScope.deserialize(json.loads(row["scope_json"])),
         status=row["status"],
         start_time=datetime.fromisoformat(row["started_at"]),

@@ -1,185 +1,208 @@
+import os
 import typer
 import httpx
-import os
-from collections import defaultdict
-from clients.cli.opening import open_descriptor
-from storage.metadata_db.document import retrieve_source 
-from src.domain.models import IngestionSource
-import warnings
 import logging
+from pathlib import Path
+from typing import List, Dict, Any
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+from collectors.filesystem.filesystem_source import FilesystemIngestionSource
+from collectors.thunderbird.thunderbird_source import ThunderbirdIngestionSource
+from storage.metadata_db.indexing_runs import create_run
+from src.domain.models import FilesystemIndexingScope, ThunderbirdIndexingScope
+from src.core.wiring import build_chunker
 
 app = typer.Typer(no_args_is_help=True)
-API_URL = os.environ.get("API_URL")
-LOSEME_SOURCE_ROOT_HOST = os.environ.get("LOSEME_SOURCE_ROOT_HOST")
+ingest = typer.Typer(no_args_is_help=True)
+app.add_typer(ingest, name="ingest")
+run = typer.Typer(no_args_is_help=True)
+app.add_typer(run, name="run")
 
-if API_URL is None:
-    warnings.warn("API_URL environment variable is not set. Defaulting to 'http://localhost:8000'.", UserWarning)
-    API_URL = "http://localhost:8000"
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
-if LOSEME_SOURCE_ROOT_HOST is None:
-    warnings.warn("LOSEME_SOURCE_ROOT_HOST environment variable is not set. Defaulting to '/host_data'.", UserWarning)
-    LOSEME_SOURCE_ROOT_HOST = "/run/media/ben/data/Nextcloud/Home/H_Projects/loseme/data/"
+API_URL = os.environ.get("API_URL", "http://localhost:8000")
+DEVICE_ID = os.environ.get("LOSEME_DEVICE_ID", "unknown-device")
 
-def parse_kv_args(args: list[str]) -> dict:
-    data: dict[str, Any] = {}
+BATCH_SIZE = 20  # tune this
 
-    for arg in args:
-        if "=" not in arg:
-            raise typer.BadParameter(
-                f"Invalid argument '{arg}'. Expected key=value."
-            )
+@ingest.command("filesystem")
+def ingest_filesystem(
+    path: Path = typer.Argument(..., exists=True, file_okay=False),
+    recursive: bool = True,
+):
+    """
+    Ingest a local filesystem directory.
+    Extraction + chunking happens locally.
+    Embedding + storage happens in the backend.
+    """
 
-        key, raw_value = arg.split("=", 1)
-        value = coerce_value(raw_value)
+    logger.info(f"Starting filesystem ingestion for {path}")
 
-        if key in data:
-            if not isinstance(data[key], list):
-                data[key] = [data[key]]
-            data[key].append(value)
-        else:
-            data[key] = value
+    scope = FilesystemIndexingScope(
+        directories=[path],
+        recursive=recursive,
+        include_patterns=[],
+        exclude_patterns=[],
+    )
 
-    return data
+    source = FilesystemIngestionSource(scope, should_stop=lambda: False)
+    logger.debug(f"Created FilesystemIngestionSource with scope: {scope}")
 
+    run_response = httpx.post(
+        f"{API_URL}/runs/create",
+        json={
+            "source_type": "filesystem",
+            "scope_json": scope.serialize(),
+        },
+    )
+    run_response.raise_for_status()
 
-def coerce_value(value: str):
-    if value.lower() in ("true", "false"):
-        return value.lower() == "true"
+    run_id = str(run_response.json()["run_id"])
+    logger.info(f"Created indexing run with ID: {run_id}")
 
-    if value.isdigit():
-        return int(value)
+    documents_batch: list[dict] = []
+    sent_any = False
 
-    return value
+    for doc in source.iter_documents():
+        logger.info(
+            f"Processing document {doc.source_path} (ID: {doc.id}) "
+            f"with size {len(doc.text)} characters"
+        )
 
+        documents_batch.append(
+            {
+                "id": doc.id,
+                "source_type": doc.source_type,
+                "source_id": doc.source_id,
+                "device_id": doc.device_id,
+                "source_path": str(doc.source_path),
+                "checksum": doc.checksum,
+                "created_at": doc.created_at.isoformat(),
+                "updated_at": doc.updated_at.isoformat(),
+                "metadata": doc.metadata,
+                "text": doc.text,
+            }
+        )
 
-@app.command()
-def ingest_filesystem(path: str):
-    """Ingest a folder into semantic memory."""
+        # 3️⃣ flush batch
+        if len(documents_batch) >= BATCH_SIZE:
+            _send_batch(run_id, documents_batch)
+            documents_batch.clear()
+            sent_any = True
+
+    # 4️⃣ flush remainder
+    if documents_batch:
+        _send_batch(run_id, documents_batch)
+        sent_any = True
+
+    if not sent_any:
+        typer.echo("No documents found.")
+        raise typer.Exit(code=0)
+
+    typer.echo("Filesystem ingestion completed successfully.")
+
+def _send_batch(run_id: str, batch: list[dict]) -> None:
+    logger.debug(
+        f"Sending batch with {len(batch)} documents for run {run_id}"
+    )
+
     r = httpx.post(
-        f"{API_URL}/ingest/filesystem",
-        json={"directories": [path],
-              "recursive": True,
-              "include_patterns": [],
-              "exclude_patterns": []
-              },
+        f"{API_URL}/ingest/documents",
+        json={
+            "run_id": run_id,
+            "documents": batch,
+        },
+        timeout=120.0,
     )
     r.raise_for_status()
-    data = r.json()
-    typer.echo(f"Ingestion started. Run ID: {data['run_id']}")
 
 
-@app.command(context_settings={"allow_extra_args": True})
-def ingest(
-    ctx: typer.Context,
-    type: str,
+@ingest.command("thunderbird")
+def ingest_thunderbird(
+    mbox: str = typer.Option(..., "--mbox"),
+    ignore_from: List[str] = typer.Option([], "--ignore-from"),
 ):
-    data = parse_kv_args(ctx.args)
-    
-    logger.debug(f"Ingesting with type: {type}, data: {data}")
+    """
+    Ingest Thunderbird mailboxes.
+    Extraction + chunking happens locally.
+    Embedding + storage happens in the backend.
+    """
 
-    payload = {
-        "type": type,
-        "data": data,
-    }
+    mbox = str(mbox)
+    logger.info(f"Starting Thunderbird ingestion for {mbox}")
 
-    r = httpx.post(f"{API_URL}/ingest/", json=payload)
+    scope = ThunderbirdIndexingScope(
+        type="thunderbird",
+        mbox_path=mbox,
+        ignore_patterns=[{"field": "from", "value": v} for v in ignore_from],
+    )
+
+    source = ThunderbirdIngestionSource(scope=scope, should_stop=lambda: False)
+
+    documents_payload: List[Dict[str, Any]] = []
+
+    for doc in source.iter_documents():
+        documents_payload.append(
+            {
+                "id": doc.id,
+                "source_type": doc.source_type,
+                "source_id": doc.source_id,
+                "device_id": doc.device_id,
+                "source_path": str(doc.source_path),
+                "checksum": doc.checksum,
+                "created_at": doc.created_at.isoformat(),
+                "updated_at": doc.updated_at.isoformat(),
+                "metadata": doc.metadata,
+                "text": doc.text,
+            }
+        )
+
+    if not documents_payload:
+        typer.echo("No emails found.")
+        raise typer.Exit(code=0)
+
+    r = httpx.post(
+        f"{API_URL}/ingest/documents",
+        json={"documents": documents_payload},
+        timeout=60.0,
+    )
     r.raise_for_status()
 
-    result = r.json()
-    typer.echo(f"Ingestion started. Run ID: {result['run_id']}")
+    typer.echo("Thunderbird ingestion completed successfully.")
+
+@run.command()
+def list():
+    r = httpx.get(f"{API_URL}/runs/list")
+    r.raise_for_status()
+
+    for run in r.json()["runs"]:
+        typer.echo(run)
+
+@run.command()
+def stop_latest(source_type: str):
+    r = httpx.post(f"{API_URL}/runs/stop_latest/{source_type}")
+    r.raise_for_status()
+
+    typer.echo(r.json())
+
+@run.command()
+def resume_latest(source_type: str):
+    r = httpx.post(f"{API_URL}/ingest/resume_latest/{source_type}")
+    r.raise_for_status()
+
+    typer.echo(r.json())
 
 @app.command()
-def search(query: str, top_k: int = 10, interactive: bool = False):
-    """Semantic search."""
+def search(query: str, top_k: int = 10):
     r = httpx.post(
         f"{API_URL}/search",
         json={"query": query, "top_k": top_k},
     )
     r.raise_for_status()
-    hits = r.json()["results"]
 
-    if not interactive:
-        for hit in hits:
-            typer.echo(f"Hit is: {hit}")
-        return
-    
-    # Log the chunk ids for debugging
-    for hit in hits:    
-        logger.debug(f"Hit chunk_id: {hit['chunk_id']}, document_id: {hit['document_id']}, score: {hit['score']}")
+    for hit in r.json()["results"]:
+        typer.echo(hit)
 
-    # group by document_id
-    grouped = defaultdict(list)
-    for hit in hits:
-        grouped[hit["document_id"]].append(hit)
-
-    documents = []
-    for doc_id, chunks in grouped.items():
-        doc = httpx.get(f"{API_URL}/documents/{doc_id}").json()
-        score = max(c["score"] for c in chunks)
-        documents.append((doc, score, len(chunks)))
-
-    documents.sort(key=lambda x: x[1], reverse=True)
-
-    if not documents:
-        typer.echo("No documents found.")
-        raise typer.Exit(code=0)
-
-    for i, (doc, score, count) in enumerate(documents, start=1):
-        typer.echo(
-            f"{i}) {doc['source_path']}  score={score:.3f}  chunks={count}"
-        )
-
-    choice = typer.prompt("Open document", type=int)
-    selected = documents[choice - 1][0]
-
-    # ask API how to open
-    r = httpx.get(f"{API_URL}/documents/{selected['document_id']}/open")
-    r.raise_for_status()
-    descriptor = r.json()
-
-    # execute locally
-    from clients.cli.opening import open_descriptor
-    open_descriptor(descriptor)
-
-
-
-@app.command()
-def get_document(document_id: str):
-    """Retrieve document metadata by document ID."""
-    r = httpx.get(f"{API_URL}/documents/{document_id}")
-    if r.status_code == 404:
-        typer.echo(f"Document with ID {document_id} not found.")
-        raise typer.Exit(code=1)
-    r.raise_for_status()
-    document = r.json()
-    typer.echo(document)
-
-@app.command()
-def stop_latest_run(source_type: str):
-    """Stop the latest ingestion run for a given source type."""
-    r = httpx.post(f"{API_URL}/ingest/stop_latest/{source_type}")
-    if r.status_code == 404:
-        typer.echo(f"No active ingestion run found for source type '{source_type}'.")
-        raise typer.Exit(code=1)
-    r.raise_for_status()
-    typer.echo(f"Stop request sent for latest ingestion run of type '{source_type}'.")
-
-@app.command()
-def resume_latest_run(source_type: str):
-    """Resume the latest interrupted ingestion run for a given source type."""
-    r = httpx.post(f"{API_URL}/ingest/resume_latest/{source_type}")
-    if r.status_code == 404:
-        typer.echo(f"No interrupted ingestion run found for source type '{source_type}'.")
-        raise typer.Exit(code=1)
-    r.raise_for_status()
-    data = r.json()
-    typer.echo(f"Resumed ingestion run. Run ID: {data['run_id']}")
 
 if __name__ == "__main__":
     app()

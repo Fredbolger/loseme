@@ -25,6 +25,14 @@ class NomicEmbeddingProvider(EmbeddingProvider):
             normalize_embeddings=True,
         ).tolist()
         return EmbeddingOutput(dense=embedding)
+    
+    def batch_embed_documents(self, texts: List[str]) -> List[EmbeddingOutput]:
+        annotated_texts = ["search_document: " + text for text in texts]
+        embeddings = self._model.encode(
+            annotated_texts,
+            normalize_embeddings=True,
+        )
+        return [EmbeddingOutput(dense=embedding.tolist()) for embedding in embeddings]
 
     def dimension(self) -> int:
         return self._model.get_sentence_embedding_dimension()

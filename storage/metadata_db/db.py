@@ -25,6 +25,7 @@ def init_db() -> None:
             """
             CREATE TABLE IF NOT EXISTS indexing_runs (
                 id TEXT PRIMARY KEY,
+                celery_task_id TEXT NOT NULL,
                 source_type TEXT NOT NULL,
                 scope_json TEXT NOT NULL,
                 status TEXT NOT NULL,
