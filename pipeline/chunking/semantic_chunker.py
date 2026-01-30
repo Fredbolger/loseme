@@ -27,12 +27,13 @@ class SemanticChunker:
         self.similarity_threshold = similarity_threshold
         self.max_chars = max_chars
         self.embedder = embedder
-
+    
     def chunk(self, document: Document, text: str) -> Tuple[List[Chunk], List[str]]:
         units = self._split_paragraphs(text)
         if not units:
             return [], []
-        
+
+        # Embed each unit
         embeddings = [self.embedder.embed_query(u) for u in units]
 
         chunks: List[Chunk] = []
@@ -43,24 +44,24 @@ class SemanticChunker:
         index = 0
 
         for i in range(1, len(units)):
-            sim = float(np.dot(embeddings[i - 1], embeddings[i]))
+            # Extract dense vectors before computing similarity
+            vec_prev = np.array(embeddings[i - 1].dense)
+            vec_curr = np.array(embeddings[i].dense)
+            sim = float(np.dot(vec_prev, vec_curr))
 
-            if (
-                sim >= self.similarity_threshold
-                and buffer_len + len(units[i]) <= self.max_chars
-            ):
+            if sim >= self.similarity_threshold and buffer_len + len(units[i]) <= self.max_chars:
                 buffer += "\n\n" + units[i]
                 buffer_len += len(units[i])
             else:
-                self._emit_chunk(
-                    document, buffer, index, chunks, chunk_texts
-                )
+                self._emit_chunk(document, buffer, index, chunks, chunk_texts)
                 index += 1
                 buffer = units[i]
                 buffer_len = len(buffer)
 
+        # Emit last buffer
         self._emit_chunk(document, buffer, index, chunks, chunk_texts)
         return chunks, chunk_texts
+
 
     def _emit_chunk(
         self,

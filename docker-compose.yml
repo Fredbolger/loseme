@@ -7,10 +7,8 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - LOSEME_DATA_DIR=/data
       - QDRANT_URL=http://qdrant:6333
       - LOSEME_DEVICE_ID=MasterMind
-      - LOSEME_SOURCE_ROOT_HOST=<DOCKER_ROOT>/
       - LOSEME_CHUNKER=semantic
       - LOSEME_EMBEDDING_MODEL=bge-m3
       - LOSEME_VECTOR_STORAGE=qdrant-hybrid
@@ -19,9 +17,7 @@ services:
       - LOSEME_USE_CUDA=true
     volumes:
       - .:/app
-      - ./data:/app/data:ro
       - metadata:/var/lib/loseme/metadata
-      - <THUNDERBIRD_EMAIL_PATH>:/app/data/email:ro
       - hf_cache:/root/.cache/huggingface
     command: uvicorn api.app.main:app --host 0.0.0.0 --port 8000 --log-level info --reload
     deploy:
@@ -51,7 +47,6 @@ services:
     volumes:
       - .:/app
       - metadata_test:/var/lib/loseme/metadata
-      - <THUNDERBIRD_EMAIL_PATH>:/app/data/email:ro
       - hf_cache:/root/.cache/huggingface
 
     working_dir: /app
@@ -60,8 +55,6 @@ services:
       QDRANT_URL: http://qdrant_test:6333
       ALLOW_VECTOR_CLEAR: "1"
       LOSEME_DEVICE_ID: "MasterMind"
-      LOSEME_DATA_DIR: "/data"
-      LOSEME_SOURCE_ROOT_HOST: <DOCKER_ROOT>/
       LOSEME_CHUNKER: semantic
       LOSEME_EMBEDDING_MODEL: nomic-ai/nomic-embed-text-v1
       HF_HOME: /root/.cache/huggingface

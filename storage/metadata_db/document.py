@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 from storage.metadata_db.db import execute, fetch_one
 from src.domain.models import Document, IndexingScope, IngestionSource
 
-def upsert_document(doc: Document) -> None:
+def upsert_document(doc: dict) -> None:
     execute(
         """
         INSERT INTO documents (
@@ -24,15 +24,15 @@ def upsert_document(doc: Document) -> None:
             updated_at = excluded.updated_at
         """,
         (
-            doc.id,
-            doc.checksum,
-            doc.source_type,
-            doc.source_id,
-            doc.device_id,
-            doc.source_path,
-            json.dumps(doc.metadata),
-            doc.created_at.isoformat(),
-            doc.updated_at.isoformat(),
+            doc["id"],
+            doc["checksum"],
+            doc["source_type"],
+            doc["source_id"],
+            doc["device_id"],
+            doc["source_path"],
+            json.dumps(doc.get("metadata", {})),
+            doc["created_at"].isoformat(),
+            doc["updated_at"].isoformat(),
         ),
     )
 

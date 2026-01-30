@@ -19,7 +19,7 @@ class Document(BaseModel):
     source_id: str
     device_id: str
     source_path: str
-    text: str
+    text: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
     checksum: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -33,9 +33,17 @@ class Document(BaseModel):
             and "source_path" in data
             and "device_id" in data
         ):
-            data["source_id"] = make_source_instance_id(...)
+            data["source_id"] = make_source_instance_id(
+                source_type=data["source_type"],
+                source_path=Path(data["source_path"]),
+                device_id=data["device_id"],
+            )
         super().__init__(**data)
 
+    def to_dict(self):
+        d = self.model_dump()
+        d["source_path"] = str(d["source_path"])
+        return d
 
     @field_validator('id')
     def id_must_not_be_empty(cls, v):
@@ -94,7 +102,8 @@ class EmailDocument(Document):
 
 class Chunk(BaseModel):
     id: str
-    source_type: Literal["filesystem", "thunderbird"]
+    source_type: str  # e.g., "text", "image", etc.
+    text: Optional[str] = None
     document_id: str
     device_id: str
     index: int
@@ -104,11 +113,6 @@ class Chunk(BaseModel):
     def ids_must_not_be_empty(cls, v):
         if not v:
             raise ValueError('IDs must not be empty')
-        return v
-    @field_validator('source_type')
-    def source_type_must_be_valid(cls, v):
-        if v not in ["filesystem", "thunderbird"]:
-            raise ValueError('source_type must be either "filesystem" or "thunderbird"')
         return v
     @field_validator('device_id')
     def device_id_must_not_be_empty(cls, v):
@@ -210,6 +214,7 @@ class ThunderbirdIndexingScope(IndexingScope):
 
 class IndexingRun(BaseModel):
     id: str
+    celery_id: str = "0"
     scope: IndexingScope
     start_time: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)

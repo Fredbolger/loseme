@@ -12,9 +12,9 @@ COPY . /app
 
 RUN pip install --upgrade pip wheel setuptools
 
-RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-#RUN pip install torch torchvision torchaudio \
-#    --index-url https://download.pytorch.org/whl/cu121
+#RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+RUN pip install torch torchvision torchaudio \
+    --index-url https://download.pytorch.org/whl/cu121
 
 RUN pip install "transformers>=4.41" "tokenizers>=0.15"
 
@@ -33,8 +33,11 @@ RUN pip install \
     qdrant-client>=1.7.0\
     sentence-transformers>=2.6\
     einops \
-    pypdf\
-    bs4
+    pypdf \
+    bs4 \
+    celery \ 
+    redis
+
 
 # 🔑 Ensure consistent imports everywhere
 ENV PYTHONPATH=/app

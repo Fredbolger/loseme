@@ -29,6 +29,7 @@ class QdrantVectorStore(VectorStore):
     
     def _ensure_collection(self) -> None:
         try:
+            logger.debug(f"Checking for Qdrant collection '{COLLECTION}'")
             self.client.get_collection(COLLECTION)
         except UnexpectedResponse:
             logger.info(f"Creating Qdrant collection '{COLLECTION}' with vector size {VECTOR_SIZE}")
