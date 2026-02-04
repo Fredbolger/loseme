@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from storage.metadata_db.indexing_runs import create_run, load_latest_run_by_type, request_stop, show_runs
+from storage.metadata_db.indexing_runs import create_run, load_latest_run_by_type, request_stop, show_runs, increment_discovered_count, load_latest_interrupted
 from src.domain.models import IndexingScope
 import json
 import logging
@@ -41,6 +41,34 @@ def stop_latest_indexing_run(source_type: str):
         "status": "stop_requested",
     }
 
+@router.get("/is_stop_requested/{run_id}")
+def is_stop_requested(run_id: str):
+    from storage.metadata_db.indexing_runs import is_stop_requested
+    stop_requested = is_stop_requested(run_id)
+    return {
+        "run_id": run_id,
+        "stop_requested": stop_requested,
+    }
+
+@router.get("/resume_latest/{source_type}")
+def load_latest_indexing_run(source_type: str):
+    run = load_latest_interrupted(source_type)
+    scope = run.scope
+
+    if not run:
+        return {
+            "error": "No interrupted indexing run found",
+            "run_id": None,
+        }
+
+    return {
+        "run_id": run.id,
+        "status": run.status,
+        "started_at": run.start_time.isoformat(),
+        "mbox_path": scope.mbox_path if hasattr(scope, 'mbox_path') else None,
+        "ignore_patterns": scope.ignore_patterns if hasattr(scope, 'ignore_patterns') else None,
+    }
+
 @router.get("/list")
 def list_indexing_runs():
     runs = show_runs()
@@ -59,3 +87,29 @@ def list_indexing_runs():
         ]
     }
 
+@router.post("/increment_discovered/{run_id}")
+def increment_discovered_documents(run_id: str):
+    increment_discovered_count(run_id)
+    logger.debug(f"Incremented discovered document count for run {run_id}")
+    return {"run_id": run_id, "status": "incremented"}
+
+@router.post("/mark_completed/{run_id}")
+def mark_run_finished(run_id: str):
+    from storage.metadata_db.indexing_runs import update_status
+    update_status(run_id, "completed")
+    logger.info(f"Marked run {run_id} as completed")
+    return {"run_id": run_id, "status": "completed"}
+
+@router.post("/mark_failed/{run_id}")
+def mark_run_failed(run_id: str):
+    from storage.metadata_db.indexing_runs import update_status
+    update_status(run_id, "failed")
+    logger.info(f"Marked run {run_id} as failed")
+    return {"run_id": run_id, "status": "failed"}
+
+@router.post("/mark_interrupted/{run_id}")
+def mark_run_interrupted(run_id: str):
+    from storage.metadata_db.indexing_runs import update_status
+    update_status(run_id, "interrupted")
+    logger.info(f"Marked run {run_id} as interrupted")
+    return {"run_id": run_id, "status": "interrupted"}

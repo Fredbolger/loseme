@@ -2,7 +2,7 @@ import uuid
 import os
 import logging
 from typing import List, Tuple
-from qdrant_client import QdrantClient
+from qdrant_client import QdrantClient, models
 from qdrant_client.models import PointStruct, VectorParams, Distance, SparseVector, SparseIndexParams, MultiVectorConfig, MultiVectorComparator, SparseVectorParams
 from qdrant_client.http.exceptions import UnexpectedResponse
 
@@ -147,11 +147,11 @@ class QdrantVectorStoreHybrid(VectorStore):
         colbert_vector = query_embedding.colbert_vec
         
         prefetch = [
-                self.model.Prefetch(
+                models.Prefetch(
                     query=sparse_vector,
                     using="sparse",
                     limit=prefetch_limit),
-                self.model.Prefetch(
+                models.Prefetch(
                     query=dense_vector,
                     using="dense",
                     limit=prefetch_limit),

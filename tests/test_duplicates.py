@@ -1,9 +1,8 @@
 import pytest
 import hashlib
 from pathlib import Path
-from storage.metadata_db.db import init_db
 from storage.metadata_db.indexing_runs import create_run, load_latest_run_by_scope 
-from storage.metadata_db.processed_documents import mark_processed, is_processed
+from storage.metadata_db.processed_documents import mark_processed, is_processed, add_discovered_document
 from src.domain.models import FilesystemIndexingScope
 
 def test_document_not_reprocessed(setup_db):
@@ -19,6 +18,7 @@ def test_document_not_reprocessed(setup_db):
     doc_id = "/docs/test_doc.md"
     content = "This is a test document."
     content_hash = hashlib.sha256(content.encode()).hexdigest()
+    add_discovered_document(str(run.id), str(doc_id), str(content_hash))
     mark_processed(str(run.id), str(doc_id), str(content_hash))
 
     # Reload run as if resuming

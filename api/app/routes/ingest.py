@@ -9,8 +9,6 @@ from src.domain.models import  FilesystemIngestRequest, ThunderbirdIngestRequest
 from src.domain.ids import make_source_instance_id, make_chunk_id
 from src.core.wiring import build_extractor_registry
 from storage.metadata_db.indexing_runs import update_status, update_checkpoint, load_latest_run_by_scope, request_stop, load_latest_run_by_type, load_latest_interrupted, create_run
-from storage.metadata_db.processed_documents import mark_processed, is_processed
-from storage.metadata_db.document import upsert_document
 from storage.metadata_db.db import init_db
 from storage.vector_db.runtime import get_vector_store
 from src.core.wiring import build_embedding_provider
@@ -43,22 +41,3 @@ def ingest_documents(req: IngestDocumentsRequest):
         "documents": len(req.documents),
     }
 
-@router.post("/resume_latest/{source_type}")
-def resume_latest_ingestion_run(source_type: str, bg: BackgroundTasks):
-    run = load_latest_interrupted(source_type)
-    
-    if not run:
-        raise HTTPException(status_code=404, detail="No interrupted ingestion run found")
-    logger.info(f"Resuming ingestion run {run.id} of type {source_type}")
-
-    scope = run.scope
-    
-    try:
-        bg.add_task(ingest_scope, scope, run.id, True)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    return {
-        "run_id": run.id,
-        "status": "resuming",
-    }

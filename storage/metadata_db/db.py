@@ -59,14 +59,30 @@ def init_db() -> None:
             run_id TEXT NOT NULL,
             source_instance_id TEXT NOT NULL,
             content_hash TEXT NOT NULL,
+            is_indexed INTEGER NOT NULL,
             PRIMARY KEY (run_id, source_instance_id, content_hash),
             FOREIGN KEY (run_id) REFERENCES indexing_runs(id)
                 ON DELETE CASCADE
             );
             """
         )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS monitored_sources (
+            id TEXT NOT NULL PRIMARY KEY,                      -- stable source instance id
+            source_type TEXT NOT NULL,             -- e.g. 'thunderbird', 'filesystem'
+            locator TEXT NOT NULL,                 -- path, glob, or logical identifier
+            scope_json TEXT NOT NULL UNIQUE,  -- serialized IndexingScope
+            last_seen_fingerprint TEXT,            -- hash / mtime / size summary
+            last_checked_at TIMESTAMP,
+            last_ingested_at TIMESTAMP,
+            enabled BOOLEAN DEFAULT 1,
+            created_at TIMESTAMP NOT NULL
+            );
+            """
+        )
 
-
+        
 def execute(query: str, params: tuple = ()) -> None:
     """
     Executes a query with the provided parameters.

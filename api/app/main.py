@@ -2,7 +2,7 @@ from fastapi import FastAPI
 import logging
 import sys
 
-from api.app.routes import ingest_router, health_router, search_router, document_router, chunk_router, runs_router
+from api.app.routes import ingest_router, health_router, search_router, document_router, chunk_router, runs_router, sources_router
 from contextlib import asynccontextmanager
 from storage.metadata_db.db import init_db
 
@@ -35,6 +35,7 @@ app.include_router(search_router)
 app.include_router(document_router)
 app.include_router(chunk_router)
 app.include_router(runs_router)
+app.include_router(sources_router)
     
 logger.info("API initialized with routers.")
 

@@ -5,17 +5,15 @@ from datetime import datetime
 from unittest.mock import patch
 from api.app.tasks.celery_app import celery_app
 celery_app.conf.task_always_eager = True
-from api.app.tasks.ingestion_tasks import ingest_document_task
-
-assert ingest_document_task.app.conf.task_always_eager is True
+from api.app.tasks.ingestion_tasks import ingest_run_task
 
 from fastapi.testclient import TestClient
 
 from api.app.main import app
 from src.domain.models import Document
 from src.domain.ids import make_logical_document_id, make_source_instance_id
+from storage.metadata_db.indexing_runs import create_run
 from collectors.filesystem import filesystem_source
-from api.app.schemas.ingest_documents import IngestDocumentsRequest, IngestedChunk, IngestedDocument
 from unittest.mock import MagicMock, patch
 import pytest
 
@@ -60,9 +58,12 @@ def test_ingest_filesystem_success(setup_db, mock_vector_store):
     file1_content = "Content of file 1"
     file2_content = "Content of file 2"
 
+    run_id = "0"
+
     response = client.post(
         "/ingest/documents",
         json={
+            "run_id": run_id,
             "documents": [
                 {
                     "id": make_logical_document_id(file1_content),
