@@ -4,5 +4,6 @@ from .search import router as search_router
 from .documents import router as document_router
 from .chunks import router as chunk_router
 from .runs import router as runs_router
+from .sources import router as sources_router
 
-__all__ = ["ingest_router", "health_router", "search_router", "documents_router", "chunk_router", "runs_router"]
+__all__ = ["ingest_router", "health_router", "search_router", "documents_router", "chunk_router", "runs_router", "sources_router"]

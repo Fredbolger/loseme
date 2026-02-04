@@ -7,64 +7,28 @@ from datetime import datetime
 from src.domain.models import EmailDocument, ThunderbirdIndexingScope, IngestionSource
 from src.domain.opening import OpenDescriptor
 from src.domain.ids import make_logical_document_id, make_source_instance_id
-from pipeline.extraction.registry import ExtractorRegistry
+from src.core.wiring import build_extractor_registry
 from storage.metadata_db.document import get_document_by_id
 from fnmatch import fnmatch
 from email.header import decode_header, make_header
 import mailbox
 import logging
+import os
 import warnings
 
 logger = logging.getLogger(__name__)
 
-device_id = os.environ.get("LOSEME_DEVICE_ID")
-if device_id is None:
-    warnings.warn("LOSEME_DEVICE_ID environment variable is not set. Defaulting to 'unknown_device'.", UserWarning)
-    device_id = "unknown_device"
+device_id = os.environ.get("LOSEME_DEVICE_ID", os.uname().nodename)
 
+registry = build_extractor_registry()
+
+if device_id is None:
+    raise ValueError("LOSEME_DEVICE_ID environment variable is not set.")
+    
 import mailbox
 from email.message import Message
 from pathlib import Path
 
-
-def extract_email_text(message: Message) -> str:
-    parts = []
-    if message.is_multipart():
-        for part in message.walk():
-            ctype = part.get_content_type()
-            if ctype == "text/plain":
-                try:
-                    parts.append(part.get_payload(decode=True).decode(
-                        part.get_content_charset() or "utf-8", errors="replace"
-                    ))
-                except:
-                    pass
-            elif ctype == "text/html":
-                try:
-                    html_content = part.get_payload(decode=True).decode(
-                        part.get_content_charset() or "utf-8", errors="replace"
-                    )
-                    parts.append(html_to_text_bs(html_content))
-                except:
-                    pass
-    else:
-        ctype = message.get_content_type()
-        if ctype == "text/plain":
-            try:
-                parts.append(message.get_payload(decode=True).decode(
-                    message.get_content_charset() or "utf-8", errors="replace"
-                ))
-            except:
-                pass
-        elif ctype == "text/html":
-            try:
-                html_content = message.get_payload(decode=True).decode(
-                    message.get_content_charset() or "utf-8", errors="replace"
-                )
-                parts.append(html_to_text_bs(html_content))
-            except:
-                pass
-    return "\n".join(parts)
 
 class ThunderbirdIngestionSource(IngestionSource):
     """
@@ -111,14 +75,12 @@ class ThunderbirdIngestionSource(IngestionSource):
     def iter_documents(self) -> List[EmailDocument]:
         mbox = mailbox.mbox(self.mbox_path)
 
-        for message in mbox:
+        for index in mbox.iterkeys():
             if self.should_stop():
                 logger.info("Stop requested, terminating Thunderbird ingestion source.")
                 break
-            email_doc = self._build_email_document(
-                message=message,
-                mbox_path=str(self.mbox_path)
-            )
+            message_doc =  mbox.get(index)
+
             # Filter by metadata ignore patterns
             if self.ignore_patterns:
                 skip = False
@@ -127,16 +89,19 @@ class ThunderbirdIngestionSource(IngestionSource):
                     value = pattern.get("value") # e.g. "*@spam.com"
 
                     if field and value:
-                        field_value = email_doc.metadata.get(field)
+                        field_value = message_doc.get(field)
                         if field_value and fnmatch(field_value.lower(), value):
                             logger.debug(
-                                f"Excluding email with Message-ID {email_doc.message_id} "
+                                f"Excluding email with Message-ID {message_doc.get('Message-ID')} "
                                 f"due to ignore pattern on field '{field}' with value '{value}'."
                             )
                             skip = True
                             break
                 if skip:
                     continue
+            email_doc = self._build_email_document(message=message_doc,
+                                                   mbox_path=str(self.mbox_path))
+
             yield email_doc
 
     def _build_email_document(
@@ -150,7 +115,7 @@ class ThunderbirdIngestionSource(IngestionSource):
             message_id = self._fallback_message_id(message)
             
 
-        text = extract_email_text(message)
+        text = registry.get_extractor("thunderbird").extract_message_text(message)
         checksum = hashlib.sha256(
                     text.strip().encode("utf-8")
                     ).hexdigest()

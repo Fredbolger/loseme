@@ -342,3 +342,25 @@ def set_run_resume(run_id: str) -> None:
         """,
         (_now(), run_id)
     )
+
+def increment_discovered_count(run_id: str, count: int = 1) -> None:
+    # Check if the document has already been discovered in this run
+
+    execute(
+        """
+        UPDATE indexing_runs
+        SET discovered_document_count = discovered_document_count + ?, updated_at = ?
+        WHERE id = ?
+        """,
+        (count, _now(), run_id),
+    )
+
+def increment_indexed_count(run_id: str, count: int = 1) -> None:
+    execute(
+        """
+        UPDATE indexing_runs
+        SET indexed_document_count = indexed_document_count + ?, updated_at = ?
+        WHERE id = ?
+        """,
+        (count, _now(), run_id),
+    )

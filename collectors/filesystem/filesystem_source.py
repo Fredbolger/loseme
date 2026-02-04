@@ -11,16 +11,26 @@ from pipeline.extraction.registry import ExtractorRegistry
 from src.core.wiring import build_extractor_registry
 from fnmatch import fnmatch
 import logging
+import os
 import warnings
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-device_id = os.environ.get("LOSEME_DEVICE_ID")
-if device_id is None:
-    warnings.warn("LOSEME_DEVICE_ID environment variable is not set. Defaulting to 'unknown_device'.", UserWarning)
-    device_id = "unknown_device"
+device_id = os.environ.get("LOSEME_DEVICE_ID", os.uname().nodename)
 
+if device_id is None:
+    raise ValueError("LOSEME_DEVICE_ID environment variable is not set.")
+
+suffix_command_dict = {
+    '.txt': 'vim',
+    '.md': 'vim',
+    '.pdf': 'xdg-open',
+    '.docx': 'xdg-open',
+    '.xlsx': 'xdg-open',
+    '.pptx': 'xdg-open',
+    '.fallback': 'cat',
+}
 
 class FilesystemIngestionSource(IngestionSource):
     _extractor_registry: ExtractorRegistry = build_extractor_registry()
@@ -176,13 +186,19 @@ class FilesystemIngestionSource(IngestionSource):
     def get_open_descriptor(self, document: dict) -> OpenDescriptor:
         source_path = document["source_path"]
         device_id = document["device_id"]
+        
+        suffix = Path(source_path).suffix.lower()
+        if suffix in suffix_command_dict:
+            os_command = suffix_command_dict[suffix]
+        else:
+            os_command = suffix_command_dict['.fallback']
 
         return OpenDescriptor(
             source_type="filesystem",
             target=source_path,   # always relative
             extra={
                 "device_id": device_id,
-                #"docker_root_host": str(LOSEME_SOURCE_ROOT_HOST),
             },
+            os_command=os_command
         )
 

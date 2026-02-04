@@ -15,11 +15,16 @@ class DocumentExtractionResult:
 
 
 class DocumentExtractor(ABC):
+    name: str = "base"
     priority: int = 0
 
     @abstractmethod
     def can_extract(self, path: Path) -> bool:
-        """Return True if this extractor supports the file"""
+        """Return Tru if this extractor supports the file"""
+
+    @abstractmethod
+    def can_extract_bytes(self, file_bytes: bytes) -> bool:
+        """Return True if this extractor supports the content type"""
 
     @abstractmethod
     def extract(self, path: Path) -> DocumentExtractionResult:

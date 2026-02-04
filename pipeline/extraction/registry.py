@@ -20,3 +20,16 @@ class ExtractorRegistry:
                 logger.debug(f"Extractor {extractor.__class__.__name__} cannot handle path {path}")
         return None
 
+    def extract_from_bytes(self, file_bytes: bytes) -> Optional[DocumentExtractionResult]:
+        for extractor in self.extractors:
+            if extractor.can_extract_bytes(file_bytes):
+                return extractor.extract_from_bytes(file_bytes)
+            else:
+                logger.debug(f"Extractor {extractor.__class__.__name__} cannot handle content type {content_type}")
+        return None
+    
+    def get_extractor(self, name: str) -> Optional[DocumentExtractor]:
+        for extractor in self.extractors:
+            if extractor.name == name:
+                return extractor
+        return None

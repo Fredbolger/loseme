@@ -131,7 +131,12 @@ class IndexingScope(BaseModel):
     Based on the type field in the dictionary, the appropriate subclass will be instantiated.
     """
     type: str
-
+    
+    @abstractmethod
+    def locator(self) -> str:
+        """Return a locator that uniquely identifies the source of this scope."""
+        pass
+    
     @classmethod
     def deserialize(cls, data: dict) -> "IndexingScope":
         scope_type = data.get("type")
@@ -169,6 +174,10 @@ class FilesystemIndexingScope(IndexingScope):
             "include_patterns": self.include_patterns,
             "exclude_patterns": self.exclude_patterns,
         }
+    
+    def locator(self) -> str:
+        dir_list = ",".join(sorted(str(p.resolve()) for p in self.directories))
+        return f"filesystem:{dir_list}"
 
     @classmethod
     def deserialize(cls, data: dict) -> "FilesystemIndexingScope":
@@ -204,6 +213,9 @@ class ThunderbirdIndexingScope(IndexingScope):
             "mbox_path": self.mbox_path,
             "ignore_patterns": self.ignore_patterns,
         }
+    
+    def locator(self) -> str:
+        return self.mbox_path
 
     @classmethod
     def deserialize(cls, data: dict) -> "ThunderbirdIndexingScope":
@@ -212,13 +224,14 @@ class ThunderbirdIndexingScope(IndexingScope):
             ignore_patterns=data.get("ignore_patterns"),
         )
 
+
 class IndexingRun(BaseModel):
     id: str
     celery_id: str = "0"
     scope: IndexingScope
     start_time: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    status: Literal['pending', 'running', 'completed', 'interrupted']
+    status: Literal['pending', 'running', 'completed', 'interrupted', 'failed']
     last_document_id: Optional[str] = None
     discovered_document_count: int = 0
     indexed_document_count: int = 0

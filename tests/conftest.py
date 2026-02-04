@@ -18,9 +18,17 @@ def setup_db():
     """
     Initialize a fresh database for testing.
     """
-    init_db()
+    
+    # We need to patch the DB_PATH in storage.metadata_db.db to use a different path for tests
+    with pytest.MonkeyPatch.context() as m:
+        test_db_path = Path("./test_metadata.db")
+        m.setattr("storage.metadata_db.db.DB_PATH", test_db_path)
+        init_db()
     yield
     clear_all()
+    if test_db_path.exists():
+        # Clean up test database file
+        test_db_path.unlink()
 
 @pytest.fixture
 def set_embedding_model_env(monkeypatch):

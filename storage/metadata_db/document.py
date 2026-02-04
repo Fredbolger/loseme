@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 from storage.metadata_db.db import execute, fetch_one
 from src.domain.models import Document, IndexingScope, IngestionSource
 
-def upsert_document(doc: dict) -> None:
+def upsert_document(doc: dict, run_id: Optional[str] = None) -> None:
     execute(
         """
         INSERT INTO documents (
