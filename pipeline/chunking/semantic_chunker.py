@@ -1,9 +1,9 @@
 from typing import List, Tuple
 import numpy as np
 
-from src.domain.models import Document, Chunk
+from src.sources.base.models import Document, Chunk
 from src.domain.embeddings import EmbeddingProvider
-from src.domain.ids import make_chunk_id
+from src.core.ids import make_chunk_id
 
 class SemanticChunker:
     """

@@ -1,6 +1,6 @@
 import hashlib
-from src.domain.models import Document
-from src.domain.ids import make_logical_document_id
+from src.sources.base.models import Document
+from src.core.ids import make_logical_document_id
 from pipeline.chunking.simple_chunker import SimpleTextChunker
 from pipeline.chunking.semantic_chunker import SemanticChunker
 from pipeline.embeddings.dummy import DummyEmbeddingProvider

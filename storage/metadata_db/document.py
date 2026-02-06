@@ -1,7 +1,8 @@
 import json
 from typing import Optional, Tuple
 from storage.metadata_db.db import execute, fetch_one
-from src.domain.models import Document, IndexingScope, IngestionSource
+from src.sources.base.models import Document, IndexingScope, IngestionSource
+from src.sources.base.registry import indexing_scope_registry
 
 def upsert_document(doc: dict, run_id: Optional[str] = None) -> None:
     execute(
@@ -71,5 +72,5 @@ def retrieve_source(document_id: str) -> Optional[Tuple[str, IndexingScope]]:
     if row is None:
         return None
 
-    scope = IndexingScope.deserialize(json.loads(row["scope_json"]))
+    scope = indexing_scope_registry.deserialize(json.loads(row["scope_json"]))
     return row["source_type"], scope

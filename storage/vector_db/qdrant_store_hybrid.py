@@ -7,10 +7,10 @@ from qdrant_client.models import PointStruct, VectorParams, Distance, SparseVect
 from qdrant_client.http.exceptions import UnexpectedResponse
 
 from src.core.config import EMBEDDING_MODEL
-from src.domain.models import Chunk
+from src.sources.base.models import Chunk
 from src.core.wiring import build_embedding_provider
-from src.domain.vector_store import VectorStore
 from src.domain.embeddings import EmbeddingOutput
+from storage.vector_db.vector_store import VectorStore
 
 COLLECTION = "chunks"
 VECTOR_SIZE = build_embedding_provider().dimension()

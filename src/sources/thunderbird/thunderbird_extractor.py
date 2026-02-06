@@ -1,5 +1,6 @@
 from pathlib import Path
-from pipeline.extraction.base import DocumentExtractor, DocumentExtractionResult
+from src.sources.base.extractor import DocumentExtractor, DocumentExtractionResult
+from src.sources.base.registry import extractor_registry
 from email.header import decode_header, make_header
 import mailbox
 from email.message import Message
@@ -97,3 +98,5 @@ class ThunderbirdExtractor(DocumentExtractor):
             if payload:
                 text_body += self._extract_part_text(message)
         return text_body 
+
+extractor_registry.register_extractor(ThunderbirdExtractor())

@@ -2,7 +2,7 @@ import pytest
 import os 
 from storage.vector_db.qdrant_store import QdrantVectorStore
 from storage.vector_db.runtime import get_vector_store
-from src.domain.models import Chunk, Document
+from src.sources.base.models import Chunk, Document
 from src.core.wiring import build_embedding_provider
 from storage.vector_db.runtime import get_vector_store
 

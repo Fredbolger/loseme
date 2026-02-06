@@ -26,6 +26,7 @@ def open_path(path: str, os_command: str = None):
 
     if sys.platform.startswith("linux"):
         subprocess.run([os_command, str(p)], check=False)
+        raise SystemExit(0)
     else:
         raise RuntimeError(f"Unsupported platform: {sys.platform}")
 
@@ -51,6 +52,7 @@ def open_descriptor(desc: dict):
                 [f"thunderbird" , f"mid:{message_id}"],
                 check=False,
         )
+        raise SystemExit(0)
 
     else:
         raise RuntimeError(f"Unknown open descriptor: {source_type}")

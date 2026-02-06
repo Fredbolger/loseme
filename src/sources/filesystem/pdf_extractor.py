@@ -1,5 +1,6 @@
 from pathlib import Path
-from pipeline.extraction.base import DocumentExtractor, DocumentExtractionResult
+from src.sources.base.extractor import DocumentExtractor, DocumentExtractionResult
+from src.sources.base.registry import extractor_registry
 from pypdf import PdfReader
 import logging
 
@@ -63,3 +64,6 @@ class PDFExtractor(DocumentExtractor):
                 "num_pages": len(reader.pages),
             },
         )
+
+# Register the PDFExtractor in the global extractor registry
+extractor_registry.register_extractor(PDFExtractor())

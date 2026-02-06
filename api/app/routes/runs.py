@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from storage.metadata_db.indexing_runs import create_run, load_latest_run_by_type, request_stop, show_runs, increment_discovered_count, load_latest_interrupted
-from src.domain.models import IndexingScope
+from src.sources.base.models import IndexingScope
 import json
 import logging
 

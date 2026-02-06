@@ -3,7 +3,7 @@ import pytest
 from unittest.mock import patch
 from qdrant_client import QdrantClient
 from storage.vector_db.qdrant_store_hybrid import QdrantVectorStoreHybrid
-from src.domain.models import Chunk
+from src.sources.base.models import Chunk
 pytest.importorskip("QdrantVectorStoreHybrid")
 from src.core.wiring import build_embedding_provider
 import logging

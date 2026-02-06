@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from typing_extensions import Literal
 from dataclasses import dataclass
 from abc import abstractmethod
-from src.domain.ids import make_source_instance_id, make_thunderbird_source_id
+from src.core.ids import make_source_instance_id
 
 import logging
 logger = logging.getLogger(__name__)
@@ -75,31 +75,6 @@ class Document(BaseModel):
             raise ValueError('device_id must not be empty')
         return v
 
-class EmailDocument(Document):
-    mbox_path: str
-    message_id: str
-
-    @model_validator(mode="before")
-    @classmethod
-    def build_thunderbird_ids(cls, data: dict):
-        if data.get("source_type") != "thunderbird":
-            return data
-
-        required = ("device_id", "mbox_path", "message_id")
-        if not all(k in data for k in required):
-            raise ValueError("Thunderbird EmailDocument missing required fields")
-
-        data["source_id"] = make_thunderbird_source_id(
-            device_id=data["device_id"],
-            mbox_path=data["mbox_path"],
-            message_id=data["message_id"],
-        )
-
-        # logical but honest source_path
-        data["source_path"] = f"{Path(data['mbox_path']).name}/{data['message_id']}"
-
-        return data
-
 class Chunk(BaseModel):
     id: str
     source_type: str  # e.g., "text", "image", etc.
@@ -139,91 +114,18 @@ class IndexingScope(BaseModel):
     
     @classmethod
     def deserialize(cls, data: dict) -> "IndexingScope":
+        from .registry import indexing_scope_registry
         scope_type = data.get("type")
 
         if scope_type == "filesystem":
-            return FilesystemIndexingScope.deserialize(data)
+            return indexing_scope_registry.deserialize(data)
+            #return FilesystemIndexingScope.deserialize(data)
 
         if scope_type == "thunderbird":
-            return ThunderbirdIndexingScope.deserialize(data)
+            return indexing_scope_registry.deserialize(data)
+            #return ThunderbirdIndexingScope.deserialize(data)
 
         raise ValueError(f"Unknown scope type: {scope_type}")
-
-class FilesystemIndexingScope(IndexingScope):
-    type: Literal["filesystem"] = "filesystem"
-
-    directories: list[Path] = Field(default_factory=list)
-    include_patterns: list[str] = Field(default_factory=list)
-    exclude_patterns: list[str] = Field(default_factory=list)
-
-    def normalized(self) -> dict:
-        return {
-            "directories": sorted(str(p.resolve()) for p in self.directories),
-            "include_patterns": sorted(self.include_patterns),
-            "exclude_patterns": sorted(self.exclude_patterns),
-        }
-
-    def hash(self) -> str:
-        normalized_json = json.dumps(self.normalized(), sort_keys=True)
-        return hashlib.sha256(normalized_json.encode()).hexdigest()
-
-    def serialize(self) -> dict:
-        return {
-            "type": self.type,
-            "directories": [str(p) for p in self.directories],
-            "include_patterns": self.include_patterns,
-            "exclude_patterns": self.exclude_patterns,
-        }
-    
-    def locator(self) -> str:
-        dir_list = ",".join(sorted(str(p.resolve()) for p in self.directories))
-        return f"filesystem:{dir_list}"
-
-    @classmethod
-    def deserialize(cls, data: dict) -> "FilesystemIndexingScope":
-        raw_dirs = data.get("directories", [])
-        logger.debug(f"Deserializing directories: {raw_dirs!r}")
-
-        if isinstance(raw_dirs, (str, Path)):
-            raw_dirs = [raw_dirs]
-
-        if not isinstance(raw_dirs, list):
-            raise ValueError("directories must be a path or list of paths")
-
-        directories = [Path(p) for p in raw_dirs]
-
-        # Guard against character explosion (belt + suspenders)
-        if any(len(str(p)) == 1 for p in directories):
-            raise ValueError(f"Invalid directories value: {raw_dirs!r}")
-        
-        return cls(
-            directories=directories,
-            include_patterns=data.get("include_patterns", []),
-            exclude_patterns=data.get("exclude_patterns", []),
-        )
-
-class ThunderbirdIndexingScope(IndexingScope):
-    type: Literal["thunderbird"] = "thunderbird"
-    mbox_path: str
-    ignore_patterns: Optional[List[dict]] = None
-
-    def serialize(self) -> dict:
-        return {
-            "type": self.type,
-            "mbox_path": self.mbox_path,
-            "ignore_patterns": self.ignore_patterns,
-        }
-    
-    def locator(self) -> str:
-        return self.mbox_path
-
-    @classmethod
-    def deserialize(cls, data: dict) -> "ThunderbirdIndexingScope":
-        return cls(
-            mbox_path=data["mbox_path"],
-            ignore_patterns=data.get("ignore_patterns"),
-        )
-
 
 class IndexingRun(BaseModel):
     id: str
@@ -242,27 +144,6 @@ class IndexingRun(BaseModel):
         if not v:
             raise ValueError('IndexingRun id must not be empty')
         return v
-
-
-class GenericIngestRequest(BaseModel):
-    type: str  # "filesystem" | "thunderbird"
-    data: Dict[str, Any]  # whatever extra parameters
-
-    @field_validator('type')
-    def type_must_be_valid(cls, v):
-        if v not in ["filesystem", "thunderbird"]:
-            raise ValueError('type must be either "filesystem" or "thunderbird"')
-        return v
-
-class FilesystemIngestRequest(BaseModel):
-    directories: list[str] = []
-    recursive: bool = True
-    include_patterns: list[str] = []
-    exclude_patterns: list[str] = []
-
-class ThunderbirdIngestRequest(BaseModel):
-    mbox_path: str = "" 
-    ignore_patterns: Optional[List[dict]] = None
 
 class IngestionSource(BaseModel):
     scope: Any  # Could be IndexingScope or subclass
@@ -305,12 +186,30 @@ class IngestionSource(BaseModel):
     @classmethod
     def from_scope(cls, scope: Any, should_stop: Callable[[], bool]) -> "IngestionSource":
         """Factory to return the correct subclass based on scope type."""
-        from collectors.filesystem.filesystem_source import FilesystemIngestionSource
-        from collectors.thunderbird.thunderbird_source import ThunderbirdIngestionSource
+        from .registry import ingestion_source_registry
 
         if scope.__class__.__name__ == "FilesystemIndexingScope":
-            return FilesystemIngestionSource(scope=scope, should_stop=should_stop)
+            source = ingestion_source_registry.get_source("filesystem")
+            return source(scope=scope, should_stop=should_stop)
         elif scope.__class__.__name__ == "ThunderbirdIndexingScope":
-            return ThunderbirdIngestionSource(scope=scope, should_stop=should_stop)
+            source = ingestion_source_registry.get_source("thunderbird")
+            return source(scope=scope, should_stop=should_stop)
         else:
             raise ValueError(f"No ingestion source for scope type: {type(scope)}")
+
+class IngestRequest(BaseModel):
+    type: str  # "filesystem" | "thunderbird"
+    data: Dict[str, Any]  # whatever extra parameters
+
+    @field_validator('type')
+    def type_must_be_valid(cls, v):
+        if v not in ["filesystem", "thunderbird"]:
+            raise ValueError('type must be either "filesystem" or "thunderbird"')
+        return v
+
+@dataclass
+class OpenDescriptor:
+    source_type: str              # "filesystem", "url", "thunderbird", ...
+    target: str            # path, url, message-id, etc.
+    extra: dict | None = None
+    os_command: str | None = None

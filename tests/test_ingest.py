@@ -10,10 +10,11 @@ from api.app.tasks.ingestion_tasks import ingest_run_task
 from fastapi.testclient import TestClient
 
 from api.app.main import app
-from src.domain.models import Document
-from src.domain.ids import make_logical_document_id, make_source_instance_id
+from src.sources.base.models import Document
+from src.core.ids import make_logical_document_id, make_source_instance_id
 from storage.metadata_db.indexing_runs import create_run
-from collectors.filesystem import filesystem_source
+#from collectors.filesystem import filesystem_source
+from src.sources.filesystem import filesystem_source
 from unittest.mock import MagicMock, patch
 import pytest
 

@@ -3,12 +3,11 @@ from pathlib import Path
 from typing import List, Optional, Callable, Mapping
 import hashlib
 from datetime import datetime
-from src.domain.models import Document, FilesystemIndexingScope, IngestionSource
-from src.domain.opening import OpenDescriptor
-from src.domain.ids import make_logical_document_id, make_source_instance_id
+from src.sources.filesystem.filesystem_model import FilesystemIndexingScope 
+from src.sources.base.models import IngestionSource, Document, OpenDescriptor
+from src.core.ids import make_logical_document_id, make_source_instance_id
 from storage.metadata_db.document import get_document_by_id
-from pipeline.extraction.registry import ExtractorRegistry
-from src.core.wiring import build_extractor_registry
+from src.sources.base.registry import extractor_registry, ExtractorRegistry, ingestion_source_registry
 from fnmatch import fnmatch
 import logging
 import os
@@ -33,7 +32,7 @@ suffix_command_dict = {
 }
 
 class FilesystemIngestionSource(IngestionSource):
-    _extractor_registry: ExtractorRegistry = build_extractor_registry()
+    _extractor_registry = extractor_registry
 
     def __init__(self, 
                  scope: FilesystemIndexingScope,
@@ -42,7 +41,8 @@ class FilesystemIngestionSource(IngestionSource):
         super().__init__(scope = scope, should_stop=should_stop)
         self.scope = scope
         self.should_stop = should_stop
-
+        logger.debug(f"Initialized FilesystemIngestionSource with scope: {self.scope.serialize()}")
+        logger.debug(f"Extractor registry contains: {list(self.extractor_registry.list_extractors())}")
     def _walk_files(self):
         """
         Walk through all files in scope.directories.
@@ -75,14 +75,16 @@ class FilesystemIngestionSource(IngestionSource):
         but actually yield documents one by one for memory efficiency.
         """
         for root_path in self.scope.directories:
-
+            logger.debug(f"Walking through directory: {root_path}")
             root = Path(root_path)
             for path in root.rglob("*"):
+                logger.debug(f"Processing path: {path}")
                 if self.should_stop():
                     logger.info("Stop requested, terminating filesystem ingestion source.")
                     break
 
                 if path.is_file():
+                    logger.debug(f"Found file: {path}")
                     rel_path = path.relative_to(root).as_posix()
                     
                     if self.scope.exclude_patterns and any(
@@ -97,8 +99,9 @@ class FilesystemIngestionSource(IngestionSource):
 
                     extracted = self.extractor_registry.extract(path)
                     if extracted is None:
+                        logger.warning(f"No suitable extractor found for file: {path}, skipping.")
                         continue
-
+                    logger.debug(f"Extracted content from {path} with content type {extracted.content_type}")
                     document_checksum = hashlib.sha256(
                            extracted.text.strip().encode("utf-8")
                            ).hexdigest()
@@ -202,3 +205,4 @@ class FilesystemIngestionSource(IngestionSource):
             os_command=os_command
         )
 
+ingestion_source_registry.register_source("filesystem", FilesystemIngestionSource)

@@ -2,10 +2,10 @@ import typer
 import asyncio
 from pathlib import Path
 import httpx
+import json
 from typing import List
-from collectors.filesystem.filesystem_source import FilesystemIngestionSource
-from collectors.thunderbird.thunderbird_source import ThunderbirdIngestionSource
-from src.domain.models import FilesystemIndexingScope, ThunderbirdIndexingScope
+from src.sources.filesystem import FilesystemIngestionSource, FilesystemIndexingScope
+from src.sources.thunderbird import ThunderbirdIngestionSource, ThunderbirdIndexingScope
 import logging
 logger = logging.getLogger(__name__)
 
@@ -44,10 +44,11 @@ def _send_batch(run_id: str, batch: list[dict]) -> None:
             "run_id": run_id,
             "documents": batch,
         },
-        timeout=120.0,
+        timeout=300.0,
     )
     r.raise_for_status()
-
+    logger.debug(f"Batch sent successfully for run {run_id}")
+    
 async def _send_batch_async(run_id: str, batch: list[dict]) -> None:
     logger.debug(
         f"Sending batch with {len(batch)} documents for run {run_id}"
@@ -103,58 +104,76 @@ async def ingest_filesystem(
     documents_batch: list[dict] = []
     sent_any = False
 
-    for doc in source.iter_documents():
-        if is_stop_requested(run_id):
-            logger.info("Stop requested, terminating filesystem ingestion.")
-            break
+    try: 
+        for doc in source.iter_documents():
+            if is_stop_requested(run_id):
+                logger.info("Stop requested, terminating filesystem ingestion.")
+                break
 
-        # Increment discovered document count runs/increment_discovered/{run_id}
-        response = httpx.post(
-            f"{API_URL}/runs/increment_discovered/{run_id}/{doc.id}"
-        )
-        # Add the discovered document to the database
-        add_discovered_document_to_db(
-            run_id=run_id,
-            source_instance_id=doc.source_id,
-            content_checksum=doc.checksum,
-        )
+            # Increment discovered document count runs/increment_discovered/{run_id}
+            response = httpx.post(
+                f"{API_URL}/runs/increment_discovered/{run_id}/{doc.id}"
+            )
+            # Add the discovered document to the database
+            add_discovered_document_to_db(
+                run_id=run_id,
+                source_instance_id=doc.source_id,
+                content_checksum=doc.checksum,
+            )
 
-        logger.info(
-            f"Processing document {doc.source_path} (ID: {doc.id}) "
-            f"with size {len(doc.text)} characters"
-        )
+            logger.info(
+                f"Processing document {doc.source_path} (ID: {doc.id}) "
+                f"with size {len(doc.text)} characters"
+            )
 
-        documents_batch.append(
-            {
-                "id": doc.id,
-                "source_type": doc.source_type,
-                "source_id": doc.source_id,
-                "device_id": doc.device_id,
-                "source_path": str(doc.source_path),
-                "checksum": doc.checksum,
-                "created_at": doc.created_at.isoformat(),
-                "updated_at": doc.updated_at.isoformat(),
-                "metadata": doc.metadata,
-                "text": doc.text,
-            }
-        )
+            documents_batch.append(
+                {
+                    "id": doc.id,
+                    "source_type": doc.source_type,
+                    "source_id": doc.source_id,
+                    "device_id": doc.device_id,
+                    "source_path": str(doc.source_path),
+                    "checksum": doc.checksum,
+                    "created_at": doc.created_at.isoformat(),
+                    "updated_at": doc.updated_at.isoformat(),
+                    "metadata": doc.metadata,
+                    "text": doc.text,
+                }
+            )
 
-        if len(documents_batch) >= BATCH_SIZE:
-            #_send_batch(run_id, documents_batch)
+            if len(documents_batch) >= BATCH_SIZE:
+                #_send_batch(run_id, documents_batch)
+                await _send_batch_async(run_id, documents_batch)
+                documents_batch.clear()
+                sent_any = True
+
+        if documents_batch:
+            # _send_batch(run_id, documents_batch)
             await _send_batch_async(run_id, documents_batch)
-            documents_batch.clear()
             sent_any = True
 
-    if documents_batch:
-        # _send_batch(run_id, documents_batch)
-        await _send_batch_async(run_id, documents_batch)
-        sent_any = True
+        if not sent_any:
+            typer.echo("No documents found.")
+            raise typer.Exit(code=0)
 
-    if not sent_any:
-        typer.echo("No documents found.")
-        raise typer.Exit(code=0)
+    except Exception as e:
+        logger.error(f"Error during filesystem ingestion: {e}")
+        if isinstance(e, RuntimeError) and str(e) == "Ingestion stopped by user request.":
+            typer.echo("Filesystem ingestion was stopped by user request.")
+            httpx.post(
+                f"{API_URL}/runs/mark_interrupted/{run_id}"
+            )
+        else:
+            httpx.post(
+                f"{API_URL}/runs/mark_failed/{run_id}",
+                json={"error_message": str(e)},
+            )
 
-    typer.echo("Filesystem ingestion completed successfully.")
+    else:
+        mark_completed_response = httpx.post(
+            f"{API_URL}/runs/mark_completed/{run_id}"
+        )
+        typer.echo("Filesystem ingestion completed successfully.")
 
 @ingest_app.command("thunderbird")
 def ingest_thunderbird(
@@ -210,6 +229,12 @@ def ingest_thunderbird(
                 f"Processing email {doc.source_path} (ID: {doc.id}) "
                 f"with size {len(doc.text)} characters"
             )
+            
+            try:
+                json.dumps(doc.metadata)
+            except TypeError as e:
+                logger.warning(f"Metadata for document ID {doc.id} is not JSON serializable: {e}. Converting to string.")
+                doc.metadata = {k: str(v) for k, v in doc.metadata.items()}
 
             documents_batch.append(
                 {

@@ -14,8 +14,7 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("sentence_transformers").setLevel(logging.WARNING)
 logging.getLogger("transformers_modules").setLevel(logging.WARNING)
 
-from src.domain.models import EmailDocument, ThunderbirdIndexingScope
-from collectors.thunderbird.thunderbird_source import ThunderbirdIngestionSource
+from src.sources.thunderbird import ThunderbirdIngestionSource, ThunderbirdDocument, ThunderbirdIndexingScope
 from storage.metadata_db.indexing_runs import (
     create_run,
     update_checkpoint,
@@ -35,7 +34,7 @@ def setup_db(tmp_path, monkeypatch):
 
 
 def test_email_document_constructor_sets_thunderbird_ids():
-    doc = EmailDocument(
+    doc = ThunderbirdDocument(
         id="doc-1",
         source_type="thunderbird",
         device_id="test-device",

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Tuple
-from .models import Chunk
+from src.sources.base.models import Chunk
 
 class VectorStore(ABC):
     """

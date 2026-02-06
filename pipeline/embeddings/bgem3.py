@@ -2,7 +2,7 @@ from typing import List
 from FlagEmbedding import BGEM3FlagModel
 
 from src.domain.embeddings import EmbeddingProvider, EmbeddingOutput
-from src.domain.models import Chunk
+from src.sources.base.models import Chunk
 
 from src.core.config import USE_CUDA
 
