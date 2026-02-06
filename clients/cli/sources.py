@@ -3,7 +3,9 @@ from pathlib import Path
 from typing import List
 import httpx
 import typer
-from src.domain.models import FilesystemIndexingScope, ThunderbirdIndexingScope, IndexingScope
+from src.sources.base.models import IndexingScope
+from src.sources.filesystem import FilesystemIndexingScope
+from src.sources.thunderbird import ThunderbirdIndexingScope
 from clients.cli.config import API_URL
 import logging
 logger = logging.getLogger(__name__)

@@ -4,8 +4,8 @@ from storage.metadata_db.document import upsert_document
 from storage.metadata_db.processed_documents import mark_processed, is_processed
 from storage.metadata_db.indexing_runs import update_status, is_stop_requested, increment_indexed_count
 from storage.vector_db.runtime import get_vector_store
-from src.domain.ids import make_chunk_id
-from src.domain.models import Chunk, Document
+from src.core.ids import make_chunk_id
+from src.sources.base.models import Chunk, Document
 import logging
 
 logger = logging.getLogger(__name__)

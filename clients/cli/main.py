@@ -6,10 +6,9 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Any
 
-from collectors.filesystem.filesystem_source import FilesystemIngestionSource
-from collectors.thunderbird.thunderbird_source import ThunderbirdIngestionSource
+from src.sources.filesystem import FilesystemIngestionSource, FilesystemIndexingScope
+from src.sources.thunderbird import ThunderbirdIngestionSource, ThunderbirdIndexingScope
 from storage.metadata_db.indexing_runs import create_run
-from src.domain.models import FilesystemIndexingScope, ThunderbirdIndexingScope
 from src.core.wiring import build_chunker
 
 from clients.cli.config import API_URL, BATCH_SIZE
@@ -48,6 +47,7 @@ def search(
     r = httpx.post(
         f"{API_URL}/search",
         json={"query": query, "top_k": top_k},
+        timeout=30.0,
     )
     r.raise_for_status()
 
@@ -101,19 +101,12 @@ def search(
             
             descriptor_res.raise_for_status()
             logger.debug(f"Open descriptor response: {descriptor_res.json()}")
-            
-            open_descriptor(descriptor_res.json())
-
 
         except (ValueError, IndexError):
             typer.echo("Invalid selection")
             continue
-
-        if "open_descriptor" not in doc:
-            typer.echo("No open descriptor available for this document")
-            continue
-
-        open_descriptor(doc["open_descriptor"])
+        
+        open_descriptor(descriptor_res.json())
 
 
 if __name__ == "__main__":

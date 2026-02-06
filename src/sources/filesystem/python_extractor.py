@@ -1,5 +1,6 @@
 from pathlib import Path
-from pipeline.extraction.base import DocumentExtractor, DocumentExtractionResult
+from src.sources.base.extractor import DocumentExtractor, DocumentExtractionResult
+from src.sources.base.registry import extractor_registry
 
 class PythonExtractor(DocumentExtractor):
     priority: int = 15
@@ -20,3 +21,9 @@ class PythonExtractor(DocumentExtractor):
                 "num_lines": len(text.splitlines()),
             },
         )
+    
+    def can_extract_bytes(self, file_bytes: bytes) -> bool:
+        # We won't implement byte extraction for Python files
+        return False
+
+extractor_registry.register_extractor(PythonExtractor())

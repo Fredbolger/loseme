@@ -2,8 +2,8 @@ import pytest
 from pathlib import Path
 from datetime import datetime
 
-from src.domain.models import Document
-from src.domain.ids import make_logical_document_id
+from src.sources.base.models import Document
+from src.core.ids import make_logical_document_id
 from storage.metadata_db.db import init_db
 from storage.metadata_db.indexing_runs import (
     create_run,
@@ -11,8 +11,8 @@ from storage.metadata_db.indexing_runs import (
     update_checkpoint,
     load_latest_interrupted,
 )
-from collectors.filesystem.filesystem_source import FilesystemIngestionSource
-from src.domain.models import FilesystemIndexingScope
+#from collectors.filesystem.filesystem_source import FilesystemIngestionSource
+from src.sources.filesystem import FilesystemIndexingScope, FilesystemIngestionSource
 
 
 @pytest.fixture(autouse=True)

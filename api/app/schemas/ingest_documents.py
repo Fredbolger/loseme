@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Dict, Any
-from src.domain.models import Chunk, Document
+from src.sources.base.models import Chunk, Document
 
 class IngestedDocument(Document):
     pass 

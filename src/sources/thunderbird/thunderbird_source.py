@@ -4,10 +4,10 @@ from typing import List, Optional, Callable
 from pydantic import PrivateAttr
 import hashlib
 from datetime import datetime
-from src.domain.models import EmailDocument, ThunderbirdIndexingScope, IngestionSource
-from src.domain.opening import OpenDescriptor
-from src.domain.ids import make_logical_document_id, make_source_instance_id
-from src.core.wiring import build_extractor_registry
+from .thunderbird_model import ThunderbirdIndexingScope, ThunderbirdDocument
+from src.sources.base.models import IngestionSource, OpenDescriptor
+from src.core.ids import make_logical_document_id, make_source_instance_id
+from src.sources.base.registry import extractor_registry, ingestion_source_registry
 from storage.metadata_db.document import get_document_by_id
 from fnmatch import fnmatch
 from email.header import decode_header, make_header
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 device_id = os.environ.get("LOSEME_DEVICE_ID", os.uname().nodename)
 
-registry = build_extractor_registry()
+registry = extractor_registry
 
 if device_id is None:
     raise ValueError("LOSEME_DEVICE_ID environment variable is not set.")
@@ -72,7 +72,7 @@ class ThunderbirdIngestionSource(IngestionSource):
     def metadata(self) -> dict:
         return self._metadata
 
-    def iter_documents(self) -> List[EmailDocument]:
+    def iter_documents(self) -> List[ThunderbirdDocument]:
         mbox = mailbox.mbox(self.mbox_path)
 
         for index in mbox.iterkeys():
@@ -108,7 +108,7 @@ class ThunderbirdIngestionSource(IngestionSource):
         self,
         message: Message,
         mbox_path: str,
-        ) -> EmailDocument:
+        ) -> ThunderbirdDocument:
         message_id = message.get("Message-ID")
         if not message_id:
             warnings.warn(f"Email message in {mbox_path} is missing Message-ID header. Using fallback ID.", UserWarning)
@@ -123,7 +123,7 @@ class ThunderbirdIngestionSource(IngestionSource):
                 text=text,
         )
 
-        return EmailDocument(
+        return ThunderbirdDocument(
             id=doc_id,
             source_type="thunderbird",
             device_id=self.metadata["device_id"],
@@ -153,7 +153,7 @@ class ThunderbirdIngestionSource(IngestionSource):
 
     def extract_by_document_id(self,
                              document_id: str
-                               ) -> Optional[EmailDocument]:
+                               ) -> Optional[ThunderbirdDocument]:
         """
         Extract a single email document's content by its document ID.
         """
@@ -184,7 +184,7 @@ class ThunderbirdIngestionSource(IngestionSource):
     
     def extract_by_document_ids(self,
                                  document_ids: List[str]
-                                   ) -> List[EmailDocument]:
+                                   ) -> List[ThunderbirdDocument]:
         """
         Extract multiple email documents' content by their document IDs.
         """
@@ -216,3 +216,5 @@ class ThunderbirdIngestionSource(IngestionSource):
             logger.warning(f"Documents with IDs {missing_ids} not found in mbox {mbox_path}.")
 
         return extracted_documents
+
+ingestion_source_registry.register_source("thunderbird", ThunderbirdIngestionSource)

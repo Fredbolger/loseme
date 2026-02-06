@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from pathlib import Path
 from typing import List, Dict, Any
 
-from src.domain.models import Chunk, Document, IngestionSource
+from src.sources.base.models import Chunk, Document, IngestionSource
 from storage.metadata_db.document import retrieve_source
 from storage.vector_db.runtime import get_vector_store
 from api.app.routes.documents import get_document

@@ -4,10 +4,11 @@ from pydantic import BaseModel
 from pathlib import Path
 from typing import Iterable
 
-from src.domain.models import Document, FilesystemIndexingScope, ThunderbirdIndexingScope, IndexingScope, Chunk
-from src.domain.models import  FilesystemIngestRequest, ThunderbirdIngestRequest, GenericIngestRequest
-from src.domain.ids import make_source_instance_id, make_chunk_id
-from src.core.wiring import build_extractor_registry
+from src.sources.base.models import Document, Chunk, IngestRequest
+from src.sources.base import extractor_registry
+from src.sources.filesystem import FilesystemIngestionSource, FilesystemIngestRequest
+from src.sources.thunderbird import ThunderbirdIngestionSource, ThunderbirdIngestRequest
+from src.core.ids import make_source_instance_id, make_chunk_id
 from storage.metadata_db.indexing_runs import update_status, update_checkpoint, load_latest_run_by_scope, request_stop, load_latest_run_by_type, load_latest_interrupted, create_run
 from storage.metadata_db.db import init_db
 from storage.vector_db.runtime import get_vector_store
@@ -18,7 +19,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-registry = build_extractor_registry()
+registry = extractor_registry
 
 def get_data_root() -> Path:
     return Path(

@@ -4,7 +4,7 @@ from storage.metadata_db.document import get_document_by_id as get_document_from
 from storage.metadata_db.document import retrieve_source
 from storage.metadata_db.processed_documents import add_discovered_document
 from storage.metadata_db.indexing_runs import increment_discovered_count
-from src.domain.models import IngestionSource
+from src.sources.base.models import IngestionSource
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 

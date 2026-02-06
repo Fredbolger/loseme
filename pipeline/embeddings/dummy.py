@@ -1,6 +1,6 @@
 # pipeline/embeddings/dummy.py
 from src.domain.embeddings import EmbeddingProvider, EmbeddingOutput
-from src.domain.models import Chunk
+from src.sources.base.models import Chunk
 from typing import List
 import hashlib
 

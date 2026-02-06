@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
-from .models import Chunk
+from src.sources.base.models import Chunk
 
 class EmbeddingOutput(BaseModel):
     dense: Optional[List[float]] = None

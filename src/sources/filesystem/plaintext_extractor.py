@@ -1,5 +1,6 @@
 from pathlib import Path
-from pipeline.extraction.base import DocumentExtractor, DocumentExtractionResult
+from src.sources.base.extractor import DocumentExtractor, DocumentExtractionResult
+from src.sources.base.registry import extractor_registry
 import os
  
 class PlainTextExtractor(DocumentExtractor):
@@ -25,3 +26,4 @@ class PlainTextExtractor(DocumentExtractor):
             },
         )
 
+extractor_registry.register_extractor(PlainTextExtractor())

@@ -1,5 +1,5 @@
 from pathlib import Path
-from src.domain.ids import make_logical_document_id, make_source_instance_id, make_chunk_id
+from src.core.ids import make_logical_document_id, make_source_instance_id, make_chunk_id
 
 def test_document_id_is_deterministic():
     textcontent = "hello world"

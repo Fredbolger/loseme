@@ -1,12 +1,15 @@
-from pipeline.extraction.registry import ExtractorRegistry
-from pipeline.extraction.plaintext import PlainTextExtractor
-from pipeline.extraction.pdf_extraction import PDFExtractor
-from pipeline.extraction.thunderbird_extractor import ThunderbirdExtractor
+#from pipeline.extraction.registry import ExtractorRegistry
+#from src.sources.base.registry import extractor_registry
+#from src.sources.filesystem import PlainTextExtractor, PDFExtractor
+#from src.sources.thunderdbird import ThunderbirdExtractor
+#from pipeline.extraction.pdf_extraction import PDFExtractor
+#from pipeline.extraction.thunderbird_extractor import ThunderbirdExtractor
 from src.core.config import CHUNKER_TYPE, EMBEDDING_MODEL, CROSS_ENCODER_MODEL, VECTOR_STORAGE 
 
 import logging
 logger = logging.getLogger(__name__)
 
+'''
 def build_extractor_registry() -> ExtractorRegistry:
     return ExtractorRegistry(
         extractors=[
@@ -17,6 +20,7 @@ def build_extractor_registry() -> ExtractorRegistry:
             # ImageOcrExtractor(),
         ]
     )
+'''
 
 def build_chunker():
     embedder = build_embedding_provider()

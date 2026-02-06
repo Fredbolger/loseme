@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 from storage.metadata_db.monitor_sources import add_monitored_source, get_monitored_source_by_id, update_monitored_source_check_times, list_all_monitored_sources
-from src.domain.models import IndexingScope
+from src.sources.base.models import IndexingScope
 import json
 import logging
 

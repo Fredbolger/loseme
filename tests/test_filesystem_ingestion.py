@@ -8,23 +8,29 @@ logger = logging.getLogger(__name__)
 
 from pathlib import Path
 from unittest.mock import patch
-from collectors.filesystem.filesystem_source import FilesystemIngestionSource
-from src.domain.models import FilesystemIndexingScope
-from pipeline.extraction.registry import ExtractorRegistry
-from pipeline.extraction.plaintext import PlainTextExtractor
+from src.sources.filesystem import FilesystemIndexingScope, FilesystemIngestionSource
+#from src.sources.base.registry import ExtractorRegistry, extractor_registry
+from src.sources.base import extractor_registry
 import pytest
+import tempfile
 
-@pytest.fixture(autouse=True)
+# After imports
+for name, log_obj in logging.root.manager.loggerDict.items():
+    if isinstance(log_obj, logging.Logger):
+        log_obj.setLevel(logging.DEBUG)
+        log_obj.propagate = True
+
+@pytest.fixture(autouse=False)
 def fake_loseme_paths(tmp_path, monkeypatch):
     fake_data_dir = tmp_path
     fake_host_root = tmp_path
 
     monkeypatch.setattr(
-        "collectors.filesystem.filesystem_source.LOSEME_DATA_DIR",
+        "src.sources.filesystem.filesystem_source.LOSEME_DATA_DIR",
         fake_data_dir,
     )
     monkeypatch.setattr(
-        "collectors.filesystem.filesystem_source.LOSEME_SOURCE_ROOT_HOST",
+        "src.sources.filesystem.filesystem_source.LOSEME_SOURCE_ROOT_HOST",
         fake_host_root,
     )
 
@@ -49,14 +55,14 @@ def test_filesystem_excludes_paths(tmp_path):
         exclude_patterns=["IgnorePath/*"],
     )
 
-    registry = ExtractorRegistry([
-        PlainTextExtractor(),
-    ])
+    #registry = extractor_registry
  
     source = FilesystemIngestionSource(
             scope=scope,
             should_stop=lambda: False,
     )
+    
+    logger.debug(f"Testing with source: {source}")
 
     # Act
     docs = [doc for doc in source.iter_documents()]
@@ -64,3 +70,9 @@ def test_filesystem_excludes_paths(tmp_path):
     # Assert
     assert len(docs) == 1
     assert docs[0].source_path == str(included)
+
+if __name__ == "__main__":
+    #pytest.main([__file__])
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = Path(tmpdir)
+        test_filesystem_excludes_paths(tmp_path)

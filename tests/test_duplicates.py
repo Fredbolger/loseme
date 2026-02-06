@@ -3,7 +3,7 @@ import hashlib
 from pathlib import Path
 from storage.metadata_db.indexing_runs import create_run, load_latest_run_by_scope 
 from storage.metadata_db.processed_documents import mark_processed, is_processed, add_discovered_document
-from src.domain.models import FilesystemIndexingScope
+from src.sources.filesystem import FilesystemIndexingScope
 
 def test_document_not_reprocessed(setup_db):
     """

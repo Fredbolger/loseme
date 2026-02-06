@@ -1,7 +1,7 @@
 # pipeline/chunking/simple_chunker.py
 from typing import List
-from src.domain.models import Document, Chunk
-from src.domain.ids import make_chunk_id
+from src.sources.base.models import Document, Chunk
+from src.core.ids import make_chunk_id
 
 class SimpleTextChunker:
     """
