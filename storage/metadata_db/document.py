@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from typing import Optional, Tuple
 from storage.metadata_db.db import execute, fetch_one
 from src.sources.base.models import Document, IndexingScope, IngestionSource
@@ -74,3 +75,37 @@ def retrieve_source(document_id: str) -> Optional[Tuple[str, IndexingScope]]:
 
     scope = indexing_scope_registry.deserialize(json.loads(row["scope_json"]))
     return row["source_type"], scope
+
+def get_update_timestamp(document_id: str) -> Optional[datetime]:
+    # fetch the updated_at timestamp for a document by
+    # first retrieving the associated run_id from the processed_documents table
+    run_id = fetch_one(
+        """
+        SELECT run_id FROM processed_documents p
+        JOIN documents d ON p.source_instance_id = d.source_instance_id
+                      AND p.content_hash = d.logical_checksum
+        WHERE d.document_id = ?
+        ORDER BY p.run_id DESC
+        LIMIT 1
+        """,
+        (document_id,),
+    )
+    
+    if run_id is None:
+        return None
+
+    # then fetch the updated_at timestamp from the indexing_runs table
+    updated_at = fetch_one(
+        "SELECT updated_at FROM indexing_runs WHERE id = ?",
+        (run_id["run_id"],),
+    )
+    run_status = fetch_one(
+        "SELECT status FROM indexing_runs WHERE id = ?",
+        (run_id["run_id"],),
+    )
+
+    # only return if the run was marked as completed, otherwise return None
+    if run_status and run_status["status"] == "completed": 
+        return datetime.fromisoformat(updated_at["updated_at"]) if updated_at else None
+    else:
+        return None

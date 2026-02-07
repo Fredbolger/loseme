@@ -7,7 +7,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 class ExtractorRegistry:
-    #def __init__(self, extractors: List[DocumentExtractor]):
     def __init__(self, extractors: Optional[List[DocumentExtractor]] = None):
         if extractors is None:
             extractors = []
@@ -39,6 +38,7 @@ class ExtractorRegistry:
         return None
     
     def register_extractor(self, extractor: DocumentExtractor):
+        extractor.registry = self
         self.extractors.append(extractor)
         self.extractors.sort(key=lambda e: e.priority, reverse=True)
     

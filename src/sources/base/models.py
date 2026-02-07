@@ -1,4 +1,5 @@
 from __future__ import annotations
+import datetime
 import json
 import hashlib
 from pathlib import Path
@@ -148,6 +149,7 @@ class IndexingRun(BaseModel):
 class IngestionSource(BaseModel):
     scope: Any  # Could be IndexingScope or subclass
     should_stop: Callable[[], bool]
+    update_if_changed_after: Optional[datetime] = None # Optional datetime to indicate that documents should only be re-ingested if they have changed since this time
 
     def iter_documents(self) -> List[Any]:
         """Yield documents for ingestion. Must be implemented by subclasses."""

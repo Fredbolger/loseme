@@ -1,4 +1,5 @@
 import typer 
+from datetime import datetime, timezone
 import asyncio
 from pathlib import Path
 import httpx
@@ -33,22 +34,6 @@ def add_discovered_document_to_db(run_id: str, source_instance_id: str, content_
         f"and checksum {content_checksum} as discovered for run {run_id}"
     )
 
-def _send_batch(run_id: str, batch: list[dict]) -> None:
-    logger.debug(
-        f"Sending batch with {len(batch)} documents for run {run_id}"
-    )
-
-    r = httpx.post(
-        f"{API_URL}/ingest/documents",
-        json={
-            "run_id": run_id,
-            "documents": batch,
-        },
-        timeout=300.0,
-    )
-    r.raise_for_status()
-    logger.debug(f"Batch sent successfully for run {run_id}")
-    
 async def _send_batch_async(run_id: str, batch: list[dict]) -> None:
     logger.debug(
         f"Sending batch with {len(batch)} documents for run {run_id}"
@@ -142,13 +127,11 @@ async def ingest_filesystem(
             )
 
             if len(documents_batch) >= BATCH_SIZE:
-                #_send_batch(run_id, documents_batch)
                 await _send_batch_async(run_id, documents_batch)
                 documents_batch.clear()
                 sent_any = True
 
         if documents_batch:
-            # _send_batch(run_id, documents_batch)
             await _send_batch_async(run_id, documents_batch)
             sent_any = True
 
@@ -176,7 +159,7 @@ async def ingest_filesystem(
         typer.echo("Filesystem ingestion completed successfully.")
 
 @ingest_app.command("thunderbird")
-def ingest_thunderbird(
+async def ingest_thunderbird(
     mbox: str = typer.Argument(..., help="Path to Thunderbird mailbox"),
     ignore_from: List[str] = typer.Option([], "--ignore-from"),
 ):
@@ -194,8 +177,6 @@ def ingest_thunderbird(
         ignore_patterns=[{"field": "from", "value": v} for v in ignore_from],
     )
 
-    source = ThunderbirdIngestionSource(scope, should_stop=lambda: False)
-    logger.debug(f"Created ThunderbirdIngestionSource with scope: {scope}")
     run_response = httpx.post(
         f"{API_URL}/runs/create",
         json={
@@ -206,6 +187,10 @@ def ingest_thunderbird(
     run_response.raise_for_status()
     run_id = str(run_response.json()["run_id"])
     logger.info(f"Created indexing run with ID: {run_id}")
+    
+    source = ThunderbirdIngestionSource(scope, should_stop=lambda: False, update_if_changed_after = (datetime.fromisoformat(run_response.json().get("started_at"))).astimezone(timezone.utc))
+    logger.debug(f"Created ThunderbirdIngestionSource with scope: {scope}")
+    
     documents_batch: list[dict] = []
     sent_any = False
     
@@ -228,14 +213,9 @@ def ingest_thunderbird(
             logger.info(
                 f"Processing email {doc.source_path} (ID: {doc.id}) "
                 f"with size {len(doc.text)} characters"
+                f"from {doc.metadata.get('from')} to {doc.metadata.get('to')} with subject {doc.metadata.get('subject')}"
             )
             
-            try:
-                json.dumps(doc.metadata)
-            except TypeError as e:
-                logger.warning(f"Metadata for document ID {doc.id} is not JSON serializable: {e}. Converting to string.")
-                doc.metadata = {k: str(v) for k, v in doc.metadata.items()}
-
             documents_batch.append(
                 {
                     "id": doc.id,
@@ -252,12 +232,14 @@ def ingest_thunderbird(
             )
 
             if len(documents_batch) >= BATCH_SIZE:
-                _send_batch(run_id, documents_batch)
+                #_send_batch(run_id, documents_batch)
+                await _send_batch_async(run_id, documents_batch)
                 documents_batch.clear()
                 sent_any = True
 
         if documents_batch:
-            _send_batch(run_id, documents_batch)
+            #_send_batch(run_id, documents_batch)
+            await _send_batch_async(run_id, documents_batch)
             sent_any = True
 
         if not sent_any:

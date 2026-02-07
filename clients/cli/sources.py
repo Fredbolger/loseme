@@ -1,4 +1,5 @@
 import asyncio
+import os
 from pathlib import Path
 from typing import List
 import httpx
@@ -14,6 +15,19 @@ sources_app = typer.Typer(no_args_is_help=True, help="Manage monitored sources."
 sources_add_app = typer.Typer(no_args_is_help=True, help="Add monitored sources.")
 sources_app.add_typer(sources_add_app, name="add")
 
+def is_mbox_file(path: Path) -> bool:
+    """
+    Simple heuristic to check if a file is an mbox file.
+    Checks if the file starts with "From " which is common for mbox files.
+    """
+    try:
+        with path.open("r", encoding="utf-8", errors="ignore") as f:
+            first_line = f.readline()
+            return first_line.startswith("From ")
+    except Exception as e:
+        logger.error(f"Error checking if file {path} is an mbox file: {e}")
+        return False
+
 @sources_add_app.command("thunderbird")
 def add_thunderbird_source(
     mbox: str = typer.Argument(..., help="Path to Thunderbird mailbox"),
@@ -22,6 +36,18 @@ def add_thunderbird_source(
     """
     Add a Thunderbird mailbox as a monitored source.
     """
+
+    # if the provided path is a directory, look for mbox files inside it and recursively add them as sources
+    if Path(mbox).is_dir():
+        logger.info(f"Provided path {mbox} is a directory, looking for mbox files inside it.")
+        for root, dirs, files in os.walk(mbox):
+            for file in files:
+                file_path = Path(root) / file
+                if is_mbox_file(file_path):
+                    logger.info(f"Found mbox file: {file_path}, adding as monitored source.")
+                    add_thunderbird_source(mbox=str(file_path), ignore_from=ignore_from)
+        return
+
     mbox = str(mbox)
     logger.info(f"Adding Thunderbird monitored source for {mbox}")
 
@@ -112,7 +138,7 @@ async def scan_monitored_sources():
                 await ingest_filesystem(path=Path(directory), recursive=True)
         elif source.get("source_type") == "thunderbird":
             logger.info(f"Scanning Thunderbird source ID {source_id} at {scope.mbox_path}")
-            ingest_thunderbird(mbox=scope.mbox_path, ignore_from=[p["value"] for p in scope.ignore_patterns if p["field"] == "from"])
+            await ingest_thunderbird(mbox=scope.mbox_path, ignore_from=[p["value"] for p in scope.ignore_patterns if p["field"] == "from"])
         else:
             logger.warning(f"Unknown source type {source.get('source_type')} for source ID {source_id}, skipping.")
 
