@@ -21,15 +21,17 @@ def is_mbox_file(path: str) -> bool:
     except Exception:
         return False
 
+"""
 def extract_pdf_from_bytes(pdf_bytes: bytes) -> str:
     try:
-        from pipeline.extraction.pdf_extraction import PDFExtractor
+        from src.sources.filesystem.pdf_extractor import PDFExtractor
         pdf_extractor = PDFExtractor()
         pdf_result = pdf_extractor.extract_from_bytes(pdf_bytes)
         return pdf_result.text
     except ImportError:
         logger.warning("PDF extraction requested but PDFExtractor is not available.")
         return ""
+"""
 
 def html_to_text_bs(html: str) -> str:
     soup = BeautifulSoup(html, "html.parser")
@@ -70,7 +72,7 @@ class ThunderbirdExtractor(DocumentExtractor):
             return html_to_text_bs(text)
         elif part.get_content_type() == "application/pdf":
             pdf_bytes = part.get_payload(decode=True)
-            return extract_pdf_from_bytes(pdf_bytes) 
+            return self.extract_pdf_from_bytes(pdf_bytes)
         else:
             logger.debug(f"Skipping unsupported content type: {part.get_content_type()}")
             return ""
@@ -98,5 +100,17 @@ class ThunderbirdExtractor(DocumentExtractor):
             if payload:
                 text_body += self._extract_part_text(message)
         return text_body 
+
+    def extract_pdf_from_bytes(self, df_bytes: bytes) -> str:
+        """
+        Test if the registry, in which this extractor is registered, has a PDF extractor and use it to extract text from the PDF bytes
+        """
+            for extractor in self.registry.extractors:
+        if extractor is self:
+            continue
+        if extractor.can_extract_bytes(df_bytes):
+            result = extractor.extract_from_bytes(df_bytes)
+            return result.text
+        return ""
 
 extractor_registry.register_extractor(ThunderbirdExtractor())

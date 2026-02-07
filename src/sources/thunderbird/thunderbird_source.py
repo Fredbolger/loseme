@@ -11,9 +11,11 @@ from src.sources.base.registry import extractor_registry, ingestion_source_regis
 from storage.metadata_db.document import get_document_by_id
 from fnmatch import fnmatch
 from email.header import decode_header, make_header
+from email.utils import parsedate_to_datetime
 import mailbox
 import logging
 import os
+import json
 import warnings
 
 logger = logging.getLogger(__name__)
@@ -45,13 +47,15 @@ class ThunderbirdIngestionSource(IngestionSource):
 
     def __init__(self, 
                  scope: ThunderbirdIndexingScope, 
-                 should_stop: Optional[Callable[[], bool]] = None
+                 should_stop: Optional[Callable[[], bool]] = None,
+                 update_if_changed_after : Optional[datetime] = None
                  ):
         super().__init__(scope=scope, should_stop=should_stop)
         self.scope = scope
         self._mbox_path = scope.mbox_path
         self._ignore_patterns = scope.ignore_patterns or []
         self.should_stop = should_stop
+        self.update_if_changed_after = update_if_changed_after
         self._metadata = {
             "device_id": device_id,
             "source_instance_id": make_source_instance_id(
@@ -80,6 +84,15 @@ class ThunderbirdIngestionSource(IngestionSource):
                 logger.info("Stop requested, terminating Thunderbird ingestion source.")
                 break
             message_doc =  mbox.get(index)
+
+            if self.update_if_changed_after:
+                email_date = self.extract_datetime(message_doc)
+                if email_date and email_date <= self.update_if_changed_after:
+                    logger.debug(
+                        f"Skipping email with Message-ID {message_doc.get('Message-ID')} "
+                        f"because its date {email_date} is not after update_if_changed_after {self.update_if_changed_after}."
+                    )
+                    continue
 
             # Filter by metadata ignore patterns
             if self.ignore_patterns:
@@ -123,7 +136,7 @@ class ThunderbirdIngestionSource(IngestionSource):
                 text=text,
         )
 
-        return ThunderbirdDocument(
+        thunderbird_document = ThunderbirdDocument(
             id=doc_id,
             source_type="thunderbird",
             device_id=self.metadata["device_id"],
@@ -139,6 +152,14 @@ class ThunderbirdIngestionSource(IngestionSource):
                 "date": message.get("Date"),
             },
         )
+
+        # If the metadata contains non-JSON-serializable values, convert them to strings
+        for k, v in thunderbird_document.metadata.items():
+            try:
+                json.dumps(v)
+            except TypeError:
+                thunderbird_document.metadata[k] = str(v)
+        return thunderbird_document
 
     def _fallback_message_id(self, message: Message) -> str:
         # Fallback to a hash of From, To, Date, Subject if Message-ID is missing
@@ -216,5 +237,17 @@ class ThunderbirdIngestionSource(IngestionSource):
             logger.warning(f"Documents with IDs {missing_ids} not found in mbox {mbox_path}.")
 
         return extracted_documents
+    
+    def extract_datetime(self, message: Message) -> Optional[datetime]:
+        received_headers = message.get_all("Received", [])
+        for header in received_headers:
+            if ";" in header:
+                date_str = header.split(";")[-1].strip()
+                try:
+                    return parsedate_to_datetime(date_str)
+                except (TypeError, ValueError):
+                    continue
+
+        
 
 ingestion_source_registry.register_source("thunderbird", ThunderbirdIngestionSource)

@@ -6,8 +6,8 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Any
 
-from src.sources.filesystem import FilesystemIngestionSource, FilesystemIndexingScope
-from src.sources.thunderbird import ThunderbirdIngestionSource, ThunderbirdIndexingScope
+#from src.sources.filesystem import FilesystemIngestionSource, FilesystemIndexingScope
+#from src.sources.thunderbird import ThunderbirdIngestionSource, ThunderbirdIndexingScope
 from storage.metadata_db.indexing_runs import create_run
 from src.core.wiring import build_chunker
 
@@ -35,6 +35,16 @@ file_handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter(
     '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+
+# Mute everythin except the clients.cli.ingest logger to WARNING level
+logging.getLogger("clients.cli.ingest").setLevel(logging.DEBUG)
+
+for logger_name in logging.root.manager.loggerDict:
+    if logger_name != "clients.cli.ingest":
+        logging.getLogger(logger_name).setLevel(logging.WARNING)
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
 
 @app.command()
 def search(
