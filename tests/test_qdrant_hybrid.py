@@ -52,6 +52,7 @@ def test_search_qdrant_hybrid(qdrant_client, setup_db, set_embedding_model_env):
     chunk = Chunk(
         id="chunk_hybrid_2",
         source_type="filesystem",
+        source_path="/path/to/hybrid/file",
         document_id="doc_hybrid_2",
         device_id="device_hybrid_2",
         index=0,

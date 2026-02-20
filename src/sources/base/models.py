@@ -132,6 +132,7 @@ class Document(BaseModel):
 class Chunk(BaseModel):
     id: str
     source_type: str  # e.g., "text", "image", etc.
+    source_path: str
     text: Optional[str] = None
     document_part_id: str
     device_id: str

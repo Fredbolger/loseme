@@ -11,6 +11,8 @@ from src.sources.base.models import Chunk
 from src.core.wiring import build_embedding_provider
 from src.domain.embeddings import EmbeddingOutput
 from storage.vector_db.vector_store import VectorStore
+from storage.metadata_db.db import get_connection
+from storage.vector_db.migrations import run_vector_migrations
 
 COLLECTION = "chunks"
 VECTOR_SIZE = build_embedding_provider().dimension()
@@ -27,7 +29,9 @@ class QdrantVectorStoreHybrid(VectorStore):
         self.model_name = EMBEDDING_MODEL
         self.model = build_embedding_provider()
         self._ensure_collection()
-    
+        with get_connection() as conn:
+            run_vector_migrations(conn, self.client, COLLECTION)
+            
     def _ensure_collection(self) -> None:
         try:
             self.client.get_collection(COLLECTION)
@@ -89,6 +93,7 @@ class QdrantVectorStoreHybrid(VectorStore):
                     payload={
                         "chunk_id": chunk.id,
                         "source_type": chunk.source_type,
+                        "source_path": chunk.source_path,
                         "document_part_id": chunk.document_part_id,
                         "device_id": chunk.device_id,
                         "index": chunk.index,
@@ -176,6 +181,7 @@ class QdrantVectorStoreHybrid(VectorStore):
             chunk = Chunk(
                 id=hit.payload["chunk_id"],
                 source_type = hit.payload["source_type"],
+                source_path = hit.payload["source_path"],
                 document_part_id=hit.payload["document_part_id"],
                 device_id=hit.payload["device_id"],
                 index=hit.payload["index"],
@@ -226,6 +232,7 @@ class QdrantVectorStoreHybrid(VectorStore):
         chunk = Chunk(
             id=payload["chunk_id"],
             source_type=payload["source_type"],
+            source_path=payload["source_path"],
             document_part_id=payload["document_part_id"],
             device_id=payload["device_id"],
             index=payload["index"],

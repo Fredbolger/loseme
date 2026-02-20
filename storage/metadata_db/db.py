@@ -1,4 +1,5 @@
 import sqlite3
+import os
 from pathlib import Path
 from typing import Iterator
 from storage.metadata_db.migrations import run_migrations

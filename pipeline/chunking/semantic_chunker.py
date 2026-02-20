@@ -86,9 +86,9 @@ class SemanticChunker:
                 id=chunk_id,
                 document_part_id=document_part.document_part_id,
                 source_type=document_part.source_type,
+                source_path=document_part.source_path,
                 document_checksum=document_part.checksum,
                 device_id=document_part.device_id,
-                source_path=document_part.source_path,
                 index=index,
                 unit_locator=document_part.unit_locator,
                 metadata={

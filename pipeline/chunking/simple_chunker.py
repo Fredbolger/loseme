@@ -38,6 +38,7 @@ class SimpleTextChunker:
                 Chunk(
                     id=chunk_id,
                     source_type=part.source_type,
+                    source_path=part.source_path,
                     document_part_id=part.document_part_id,
                     document_checksum=part.checksum,
                     device_id=part.device_id,

@@ -57,6 +57,7 @@ class QdrantVectorStore(VectorStore):
                     payload={
                         "chunk_id": chunk.id,
                         "source_type": chunk.source_type,
+                        "source_path": chunk.source_path,
                         "document_part_id": chunk.document_part_id,
                         "device_id": chunk.device_id,
                         "index": chunk.index,
@@ -93,6 +94,7 @@ class QdrantVectorStore(VectorStore):
             chunk = Chunk(
                 id=hit.payload["chunk_id"],
                 source_type = hit.payload["source_type"],
+                source_path = hit.payload["source_path"],
                 document_part_id=hit.payload["document_part_id"],
                 device_id=hit.payload["device_id"],
                 index=hit.payload["index"],
@@ -144,6 +146,7 @@ class QdrantVectorStore(VectorStore):
         chunk = Chunk(
             id=payload["chunk_id"],
             source_type=payload["source_type"],
+            source_path=payload["source_path"],
             document_part_id=payload["document_part_id"],
             device_id=payload["device_id"],
             index=payload["index"],
