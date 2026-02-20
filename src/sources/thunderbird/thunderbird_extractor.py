@@ -46,7 +46,11 @@ class ThunderbirdExtractor(DocumentExtractor):
         if part.is_multipart():
             logger.debug("Skipping multipart part in _extract_part_text")
             return False
-
+    
+        # also skip encrypted parts 
+        elif part.get_content_type() == "application/pkcs7-mime":
+            logger.debug("Skipping encrypted part in _extract_part_text")
+            return False
 
         if part.get_content_type() == "text/plain":
             # Use the extractor from the registry to extract text from the plain text part
@@ -88,12 +92,6 @@ class ThunderbirdExtractor(DocumentExtractor):
         logger.debug(f"Extracting Thunderbird email from {mbox_folder}, message ID: {msg_id}")
         email_data = get_email_by_message_id(str(mbox_folder), msg_id)
         return email_data
-    """
-    def extract_by_message_id(self, mbox_path: str, message_id: str) -> str:
-        logger.debug(f"Extracting Thunderbird email from {mbox_path}, message ID: {message_id}")
-        email_data = get_email_by_message_id(mbox_path, message_id)
-        return email_data
-    """
 
     def extract_message_text(self, message: Message) -> DocumentExtractionResult:
         if message.is_multipart():
@@ -104,9 +102,6 @@ class ThunderbirdExtractor(DocumentExtractor):
                 if not extraction_result:
                     continue
                 unit_locators.append(f"message_part://{part_id}")
-                #text_body += self._extract_part_text(part)
-                #part_text, part_conent_type = self._extract_part_text(part)
-                #if part_conent_type != "unsupported" and part_text.strip():
                 extraction_results.append(extraction_result)
             
             return DocumentExtractionResult(

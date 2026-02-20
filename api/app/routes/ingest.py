@@ -48,6 +48,7 @@ class IngestDocumentPartRequest(BaseModel):
 
 @router.post("/document_part")
 def ingest_document_part(req: IngestDocumentPartRequest):
+    logger.debug(f"Received ingest request for document part ID {req.document_part_id} in run ID {req.run_id}")
     all_runs = show_runs()
     if req.run_id not in [run.id for run in all_runs]:
         raise HTTPException(status_code=404, detail=f"Run with ID {req.run_id} not found")

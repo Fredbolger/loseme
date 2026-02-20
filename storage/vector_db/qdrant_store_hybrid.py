@@ -60,7 +60,7 @@ class QdrantVectorStoreHybrid(VectorStore):
     def add(self, chunk: Chunk, embedding: EmbeddingOutput) -> None:
         logger.debug(f"Adding chunk with ID {chunk.id} to Qdrant collection '{COLLECTION}'")
         logger.debug(f"Embedding has keys: {embedding.__dict__.keys()}")
-        self._ensure_collection()
+        #self._ensure_collection()
         dense_vector = embedding.dense  # Assuming embedding.dense is a list of floats
         if len(dense_vector) != VECTOR_SIZE:
             raise ValueError(f"Vector size missmatch: expected {VECTOR_SIZE}, got {len(dense_vector)}")

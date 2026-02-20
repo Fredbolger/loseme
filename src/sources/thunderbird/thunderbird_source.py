@@ -103,10 +103,15 @@ class ThunderbirdIngestionSource(IngestionSource):
                 if skip:
                     continue
             logger.debug(f"Processing email with Message-ID {message_doc.get('Message-ID')} from mbox {self.mbox_path}.")
-            email_doc = self._build_email_document(message=message_doc,
-                                                   mbox_path=str(self.mbox_path))
+            try:
+                email_doc = self._build_email_document(message=message_doc,
+                                                       mbox_path=str(self.mbox_path))
             
-            yield email_doc
+                yield email_doc
+
+            except Exception as e:
+                logger.error(f"Error processing email with Message-ID {message_doc.get('Message-ID')} from mbox {self.mbox_path}: {e}")
+                continue
 
     def _build_email_document(
         self,
