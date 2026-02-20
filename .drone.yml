@@ -1,0 +1,10 @@
+kind: pipeline
+name: default
+
+steps:
+  - name: run-tests
+    image: python:3.11
+    commands:
+      - pip install poetry
+      - poetry install
+      - poetry run pytest --maxfail=1 --disable-warnings -q
