@@ -21,25 +21,11 @@ def is_mbox_file(path: str) -> bool:
     except Exception:
         return False
 
-"""
-def extract_pdf_from_bytes(pdf_bytes: bytes) -> str:
-    try:
-        from src.sources.filesystem.pdf_extractor import PDFExtractor
-        pdf_extractor = PDFExtractor()
-        pdf_result = pdf_extractor.extract_from_bytes(pdf_bytes)
-        return pdf_result.text
-    except ImportError:
-        logger.warning("PDF extraction requested but PDFExtractor is not available.")
-        return ""
-"""
-
-def html_to_text_bs(html: str) -> str:
-    soup = BeautifulSoup(html, "html.parser")
-    return soup.get_text("\n", strip=True)
-
 class ThunderbirdExtractor(DocumentExtractor):
     name: str = "thunderbird"
     priority: int = 15
+    supported_mime_types: set[str] = {"message/rfc822"} # This refers to the email message format, not the attachments
+    version: str = "0.1"
 
     def can_extract(self, path: Path) -> bool:
         try:
@@ -53,64 +39,123 @@ class ThunderbirdExtractor(DocumentExtractor):
         # We won't implement byte extraction for Thunderbird emails
         return False
 
-    def _extract_part_text(self, part) -> str:
-        # This function extracts text from a single part of the email
+    def _extract_part(self, part) -> DocumentExtractionResult:
+        # This function extracts a single part of the email
         # It should only operate on non-multipart parts
 
         if part.is_multipart():
             logger.debug("Skipping multipart part in _extract_part_text")
-            return ""
+            return False
+
 
         if part.get_content_type() == "text/plain":
-            return part.get_payload(decode=True).decode(
-                part.get_content_charset() or "utf-8", errors="replace"
-            )
+            # Use the extractor from the registry to extract text from the plain text part
+            plain_text_extractor = self.registry.get_extractor("plaintext")
+            if plain_text_extractor is None:
+                raise ValueError("Plain text extractor not found in registry") 
+
+            plain_text_extraction = plain_text_extractor.extract_from_bytes(part.get_payload(decode=True))
+            return plain_text_extraction
+        
         elif part.get_content_type() == "text/html":
-            text = part.get_payload(decode=True).decode(
-                part.get_content_charset() or "utf-8", errors="replace"
-            )
-            return html_to_text_bs(text)
+            html_extractor = self.registry.get_extractor("html")
+            if html_extractor is None:
+                raise ValueError("HTML extractor not found in registry. Registry contains the following extractors: " + ", ".join([extractor.name for extractor in self.registry.extractors]))
+            html_text_extraction = html_extractor.extract_from_bytes(part.get_payload(decode=True))
+            return html_text_extraction
+        
         elif part.get_content_type() == "application/pdf":
-            pdf_bytes = part.get_payload(decode=True)
-            return self.extract_pdf_from_bytes(pdf_bytes)
+            pdf_extractor = self.registry.get_extractor("pdf")
+            if pdf_extractor is None:
+                raise ValueError("PDF extractor not found in registry")
+            pdf_extraction = pdf_extractor.extract_from_bytes(part.get_payload(decode=True))
+            return pdf_extraction
+        
         else:
             logger.debug(f"Skipping unsupported content type: {part.get_content_type()}")
-            return ""
-
-    def extract(self, path: Path):
+            return DocumentExtractionResult(
+                texts=[""],
+                content_types=[part.get_content_type()],
+                metadata=[{}],
+                unit_locators=[],
+                extractor_names=["unsupported"],
+                extractor_versions=["None"],
+            )
+    
+    def extract(self, path: Path) -> DocumentExtractionResult:
         msg_id = "<" + path.name.strip("<>") + ">"
         mbox_folder = path.parent
         logger.debug(f"Extracting Thunderbird email from {mbox_folder}, message ID: {msg_id}")
         email_data = get_email_by_message_id(str(mbox_folder), msg_id)
         return email_data
-
+    """
     def extract_by_message_id(self, mbox_path: str, message_id: str) -> str:
         logger.debug(f"Extracting Thunderbird email from {mbox_path}, message ID: {message_id}")
         email_data = get_email_by_message_id(mbox_path, message_id)
         return email_data
-    
-    def extract_message_text(self, message: Message) -> str:
-        text_body = ""
+    """
 
+    def extract_message_text(self, message: Message) -> DocumentExtractionResult:
         if message.is_multipart():
-            for part in message.walk():
-                text_body += self._extract_part_text(part)
+            extraction_results = []
+            unit_locators = []
+            for part_id, part in enumerate(message.walk()):
+                extraction_result = self._extract_part(part)
+                if not extraction_result:
+                    continue
+                unit_locators.append(f"message_part://{part_id}")
+                #text_body += self._extract_part_text(part)
+                #part_text, part_conent_type = self._extract_part_text(part)
+                #if part_conent_type != "unsupported" and part_text.strip():
+                extraction_results.append(extraction_result)
+            
+            return DocumentExtractionResult(
+                texts=[result.texts[0] for result in extraction_results],
+                content_types=[result.content_types[0] for result in extraction_results],
+                metadata=[{
+                    "message_id": message.get("Message-ID"),
+                    "subject": str(make_header(decode_header(message.get("Subject", "")))),
+                    "from": str(make_header(decode_header(message.get("From", "")))),
+                    "to": str(make_header(decode_header(message.get("To", "")))),
+                    "date": message.get("Date"),
+                }] * len(extraction_results),
+                unit_locators=unit_locators,
+                extractor_names= [result.extractor_names[0] for result in extraction_results],
+                extractor_versions=[result.extractor_versions[0] for result in extraction_results],
+            )
+
         else:
             payload = message.get_payload(decode=True)
             if payload:
-                text_body += self._extract_part_text(message)
-        return text_body 
+                texts = [payload.decode(message.get_content_charset() or "utf-8", errors="replace")]
+                content_types = [message.get_content_type()]
+        
+            return DocumentExtractionResult(texts=texts, 
+                                            content_types=content_types, 
+                                            metadata=[{
+                        "message_id": message.get("Message-ID"),
+                        "subject": str(make_header(decode_header(message.get("Subject", "")))),
+                        "from": str(make_header(decode_header(message.get("From", "")))),
+                        "to": str(make_header(decode_header(message.get("To", "")))),
+                        "date": message.get("Date"),
+                    }],
+                                            unit_locators=[f"message_part://0"],
+                                            extractor_names=[self.name], 
+                                            extractor_versions=[self.version]
+                                            )
 
     def extract_pdf_from_bytes(self, df_bytes: bytes) -> str:
         """
         Test if the registry, in which this extractor is registered, has a PDF extractor and use it to extract text from the PDF bytes
         """
-            for extractor in self.registry.extractors:
-        if extractor is self:
-            continue
-        if extractor.can_extract_bytes(df_bytes):
-            result = extractor.extract_from_bytes(df_bytes)
-            return result.text
-        return ""
+        for extractor in self.registry.extractors:
+            if extractor is self:
+                continue
+            if extractor.can_extract_bytes(df_bytes):
+                if extractor == None:
+                    raise ValueError("PDF extractor not found in registry")
+                result = extractor.extract_from_bytes(df_bytes)
+                return result.texts[0] if result.texts else ""
+            return ""
 
 extractor_registry.register_extractor(ThunderbirdExtractor())

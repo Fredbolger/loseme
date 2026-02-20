@@ -9,6 +9,9 @@ from src.sources.filesystem import FilesystemIndexingScope
 from src.sources.thunderbird import ThunderbirdIndexingScope
 from clients.cli.config import API_URL
 import logging
+from clients.cli.ingest import queue_filesystem_logic
+from clients.cli.ingest import queue_thunderbird_logic
+
 logger = logging.getLogger(__name__)
 
 sources_app = typer.Typer(no_args_is_help=True, help="Manage monitored sources.")
@@ -73,6 +76,8 @@ def add_thunderbird_source(
 def add_filesystem_source(
     path: Path = typer.Argument(..., exists=True, file_okay=False),
     recursive: bool = True,
+    include_patterns: List[str] = typer.Option([], "--include-pattern", help="Glob pattern to include (e.g. *.txt)"),
+    exclude_patterns: List[str] = typer.Option([], "--exclude-pattern", help="Glob pattern to exclude (e.g. *.log)")
 ):
     """
     Add a local filesystem directory as a monitored source.
@@ -83,8 +88,8 @@ def add_filesystem_source(
     scope = FilesystemIndexingScope(
         directories=[path],
         recursive=recursive,
-        include_patterns=[],
-        exclude_patterns=[],
+        include_patterns=include_patterns,
+        exclude_patterns=exclude_patterns,
     )
 
     response = httpx.post(
@@ -118,12 +123,34 @@ def list_monitored_sources():
 
     typer.echo(pretty_text)
 
-@sources_app.command("scan")
-def scan_sources():
-    asyncio.run(scan_monitored_sources())
 
-async def scan_monitored_sources():
-    from clients.cli.ingest import ingest_filesystem, ingest_thunderbird
+
+@sources_app.command("scan-all")
+def scan_sources():
+    scan_monitored_sources()
+
+@sources_app.command("scan")
+def scan_source(source_id: str = typer.Argument(..., help="ID of the monitored source to scan")):
+    r = httpx.get(f"{API_URL}/sources/get_all_sources")
+    r.raise_for_status()
+
+    source = next((s for s in r.json().get("sources", []) if s["id"] == source_id), None)
+    if not source:
+        typer.echo(f"No monitored source found with ID: {source_id}")
+        raise typer.Exit(code=1)
+
+    logger.info(f"Starting scan of monitored source ID {source_id} of type {source['source_type']} with locator {source['locator']}")
+    if source["source_type"] == "filesystem":
+        for directory in source["scope"]["directories"]:
+            logger.info(f"Scanning filesystem source ID {source_id} at {directory}")
+            queue_filesystem_logic(path=directory, recursive=source["scope"]["recursive"], include_patterns=source["scope"]["include_patterns"], exclude_patterns=source["scope"]["exclude_patterns"])
+    elif source["source_type"] == "thunderbird":
+        logger.info(f"Scanning Thunderbird source ID {source_id} at {source['scope']['mbox_path']}")
+        queue_thunderbird_logic(mbox=source["scope"]["mbox_path"], ignore_from=[p["value"] for p in source["scope"]["ignore_patterns"] if p["field"] == "from"])
+    else:
+        logger.warning(f"Unknown source type {source['source_type']} for source ID {source_id}, skipping.")
+
+def scan_monitored_sources():
     sources = httpx.get(f"{API_URL}/sources/get_all_sources") 
     sources.raise_for_status()
 
@@ -135,11 +162,9 @@ async def scan_monitored_sources():
         if source.get("source_type") == "filesystem":
             for directory in scope.directories:
                 logger.info(f"Scanning filesystem source ID {source_id} at {directory}")
-                await ingest_filesystem(path=Path(directory), recursive=True)
+                queue_filesystem_logic(path=directory, recursive=scope.recursive, include_patterns=scope.include_patterns, exclude_patterns=scope.exclude_patterns)
         elif source.get("source_type") == "thunderbird":
             logger.info(f"Scanning Thunderbird source ID {source_id} at {scope.mbox_path}")
-            await ingest_thunderbird(mbox=scope.mbox_path, ignore_from=[p["value"] for p in scope.ignore_patterns if p["field"] == "from"])
+            queue_thunderbird_logic(mbox=scope.mbox_path, ignore_from=[p["value"] for p in scope.ignore_patterns if p["field"] == "from"])
         else:
             logger.warning(f"Unknown source type {source.get('source_type')} for source ID {source_id}, skipping.")
-
-

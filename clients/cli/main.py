@@ -6,8 +6,6 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Any
 
-#from src.sources.filesystem import FilesystemIngestionSource, FilesystemIndexingScope
-#from src.sources.thunderbird import ThunderbirdIngestionSource, ThunderbirdIndexingScope
 from storage.metadata_db.indexing_runs import create_run
 from src.core.wiring import build_chunker
 
@@ -15,14 +13,15 @@ from clients.cli.config import API_URL, BATCH_SIZE
 from clients.cli.ingest import ingest_app 
 from clients.cli.sources import sources_app 
 from clients.cli.runs import run_app
+from clients.cli.queue import queue_app
 
 app = typer.Typer(no_args_is_help=True)
 
 app.add_typer(ingest_app, name="ingest")
 app.add_typer(sources_app, name="sources")
 app.add_typer(run_app, name="run")
+app.add_typer(queue_app, name="queue")
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Mute httpcore and httpx loggers to WARNING level
@@ -36,14 +35,20 @@ formatter = logging.Formatter(
     '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
-# Mute everythin except the clients.cli.ingest logger to WARNING level
-logging.getLogger("clients.cli.ingest").setLevel(logging.DEBUG)
-
-for logger_name in logging.root.manager.loggerDict:
-    if logger_name != "clients.cli.ingest":
-        logging.getLogger(logger_name).setLevel(logging.WARNING)
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
+
+logging.basicConfig(level=logging.DEBUG, handlers=[file_handler])
+
+
+# Mute everythin except the clients.cli.ingest logger to WARNING level
+#logging.getLogger("clients.cli.ingest").setLevel(logging.DEBUG)
+
+#for logger_name in logging.root.manager.loggerDict:
+#    if logger_name != "clients.cli.ingest":
+#        logging.getLogger(logger_name).setLevel(logging.WARNING)
+#file_handler.setFormatter(formatter)
+#logger.addHandler(file_handler)
 
 
 @app.command()
@@ -67,20 +72,20 @@ def search(
         typer.echo("No results.")
         return
 
-    payloads = [hit["document_id"] for hit in results]
+    payloads = [hit["document_part_id"] for hit in results]
 
-    doc_r = httpx.post(
+    doc_parts = httpx.post(
         f"{API_URL}/documents/batch_get",
-        json={"document_ids": payloads},
+        json={"document_part_ids": payloads},
     )
-    doc_r.raise_for_status()
+    doc_parts.raise_for_status()
 
-    documents = {doc["document_id"]: doc for doc in doc_r.json()}
+    documents = {part["document_part_id"]: part for part in doc_parts.json().get("documents_parts", [])}
 
     typer.echo("-" * 80)
     indexed = []
     for idx, hit in enumerate(results, start=1):
-        doc = documents.get(hit["document_id"])
+        doc = documents.get(hit["document_part_id"])
         if not doc:
             continue
 
@@ -106,7 +111,7 @@ def search(
             doc = indexed[i]
 
             descriptor_res = httpx.get(
-                f"{API_URL}/documents/{doc['document_id']}/open"
+                f"{API_URL}/documents/open/{doc['document_part_id']}"
                 )
             
             descriptor_res.raise_for_status()

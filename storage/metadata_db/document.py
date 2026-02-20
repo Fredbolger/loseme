@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 from typing import Optional, Tuple
-from storage.metadata_db.db import execute, fetch_one
+from storage.metadata_db.db import execute, fetch_one, fetch_all
 from src.sources.base.models import Document, IndexingScope, IngestionSource
 from src.sources.base.registry import indexing_scope_registry
 
@@ -109,3 +109,14 @@ def get_update_timestamp(document_id: str) -> Optional[datetime]:
         return datetime.fromisoformat(updated_at["updated_at"]) if updated_at else None
     else:
         return None
+
+def get_all_document_ids() -> list[dict]:
+    rows = fetch_all(
+        """
+        SELECT document_id, source_instance_id
+        FROM documents
+        """,
+    )
+    #return [row["document_id"] for row in rows]
+    # Return document_ids and source_instance_ids
+    return [{"document_id": row["document_id"], "source_instance_id": row["source_instance_id"]} for row in rows]

@@ -1,9 +1,11 @@
 from typing import List, Tuple
 import numpy as np
 
-from src.sources.base.models import Document, Chunk
-from src.domain.embeddings import EmbeddingProvider
+from src.sources.base.models import Document, Chunk, DocumentPart
+from src.core.wiring import build_embedding_provider
 from src.core.ids import make_chunk_id
+
+
 
 class SemanticChunker:
     """
@@ -20,16 +22,17 @@ class SemanticChunker:
 
     def __init__(
         self,
-        embedder: EmbeddingProvider,
+        embedder: build_embedding_provider(),
         similarity_threshold: float = 0.75,
         max_chars: int = 1200,
-    ):
+        ):
         self.similarity_threshold = similarity_threshold
         self.max_chars = max_chars
         self.embedder = embedder
-    
-    def chunk(self, document: Document, text: str) -> Tuple[List[Chunk], List[str]]:
-        units = self._split_paragraphs(text)
+
+    def chunk(self, part: DocumentPart) -> Tuple[List[Chunk], List[str]]:
+
+        units = self._split_paragraphs(part.text)
         if not units:
             return [], []
 
@@ -53,42 +56,45 @@ class SemanticChunker:
                 buffer += "\n\n" + units[i]
                 buffer_len += len(units[i])
             else:
-                self._emit_chunk(document, buffer, index, chunks, chunk_texts)
+                self._emit_chunk(part, buffer, index, chunks, chunk_texts)
                 index += 1
                 buffer = units[i]
                 buffer_len = len(buffer)
 
         # Emit last buffer
-        self._emit_chunk(document, buffer, index, chunks, chunk_texts)
+        self._emit_chunk(part, buffer, index, chunks, chunk_texts)
         return chunks, chunk_texts
 
 
     def _emit_chunk(
         self,
-        document: Document,
+        document_part: DocumentPart,
         text: str,
         index: int,
         chunks: List[Chunk],
         chunk_texts: List[str],
+
     ):
         chunk_id = make_chunk_id(
-            document_id=document.id,
-            document_checksum=document.checksum,
+            document_part_id=document_part.document_part_id,
+            document_checksum=document_part.checksum,
             index=index,
         )
 
         chunks.append(
             Chunk(
                 id=chunk_id,
-                source_type=document.source_type,
-                document_id=document.id,
-                document_checksum=document.checksum,
-                device_id=document.device_id,
-                source_path=document.source_path,
+                document_part_id=document_part.document_part_id,
+                source_type=document_part.source_type,
+                document_checksum=document_part.checksum,
+                device_id=document_part.device_id,
+                source_path=document_part.source_path,
                 index=index,
+                unit_locator=document_part.unit_locator,
                 metadata={
                     "char_len": len(text),
                 },
+                text=text
             )
         )
         chunk_texts.append(text)
@@ -99,4 +105,3 @@ class SemanticChunker:
             for p in text.split("\n\n")
             if p.strip()
         ]
-

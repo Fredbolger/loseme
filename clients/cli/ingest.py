@@ -1,3 +1,4 @@
+import asyncio
 import typer 
 from datetime import datetime, timezone
 import asyncio
@@ -5,6 +6,7 @@ from pathlib import Path
 import httpx
 import json
 from typing import List
+from src.sources.base.models import DocumentPart, IndexingScope
 from src.sources.filesystem import FilesystemIngestionSource, FilesystemIndexingScope
 from src.sources.thunderbird import ThunderbirdIngestionSource, ThunderbirdIndexingScope
 import logging
@@ -19,56 +21,64 @@ def is_stop_requested(run_id: str) -> bool:
     response.raise_for_status()
     return response.json().get("stop_requested", False)
 
-def add_discovered_document_to_db(run_id: str, source_instance_id: str, content_checksum: str) -> None:
+def queue_document_part(run_id: str, part: DocumentPart, scope: IndexingScope):
     response = httpx.post(
-        f"{API_URL}/documents/add_discovered_document",
+        f"{API_URL}/queue/add",
         json={
+            "part": {
+                    "document_part_id": part.document_part_id,
+                    "source_type": part.source_type,
+                    "checksum": part.checksum,
+                    "device_id": part.device_id,
+                    "source_path": str(part.source_path),
+                    "source_instance_id": part.source_instance_id,
+                    "unit_locator": part.unit_locator,
+                    "content_type": part.content_type,
+                    "extractor_name": part.extractor_name,
+                    "extractor_version": part.extractor_version,
+                    "metadata_json": part.metadata_json,
+                    "created_at": part.created_at.isoformat(),
+                    "updated_at": part.updated_at.isoformat(),
+                    "text": part.text,
+                    "scope_json": scope.serialize(),
+            },
             "run_id": run_id,
-            "source_instance_id": source_instance_id,
-            "content_checksum": content_checksum,
         },
+        timeout=1.0,
     )
     response.raise_for_status()
-    logger.debug(
-        f"Marked document with source_instance_id {source_instance_id} "
-        f"and checksum {content_checksum} as discovered for run {run_id}"
-    )
-
-async def _send_batch_async(run_id: str, batch: list[dict]) -> None:
-    logger.debug(
-        f"Sending batch with {len(batch)} documents for run {run_id}"
-    )
-
-    async with httpx.AsyncClient(timeout=300.0) as client:
-        r = await client.post(
-            f"{API_URL}/ingest/documents",
-            json={
-                "run_id": run_id,
-                "documents": batch,
-            },
-        )
-        r.raise_for_status()
+    logger.info(f"Queued document part with unit_locator {part.unit_locator} and content_type {part.content_type} for file {part.source_path} (Document Part ID: {part.document_part_id})")
 
 @ingest_app.command("filesystem")
-async def ingest_filesystem(
+def ingest_filesystem(
+        path: Path = typer.Argument(..., exists=True, file_okay=False),
+        recursive: bool = True,
+        include_patterns: List[str] = typer.Option([], "--include-pattern", help="List of glob patterns to include (e.g. --include-pattern *.txt --include-pattern *.md)"),
+        exclude_patterns: List[str] = typer.Option([], "--exclude-pattern", help="List of glob patterns to exclude (e.g. --exclude-pattern *.log --exclude-pattern temp/*)"),
+):
+    queue_filesystem_logic(path=path, recursive=recursive, include_patterns=include_patterns, exclude_patterns=exclude_patterns)
+
+def queue_filesystem_logic(
     path: Path = typer.Argument(..., exists=True, file_okay=False),
     recursive: bool = True,
+    include_patterns: List[str] = typer.Option([], "--include-pattern", help="List of glob patterns to include (e.g. --include-pattern *.txt --include-pattern *.md)"),
+    exclude_patterns: List[str] = typer.Option([], "--exclude-pattern", help="List of glob patterns to exclude (e.g. --exclude-pattern *.log --exclude-pattern temp/*)"),
+
 ):
     """
-    Ingest a local filesystem directory.
-    Extraction + chunking happens locally.
-    Embedding + storage happens in the backend.
+    Queue a local filesystem directory.
     """
     
-    BATCH_SIZE = 5 
-
-    logger.info(f"Starting filesystem ingestion for {path}")
+    logger.info(f"Starting filesystem queuing for {path}")
+    
+    # resolve the absolute path to ensure consistency in source_instance_id generation and logging
+    path = path.resolve()
 
     scope = FilesystemIndexingScope(
         directories=[path],
         recursive=recursive,
-        include_patterns=[],
-        exclude_patterns=[],
+        include_patterns=include_patterns,
+        exclude_patterns=exclude_patterns,
     )
 
     source = FilesystemIngestionSource(scope, should_stop=lambda: False)
@@ -85,97 +95,68 @@ async def ingest_filesystem(
 
     run_id = str(run_response.json()["run_id"])
     logger.info(f"Created indexing run with ID: {run_id}")
-
-    documents_batch: list[dict] = []
-    sent_any = False
+    
+    # Start indexing for the run
+    indexing_response = httpx.post(
+        f"{API_URL}/runs/start_indexing/{run_id}"
+    )
+    indexing_response.raise_for_status()
+    logger.info(f"Started indexing for run {run_id}. Beginning to queue document parts for filesystem at {path} with recursive={recursive}. Status is: {indexing_response.json().get('status')}")
 
     try: 
         for doc in source.iter_documents():
-            if is_stop_requested(run_id):
-                logger.info("Stop requested, terminating filesystem ingestion.")
-                break
-
-            # Increment discovered document count runs/increment_discovered/{run_id}
-            response = httpx.post(
-                f"{API_URL}/runs/increment_discovered/{run_id}/{doc.id}"
-            )
-            # Add the discovered document to the database
-            add_discovered_document_to_db(
-                run_id=run_id,
-                source_instance_id=doc.source_id,
-                content_checksum=doc.checksum,
-            )
-
-            logger.info(
-                f"Processing document {doc.source_path} (ID: {doc.id}) "
-                f"with size {len(doc.text)} characters"
-            )
-
-            documents_batch.append(
-                {
-                    "id": doc.id,
-                    "source_type": doc.source_type,
-                    "source_id": doc.source_id,
-                    "device_id": doc.device_id,
-                    "source_path": str(doc.source_path),
-                    "checksum": doc.checksum,
-                    "created_at": doc.created_at.isoformat(),
-                    "updated_at": doc.updated_at.isoformat(),
-                    "metadata": doc.metadata,
-                    "text": doc.text,
-                }
-            )
-
-            if len(documents_batch) >= BATCH_SIZE:
-                await _send_batch_async(run_id, documents_batch)
-                documents_batch.clear()
-                sent_any = True
-
-        if documents_batch:
-            await _send_batch_async(run_id, documents_batch)
-            sent_any = True
-
-        if not sent_any:
-            typer.echo("No documents found.")
-            raise typer.Exit(code=0)
+            for part in doc.parts:
+                logger.debug(f"Ingesting text: {part.text[:30]}... from file {part.source_path} (Document Part ID: {part.document_part_id})")
+                queue_document_part(run_id, part, scope)                
+        
+        # Once all documents are queued, we can mark the run as not discovering anymore
+        httpx.post(
+            f"{API_URL}/runs/discovering_stopped/{run_id}"
+        )
+         
+        logger.info(f"Completed filesystem queuing for {path}. Marked run {run_id} as discovering stopped.")
 
     except Exception as e:
-        logger.error(f"Error during filesystem ingestion: {e}")
-        if isinstance(e, RuntimeError) and str(e) == "Ingestion stopped by user request.":
-            typer.echo("Filesystem ingestion was stopped by user request.")
-            httpx.post(
-                f"{API_URL}/runs/mark_interrupted/{run_id}"
-            )
-        else:
-            httpx.post(
-                f"{API_URL}/runs/mark_failed/{run_id}",
-                json={"error_message": str(e)},
-            )
-
-    else:
-        mark_completed_response = httpx.post(
-            f"{API_URL}/runs/mark_completed/{run_id}"
+        # Request stop
+        httpx.post(
+            f"{API_URL}/runs/request_stop/{run_id}"
         )
-        typer.echo("Filesystem ingestion completed successfully.")
+        # and mark run as failed
+        httpx.post(
+            f"{API_URL}/runs/mark_failed/{run_id}",
+            json={"error_message": str(e)},
+        )
+        
+
+        logger.error(f"Error during filesystem queuing: {e}")
 
 @ingest_app.command("thunderbird")
-async def ingest_thunderbird(
-    mbox: str = typer.Argument(..., help="Path to Thunderbird mailbox"),
+def ingest_thunderbird(
+        mbox: str = typer.Argument(..., help="Path to Thunderbird mailbox"),
+        ignore_from: List[str] = typer.Option([], "--ignore-from"),
+):
+    queue_thunderbird_logic(mbox=mbox, ignore_from=ignore_from)
+
+def queue_thunderbird_logic(
+    mbox: Path = typer.Argument(..., help="Path to Thunderbird mailbox"),
     ignore_from: List[str] = typer.Option([], "--ignore-from"),
 ):
     """
-    Ingest Thunderbird mailboxes.
-    Extraction + chunking happens locally.
-    Embedding + storage happens in the backend.
+    Queue Thunderbird mailboxes.
     """
+    # resolve the absolute path to ensure consistency in source_instance_id generation and logging
+    mbox = Path(mbox).resolve()
     mbox = str(mbox)
-    logger.info(f"Starting Thunderbird ingestion for {mbox}")
+    logger.info(f"Starting Thunderbird queuing for {mbox}")
 
     scope = ThunderbirdIndexingScope(
         type="thunderbird",
         mbox_path=mbox,
         ignore_patterns=[{"field": "from", "value": v} for v in ignore_from],
     )
+
+    source = ThunderbirdIngestionSource(scope, should_stop=lambda: False)
+    logger.debug(f"Created ThunderbirdIngestionSource with scope: {scope}")
 
     run_response = httpx.post(
         f"{API_URL}/runs/create",
@@ -187,81 +168,37 @@ async def ingest_thunderbird(
     run_response.raise_for_status()
     run_id = str(run_response.json()["run_id"])
     logger.info(f"Created indexing run with ID: {run_id}")
-    
-    source = ThunderbirdIngestionSource(scope, should_stop=lambda: False, update_if_changed_after = (datetime.fromisoformat(run_response.json().get("started_at"))).astimezone(timezone.utc))
-    logger.debug(f"Created ThunderbirdIngestionSource with scope: {scope}")
-    
-    documents_batch: list[dict] = []
-    sent_any = False
-    
+
+    # Start indexing for the run
+    indexing_response = httpx.post(
+        f"{API_URL}/runs/start_indexing/{run_id}"
+    )
+    indexing_response.raise_for_status()
+    logger.info(f"Started indexing for run {run_id}. Beginning to queue document parts for Thunderbird mailbox at {mbox} with ignore_from={ignore_from}. Status is: {indexing_response.json().get('status')}")
+
     try:
         for doc in source.iter_documents():
-            if is_stop_requested(run_id):
-                logger.info("Stop requested, terminating Thunderbird ingestion.")
-                raise RuntimeError("Ingestion stopped by user request.") 
-            # Increment discovered document count runs/increment_discovered/{run_id}
-            response = httpx.post(
-                f"{API_URL}/runs/increment_discovered/{run_id}"
-            )
-            # Add the discovered document to the database
-            add_discovered_document_to_db(
-                run_id=run_id,
-                source_instance_id=doc.source_id,
-                content_checksum=doc.checksum,
-            )
-
-            logger.info(
-                f"Processing email {doc.source_path} (ID: {doc.id}) "
-                f"with size {len(doc.text)} characters"
-                f"from {doc.metadata.get('from')} to {doc.metadata.get('to')} with subject {doc.metadata.get('subject')}"
-            )
-            
-            documents_batch.append(
-                {
-                    "id": doc.id,
-                    "source_type": doc.source_type,
-                    "source_id": doc.source_id,
-                    "device_id": doc.device_id,
-                    "source_path": str(doc.source_path),
-                    "checksum": doc.checksum,
-                    "created_at": doc.created_at.isoformat(),
-                    "updated_at": doc.updated_at.isoformat(),
-                    "metadata": doc.metadata,
-                    "text": doc.text,
-                }
-            )
-
-            if len(documents_batch) >= BATCH_SIZE:
-                #_send_batch(run_id, documents_batch)
-                await _send_batch_async(run_id, documents_batch)
-                documents_batch.clear()
-                sent_any = True
-
-        if documents_batch:
-            #_send_batch(run_id, documents_batch)
-            await _send_batch_async(run_id, documents_batch)
-            sent_any = True
-
-        if not sent_any:
-            typer.echo("No documents found.")
-            return
-    
-    except Exception as e:
-        logger.error(f"Error during Thunderbird ingestion: {e}")
-        if isinstance(e, RuntimeError) and str(e) == "Ingestion stopped by user request.":
-            typer.echo("Thunderbird ingestion was stopped by user request.")
-            httpx.post(
-                f"{API_URL}/runs/mark_interrupted/{run_id}"
-            )
-        else:
-            httpx.post(
-                f"{API_URL}/runs/mark_failed/{run_id}",
-                json={"error_message": str(e)},
-            )
-
-    else:
-        mark_completed_response = httpx.post(
-            f"{API_URL}/runs/mark_completed/{run_id}"
+            for part in doc.parts:
+                logger.debug(f"Ingesting text: {part.text[:30]}... from email {part.source_path} (Document Part ID: {part.document_part_id})")
+                queue_document_part(run_id, part, scope)
+                
+        # Once all documents are queued, we can mark the run as not discovering anymore
+        httpx.post(
+            f"{API_URL}/runs/discovering_stopped/{run_id}"
         )
-        typer.echo("Thunderbird ingestion completed successfully.")
+         
+        logger.info(f"Completed Thunderbird queuing for {mbox}. Marked run {run_id} as discovering stopped.")
+
+    except Exception as e:
+        # Request stop
+        httpx.post(
+            f"{API_URL}/runs/request_stop/{run_id}"
+        )
+        # and mark run as failed
+        httpx.post(
+            f"{API_URL}/runs/mark_failed/{run_id}",
+            json={"error_message": str(e)},
+        )
+
+        logger.error(f"Error during Thunderbird queuing: {e}")
 

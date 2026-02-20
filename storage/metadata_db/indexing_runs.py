@@ -4,9 +4,8 @@ from datetime import datetime
 from typing import Optional
 from pathlib import Path
 
-from storage.metadata_db.db import execute, fetch_one
+from storage.metadata_db.db import execute, fetch_one, fetch_all
 from src.sources.base.models import IndexingRun, IndexingScope
-from storage.metadata_db.processed_documents import get_all_processed
 from src.sources.base.registry import indexing_scope_registry
 import logging
 logger = logging.getLogger(__name__)
@@ -42,9 +41,11 @@ def create_run(
             updated_at,
             discovered_document_count,
             indexed_document_count,
-            stop_requested
+            stop_requested,
+            is_discovering,
+            is_indexing
         )
-        VALUES (?, 0, ?, ?, ?, ?, ?, ?, 0, 0, 0)
+        VALUES (?, 0, ?, ?, ?, ?, ?, ?, 0, 0, 0, 1, 0)
         """,
         (
             run_id,
@@ -67,7 +68,9 @@ def create_run(
         last_document_id=None,
         discovered_document_count=0, 
         indexed_document_count=0,
-        stop_requested=False
+        stop_requested=False,
+        is_discovering=True,
+        is_indexing=False,
     )
 
 def load_latest_run_by_scope(
@@ -161,39 +164,33 @@ def load_latest_run_by_type(
         discovered_document_count=row["discovered_document_count"],
         indexed_document_count=row["indexed_document_count"],
         stop_requested=bool(row["stop_requested"]),
+        is_discovering=bool(row["is_discovering"]),
+        is_indexing=bool(row["is_indexing"]),
     )
 
 # ----------------------------
 # Updates
 # ----------------------------
 
-def update_status(run_id: str, status: str) -> None:
+def update_status(run_id: str, status: str, is_discovering: Optional[bool] = None, is_indexing: Optional[bool] = None, timestamp: Optional[str] = None) -> None:
+    if timestamp is None:
+        timestamp = _now()
     execute(
         """
         UPDATE indexing_runs
-        SET status = ?, updated_at = ?
+        SET status = ?, updated_at = ?, is_discovering = COALESCE(?, is_discovering), is_indexing = COALESCE(?, is_indexing)
         WHERE id = ?
         """,
-        (status, _now(), run_id),
+        (status, timestamp, is_discovering, is_indexing, run_id),
     )
 
-
-def update_checkpoint(run_id: str, source_instance_id: str) -> None:
-    execute(
-        """
-        UPDATE indexing_runs
-        SET last_document_id = ?, updated_at = ?
-        WHERE id = ?
-        """,
-        (source_instance_id, _now(), run_id),
-    )
-
+'''
 # Helper function needed
 def fetch_all(query: str, params: tuple = ()) -> list:
     """Fetch all rows - import from db module or define here"""
     from storage.metadata_db.db import fetch_all as _fetch_all
     return _fetch_all(query, params)
-
+'''
 # ----------------------------
 # Run status
 # ----------------------------
@@ -231,6 +228,8 @@ def show_runs(truncate_completed: bool = True) -> list[IndexingRun]:
                 discovered_document_count=row["discovered_document_count"],
                 indexed_document_count=row["indexed_document_count"],
                 stop_requested=bool(row["stop_requested"]),
+                is_discovering=bool(row["is_discovering"]),
+                is_indexing=bool(row["is_indexing"])
             )
         )
 
@@ -300,6 +299,8 @@ def load_latest_interrupted(
         discovered_document_count=row["discovered_document_count"],
         indexed_document_count=row["indexed_document_count"],
         stop_requested=bool(row["stop_requested"]),
+        is_discovering=bool(row["is_discovering"]),
+        is_indexing=bool(row["is_indexing"]),
     )
 
 def load_run_by_id(
@@ -332,6 +333,8 @@ def load_run_by_id(
         discovered_document_count=row["discovered_document_count"],
         indexed_document_count=row["indexed_document_count"],
         stop_requested=bool(row["stop_requested"]),
+        is_discovering=bool(row["is_discovering"]),
+        is_indexing=bool(row["is_indexing"])
     )
 
 def set_run_resume(run_id: str) -> None:
@@ -364,4 +367,34 @@ def increment_indexed_count(run_id: str, count: int = 1) -> None:
         WHERE id = ?
         """,
         (count, _now(), run_id),
+    )
+
+def stop_discovery(run_id: str) -> None:
+    execute(
+        """
+        UPDATE indexing_runs
+        SET is_discovering = 0, updated_at = ?
+        WHERE id = ?
+        """,
+        (_now(), run_id),
+    )
+
+def start_indexing(run_id: str) -> None:
+    execute(
+        """
+        UPDATE indexing_runs
+        SET is_indexing = 1, updated_at = ?
+        WHERE id = ?
+        """,
+        (_now(), run_id),
+    )
+
+def stop_indexing(run_id: str) -> None:
+    execute(
+        """
+        UPDATE indexing_runs
+        SET is_indexing = 0, updated_at = ?
+        WHERE id = ?
+        """,
+        (_now(), run_id),
     )

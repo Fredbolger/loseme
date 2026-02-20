@@ -20,7 +20,7 @@ class SearchRequest(BaseModel):
 
 class SearchResult(BaseModel):
     chunk_id: str
-    document_id: str
+    document_part_id: str
     device_id: str
     score: float
     metadata: Dict[str, Any]
@@ -60,7 +60,7 @@ def search(req: SearchRequest) -> SearchResponse:
         search_results.append(
             SearchResult(
                 chunk_id=chunk.id,
-                document_id=chunk.document_id,
+                document_part_id=chunk.document_part_id,
                 device_id=chunk.device_id,
                 score=score,
                 metadata=chunk.metadata,

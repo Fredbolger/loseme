@@ -17,12 +17,11 @@ logging.getLogger("transformers_modules").setLevel(logging.WARNING)
 from src.sources.thunderbird import ThunderbirdIngestionSource, ThunderbirdDocument, ThunderbirdIndexingScope
 from storage.metadata_db.indexing_runs import (
     create_run,
-    update_checkpoint,
     update_status,
     load_latest_interrupted,
 )
-from storage.metadata_db.processed_documents import get_all_processed
 from storage.metadata_db.db import init_db
+from src.sources.base.models import DocumentPart
 
 
 @pytest.fixture(autouse=True)
@@ -31,29 +30,6 @@ def setup_db(tmp_path, monkeypatch):
     monkeypatch.setenv("LOSEME_DATA_DIR", str(tmp_path))
     init_db()
     yield
-
-
-def test_email_document_constructor_sets_thunderbird_ids():
-    doc = ThunderbirdDocument(
-        id="doc-1",
-        source_type="thunderbird",
-        device_id="test-device",
-        mbox_path="/home/user/.thunderbird/Inbox",
-        message_id="<abc123@example.com>",
-        text="Hello world",
-        checksum="checksum-1",
-        metadata={},
-    )
-
-    assert doc.source_type == "thunderbird"
-    assert doc.device_id == "test-device"
-    assert doc.mbox_path.endswith("Inbox")
-    assert doc.message_id == "<abc123@example.com>"
-    assert doc.text == "Hello world"
-
-    assert doc.source_id
-    assert doc.source_path == "Inbox/<abc123@example.com>"
-
 
 def test_thunderbird_source_iterates_documents(fake_mbox_path):
     scope = ThunderbirdIndexingScope(
@@ -67,8 +43,12 @@ def test_thunderbird_source_iterates_documents(fake_mbox_path):
     assert len(docs) > 0
 
     for d in docs[:3]:
-        assert d.text
         assert d.source_id
+        for part in d.parts:
+            assert part.unit_locator
+            assert part.content_type
+            assert part.extractor_name
+            assert part.extractor_version
 
 
 def test_thunderbird_ignore_pattern(fake_mbox_path):
@@ -100,11 +80,13 @@ def test_thunderbird_ignore_pattern(fake_mbox_path):
         if "google.com" in from_val:
             ignored += 1
             # ignored docs must either be missing or altered
-            assert ignored_doc is None or ignored_doc.text != plain.text
+            if ignored_doc:
+                assert ignored_doc.parts[0].text  != plain.parts[0].text   # allow for whitespace differences
+
         else:
             # non-ignored docs must be identical
             assert ignored_doc is not None
-            assert ignored_doc.text == plain.text
+            assert ignored_doc.parts[0].text  == plain.parts[0].text 
 
     assert ignored > 0
 
@@ -126,16 +108,13 @@ def test_thunderbird_resume_pipeline(fake_mbox_path):
     for d in first_batch:
         pass  # simulate processing
 
-    update_checkpoint(run.id, last_doc.id)
     update_status(run.id, "interrupted")
 
     resumed = load_latest_interrupted("thunderbird")
     assert resumed is not None
-    assert resumed.last_document_id == last_doc.id
 
     resumed_source = ThunderbirdIngestionSource(resumed.scope, should_stop=lambda: False)
     resumed_docs = list(resumed_source.iter_documents())
 
     all_ids = {d.id for d in resumed_docs}
     assert last_doc.id in all_ids
-

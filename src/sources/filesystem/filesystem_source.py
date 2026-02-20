@@ -4,8 +4,8 @@ from typing import List, Optional, Callable, Mapping
 import hashlib
 from datetime import datetime
 from src.sources.filesystem.filesystem_model import FilesystemIndexingScope 
-from src.sources.base.models import IngestionSource, Document, OpenDescriptor
-from src.core.ids import make_logical_document_id, make_source_instance_id
+from src.sources.base.models import IngestionSource, Document, OpenDescriptor, DocumentPart
+from src.core.ids import make_logical_document_part_id, make_source_instance_id
 from storage.metadata_db.document import get_document_by_id
 from src.sources.base.registry import extractor_registry, ExtractorRegistry, ingestion_source_registry
 from fnmatch import fnmatch
@@ -36,9 +36,10 @@ class FilesystemIngestionSource(IngestionSource):
 
     def __init__(self, 
                  scope: FilesystemIndexingScope,
-                 should_stop: Optional[Callable[[], bool]] = None
+                 should_stop: Optional[Callable[[], bool]] = None,
+                 update_if_changed_after: Optional[datetime] = None
                  ):
-        super().__init__(scope = scope, should_stop=should_stop)
+        super().__init__(scope = scope, should_stop=should_stop, update_if_changed_after=update_if_changed_after)
         self.scope = scope
         self.should_stop = should_stop
         logger.debug(f"Initialized FilesystemIngestionSource with scope: {self.scope.serialize()}")
@@ -101,43 +102,63 @@ class FilesystemIngestionSource(IngestionSource):
                     if extracted is None:
                         logger.warning(f"No suitable extractor found for file: {path}, skipping.")
                         continue
-                    logger.debug(f"Extracted content from {path} with content type {extracted.content_type}")
+                    logger.debug(f"Extracted content from {path} with content type {extracted.content_types[0]}")
+
                     document_checksum = hashlib.sha256(
-                           extracted.text.strip().encode("utf-8")
+                           extracted.text().strip().encode("utf-8")
                            ).hexdigest()
 
-                    doc_id = make_logical_document_id(
-                            text=extracted.text,
-                    )
                     source_instance_id = make_source_instance_id(
                             source_type="filesystem",
                             source_path=path,
                             device_id=device_id,
                     )
-
-                    yield Document(
+                    doc_id = make_logical_document_part_id(
+                            source_instance_id=source_instance_id,
+                            unit_locator=extracted.unit_locators[0]
+                    )
+                    extracted_metadata = extracted.metadata[0]
+                    document = Document(
                         id=doc_id,
                         source_type="filesystem",
                         source_id=source_instance_id,
                         device_id=device_id,
                         source_path=str(path),
-                        text=extracted.text,
                         checksum=document_checksum,
                         created_at=datetime.fromtimestamp(path.stat().st_ctime),
                         updated_at=datetime.fromtimestamp(path.stat().st_mtime),
                         metadata={
-                            **extracted.metadata,
+                            **extracted_metadata,
                             "relative_path": rel_path,
                             "size": path.stat().st_size,
-                            "content_type": extracted.content_type,
                         },
                     )
+                    
+                    document.add_part(DocumentPart(
+                                        document_part_id=doc_id,
+                                        text=extracted.text(),
+                                        source_type="filesystem",
+                                        checksum=document_checksum,
+                                        device_id=device_id,
+                                        source_path=str(path),
+                                        source_instance_id=source_instance_id,
+                                        unit_locator=f"filesystem:{path}",
+                                        content_type=extracted.content_types[0],
+                                        extractor_name=extracted.extractor_names[0],
+                                        extractor_version=extracted.extractor_versions[0],
+                                        metadata_json=extracted.metadata[0],
+                                        created_at=document.created_at,
+                                        updated_at=document.updated_at,
+                                        )
+                    )
+            
+                    yield document
     
     def extract_by_document_id(self,
                              document_id: str
                                ) -> Optional[Document]:
         """
-        Extract a single document's content by its document ID.
+        Extract a single document's content with all its parts by its document ID.
         Args:
             document_id: The unique identifier of the document to extract.
         Returns:
@@ -162,7 +183,6 @@ class FilesystemIngestionSource(IngestionSource):
                    ).hexdigest()
 
             metadata = doc_record.get("metadat_json", {})
-            
 
             return Document(
                 id=document_id,
@@ -170,7 +190,11 @@ class FilesystemIngestionSource(IngestionSource):
                 source_id=doc_record["source_instance_id"],
                 device_id=doc_record["device_id"],
                 source_path=str(source_path),
-                text=extracted.text,
+                texts=extracted.texts,
+                unit_locators=extracted.unit_locators,
+                content_types=extracted.content_types,
+                extractor_names=extracted.extractor_names,
+                extractor_versions=extracted.extractor_versions,
                 checksum=document_checksum,
                 created_at=datetime.fromtimestamp(source_path.stat().st_ctime),
                 updated_at=datetime.fromtimestamp(source_path.stat().st_mtime),
@@ -178,7 +202,6 @@ class FilesystemIngestionSource(IngestionSource):
                     **metadata,
                     "relative_path": os.path.relpath(source_path, LOSEME_DATA_DIR),
                     "size": source_path.stat().st_size,
-                    "content_type": extracted.content_type,
                 },
             )
             
@@ -186,9 +209,9 @@ class FilesystemIngestionSource(IngestionSource):
             logger.error(f"Error extracting document {document_id}: {e}")
             return None
     
-    def get_open_descriptor(self, document: dict) -> OpenDescriptor:
-        source_path = document["source_path"]
-        device_id = document["device_id"]
+    def get_open_descriptor(self, document_part: dict) -> OpenDescriptor:
+        source_path = document_part["source_path"]
+        device_id = document_part["device_id"]
         
         suffix = Path(source_path).suffix.lower()
         if suffix in suffix_command_dict:

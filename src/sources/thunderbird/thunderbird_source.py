@@ -5,10 +5,9 @@ from pydantic import PrivateAttr
 import hashlib
 from datetime import datetime
 from .thunderbird_model import ThunderbirdIndexingScope, ThunderbirdDocument
-from src.sources.base.models import IngestionSource, OpenDescriptor
-from src.core.ids import make_logical_document_id, make_source_instance_id
+from src.sources.base.models import IngestionSource, OpenDescriptor, DocumentPart
+from src.core.ids import make_logical_document_part_id, make_source_instance_id, make_thunderbird_source_id
 from src.sources.base.registry import extractor_registry, ingestion_source_registry
-from storage.metadata_db.document import get_document_by_id
 from fnmatch import fnmatch
 from email.header import decode_header, make_header
 from email.utils import parsedate_to_datetime
@@ -78,23 +77,14 @@ class ThunderbirdIngestionSource(IngestionSource):
 
     def iter_documents(self) -> List[ThunderbirdDocument]:
         mbox = mailbox.mbox(self.mbox_path)
+        logger.debug(f"Opened mbox file at {self.mbox_path} with {len(mbox)} messages.")
 
         for index in mbox.iterkeys():
             if self.should_stop():
                 logger.info("Stop requested, terminating Thunderbird ingestion source.")
                 break
             message_doc =  mbox.get(index)
-
-            if self.update_if_changed_after:
-                email_date = self.extract_datetime(message_doc)
-                if email_date and email_date <= self.update_if_changed_after:
-                    logger.debug(
-                        f"Skipping email with Message-ID {message_doc.get('Message-ID')} "
-                        f"because its date {email_date} is not after update_if_changed_after {self.update_if_changed_after}."
-                    )
-                    continue
-
-            # Filter by metadata ignore patterns
+        # Filter by metadata ignore patterns
             if self.ignore_patterns:
                 skip = False
                 for pattern in self.ignore_patterns:
@@ -112,9 +102,10 @@ class ThunderbirdIngestionSource(IngestionSource):
                             break
                 if skip:
                     continue
+            logger.debug(f"Processing email with Message-ID {message_doc.get('Message-ID')} from mbox {self.mbox_path}.")
             email_doc = self._build_email_document(message=message_doc,
                                                    mbox_path=str(self.mbox_path))
-
+            
             yield email_doc
 
     def _build_email_document(
@@ -127,22 +118,31 @@ class ThunderbirdIngestionSource(IngestionSource):
             warnings.warn(f"Email message in {mbox_path} is missing Message-ID header. Using fallback ID.", UserWarning)
             message_id = self._fallback_message_id(message)
             
-
-        text = registry.get_extractor("thunderbird").extract_message_text(message)
+        doc_id = make_thunderbird_source_id(
+                device_id=device_id,
+                mbox_path=mbox_path,
+                message_id=message_id
+                )
+        source_instance_id = make_source_instance_id(
+                source_type="thunderbird",
+                source_path=Path(mbox_path) / f"Message-ID:{message_id}",
+                device_id=device_id
+                )
+    
+        received_date = self.extract_datetime(message)
+        extraction_result = registry.get_extractor("thunderbird").extract_message_text(message)
+        texts = extraction_result.texts
+        merged_text = "\n".join(texts)
         checksum = hashlib.sha256(
-                    text.strip().encode("utf-8")
-                    ).hexdigest()
-        doc_id = make_logical_document_id(
-                text=text,
-        )
-
+                    merged_text.strip().encode("utf-8")
+                    ).hexdigest() 
+        
         thunderbird_document = ThunderbirdDocument(
             id=doc_id,
             source_type="thunderbird",
             device_id=self.metadata["device_id"],
             mbox_path=mbox_path,
             message_id=message_id,
-            text=text,
             checksum=checksum,
             metadata={
                 **self.metadata,
@@ -152,6 +152,28 @@ class ThunderbirdIngestionSource(IngestionSource):
                 "date": message.get("Date"),
             },
         )
+        for part_id, part_text in enumerate(extraction_result.texts):
+            part = DocumentPart(
+                document_part_id=make_logical_document_part_id(
+                    source_instance_id=source_instance_id,
+                    unit_locator=extraction_result.unit_locators[part_id],
+                ),
+                text=part_text,
+                checksum=checksum,
+                device_id=device_id,
+                source_path=f"{mbox_path}::Message-ID:{message_id}",
+                source_type="thunderbird",
+                source_instance_id=source_instance_id,
+                unit_locator=extraction_result.unit_locators[part_id],
+                content_type=extraction_result.content_types[part_id],
+                extractor_name=extraction_result.extractor_names[part_id],
+                extractor_version=extraction_result.extractor_versions[part_id],
+                metadata_json=extraction_result.metadata[part_id],
+                created_at=received_date or datetime.utcnow(),
+                updated_at=received_date or datetime.utcnow(),
+                )
+
+            thunderbird_document.add_part(part)
 
         # If the metadata contains non-JSON-serializable values, convert them to strings
         for k, v in thunderbird_document.metadata.items():
@@ -237,7 +259,7 @@ class ThunderbirdIngestionSource(IngestionSource):
             logger.warning(f"Documents with IDs {missing_ids} not found in mbox {mbox_path}.")
 
         return extracted_documents
-    
+
     def extract_datetime(self, message: Message) -> Optional[datetime]:
         received_headers = message.get_all("Received", [])
         for header in received_headers:

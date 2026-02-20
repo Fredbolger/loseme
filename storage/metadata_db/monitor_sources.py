@@ -6,7 +6,6 @@ from pathlib import Path
 
 from storage.metadata_db.db import execute, fetch_one, fetch_all
 from src.sources.base.models import IndexingRun, IndexingScope
-from storage.metadata_db.processed_documents import get_all_processed
 import logging
 logger = logging.getLogger(__name__)
 

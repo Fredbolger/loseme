@@ -11,6 +11,7 @@ class FilesystemIndexingScope(IndexingScope):
     type: Literal["filesystem"] = "filesystem"
 
     directories: list[Path] = Field(default_factory=list)
+    recursive: bool = True
     include_patterns: list[str] = Field(default_factory=list)
     exclude_patterns: list[str] = Field(default_factory=list)
 
@@ -29,6 +30,7 @@ class FilesystemIndexingScope(IndexingScope):
         return {
             "type": self.type,
             "directories": [str(p) for p in self.directories],
+            "recursive": self.recursive,
             "include_patterns": self.include_patterns,
             "exclude_patterns": self.exclude_patterns,
         }
@@ -56,6 +58,7 @@ class FilesystemIndexingScope(IndexingScope):
         
         return cls(
             directories=directories,
+            recursive=data.get("recursive", True),
             include_patterns=data.get("include_patterns", []),
             exclude_patterns=data.get("exclude_patterns", []),
         )

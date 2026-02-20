@@ -1,0 +1,7 @@
+# ninja log v7
+2	487	1770983622530000000	loseme_gui_autogen/timestamp	19387afd280e86e5
+2	487	1770983622530000000	loseme_gui_autogen/mocs_compilation.cpp	19387afd280e86e5
+2	487	1770983622530000000	/home/ben/Nextcloud/Home/H_Projects/loseme/clients/loseme_gui/build/loseme_gui_autogen/timestamp	19387afd280e86e5
+2	487	1770983622530000000	/home/ben/Nextcloud/Home/H_Projects/loseme/clients/loseme_gui/build/loseme_gui_autogen/mocs_compilation.cpp	19387afd280e86e5
+488	3610	1770983622540000000	CMakeFiles/loseme_gui.dir/src/main.cpp.o	bc20a79de6a7154b
+488	4249	1770983622540000000	CMakeFiles/loseme_gui.dir/src/mainwindow.cpp.o	baf3db8358c42799
