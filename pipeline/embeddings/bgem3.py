@@ -1,5 +1,7 @@
 from typing import List
 from FlagEmbedding import BGEM3FlagModel
+import numpy as np
+import torch
 
 from src.domain.embeddings import EmbeddingProvider, EmbeddingOutput
 from src.sources.base.models import Chunk
@@ -20,11 +22,32 @@ class BGEM3EmbeddingProvider(EmbeddingProvider):
         return self._dimension
 
     def embed_query(self, text: str) -> EmbeddingOutput:
-        embedding = self.model.encode(
-            [text],
-            return_dense=True,
-            return_sparse=True,
-            return_colbert_vecs=True,
-        )
+        with torch.no_grad():
+            embedding = self.model.encode(
+                [text],
+                return_dense=True,
+                return_sparse=True,
+                return_colbert_vecs=True,
+            )
         dense, sparse, colbert = embedding["dense_vecs"], embedding["lexical_weights"], embedding["colbert_vecs"]
-        return EmbeddingOutput(dense=dense[0], sparse=sparse[0], colbert_vec=colbert[0])
+        result = EmbeddingOutput(dense=self._to_numpy(dense[0]), sparse=sparse[0], colbert_vec=self._to_numpy(colbert[0]))
+        del embedding, dense, colbert
+        return result
+    
+    def embed_document(self, text: str) -> EmbeddingOutput:
+        with torch.no_grad(): 
+            embedding = self.model.encode(
+                [text],
+                return_dense=True,
+                return_sparse=True,
+                return_colbert_vecs=True,
+            )
+        dense, sparse, colbert = embedding["dense_vecs"], embedding["lexical_weights"], embedding["colbert_vecs"]
+        result = EmbeddingOutput(dense=self._to_numpy(dense[0]), sparse=sparse[0], colbert_vec=self._to_numpy(colbert[0]))
+        del embedding, dense, colbert
+        return result
+
+    def _to_numpy(self, x):
+        if isinstance(x, torch.Tensor):
+            return x.detach().cpu().numpy()
+        return np.array(x)

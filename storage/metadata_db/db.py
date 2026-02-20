@@ -1,6 +1,7 @@
 import sqlite3
 from pathlib import Path
 from typing import Iterator
+from storage.metadata_db.migrations import run_migrations
 
 DB_PATH = Path("/var/lib/loseme/metadata/metadata.db")
 
@@ -34,35 +35,55 @@ def init_db() -> None:
                 updated_at TEXT NOT NULL,
                 discovered_document_count INTEGER NOT NULL DEFAULT 0,
                 indexed_document_count INTEGER NOT NULL DEFAULT 0,
-                stop_requested INTEGER NOT NULL DEFAULT 0
+                stop_requested INTEGER NOT NULL DEFAULT 0,
+                is_discovering INTEGER NOT NULL DEFAULT 1,
+                is_indexing INTEGER NOT NULL DEFAULT 0
             );
             """
         )
         conn.execute(
             """
-            CREATE TABLE IF NOT EXISTS documents (
-            document_id TEXT PRIMARY KEY,
-            logical_checksum TEXT NOT NULL,
+            CREATE TABLE IF NOT EXISTS document_parts (
+            document_part_id TEXT PRIMARY KEY,
+            checksum TEXT NOT NULL,
             source_type TEXT NOT NULL,
             source_instance_id TEXT NOT NULL,
             device_id TEXT NOT NULL,
             source_path TEXT NOT NULL,
             metadata_json TEXT NOT NULL,
+            last_indexed_run_id TEXT,
+            chunk_ids TEXT,
+            unit_locator TEXT,
+            content_type TEXT,
+            extractor_name TEXT,
+            extractor_version TEXT,
             created_at TEXT NOT NULL,
-            updated_at TEXT NOT NULL
+            updated_at TEXT NOT NULL,
+            last_indexed_at TEXT,
+            scope_json TEXT
             );
             """
         )
         conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS processed_documents (
+             """
+            CREATE TABLE IF NOT EXISTS document_parts_queue (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             run_id TEXT NOT NULL,
+            document_part_id TEXT NOT NULL,
+            checksum TEXT NOT NULL,
+            source_type TEXT NOT NULL,
             source_instance_id TEXT NOT NULL,
-            content_hash TEXT NOT NULL,
-            is_indexed INTEGER NOT NULL,
-            PRIMARY KEY (run_id, source_instance_id, content_hash),
-            FOREIGN KEY (run_id) REFERENCES indexing_runs(id)
-                ON DELETE CASCADE
+            device_id TEXT NOT NULL,
+            source_path TEXT NOT NULL,
+            metadata_json TEXT NOT NULL,
+            unit_locator TEXT,
+            content_type TEXT,
+            extractor_name TEXT,
+            extractor_version TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            text TEXT,
+            scope_json TEXT
             );
             """
         )
@@ -81,6 +102,7 @@ def init_db() -> None:
             );
             """
         )
+        run_migrations(conn)  # <-- run migrations after ensuring base tables exist
 
         
 def execute(query: str, params: tuple = ()) -> None:
@@ -110,32 +132,14 @@ def fetch_all(query: str, params: tuple = ()) -> list:
         return cur.fetchall()
 
 
-def log_active_schema() -> None:
+def get_document_part(document_part_id: str) -> sqlite3.Row:
     """
-    Logs current database schema using the project logger.
+    Retrieves a document part by its ID.
     """
-    # Lazy import to prevent import-time failures
-    import logging
-    logger = logging.getLogger(__name__)
-
-    tables = fetch_all("SELECT name, sql FROM sqlite_master WHERE type='table'")
-    indexes = fetch_all("SELECT name, sql FROM sqlite_master WHERE type='index'")
-
-    logger.info("=== Active DB schema ===")
-    for t in tables:
-        logger.info("TABLE %s: %s", t["name"], t["sql"])
-    for i in indexes:
-        logger.info("INDEX %s: %s", i["name"], i["sql"])
-
-def get_document(document_id: str) -> Iterator[sqlite3.Row]:
-    """
-    Retrieves a document by its ID.
-    """
-    query = "SELECT * FROM documents WHERE id = ?"
+    query = "SELECT * FROM document_parts WHERE document_part_id = ?"
     with get_connection() as conn:
-        cur = conn.execute(query, (document_id,))
-        for row in cur:
-            yield row
+        cur = conn.execute(query, (document_part_id,))
+        return cur.fetchone()
 
 def delete_database() -> None:
     """

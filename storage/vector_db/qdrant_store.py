@@ -3,7 +3,7 @@ import os
 import logging
 from typing import List, Tuple
 from qdrant_client import QdrantClient
-from qdrant_client.models import PointStruct, VectorParams, Distance
+from qdrant_client.models import PointStruct, VectorParams, Distance, PointIdsList
 from qdrant_client.http.exceptions import UnexpectedResponse
 
 from src.core.config import EMBEDDING_MODEL
@@ -42,6 +42,7 @@ class QdrantVectorStore(VectorStore):
             )
     
     def add(self, chunk: Chunk, embedding: EmbeddingOutput) -> None:
+        logger.debug(f"Adding chunk with id {chunk.id} to Qdrant collection '{COLLECTION}'")
         self._ensure_collection()
         vector = embedding.dense 
         if len(vector) != VECTOR_SIZE:
@@ -56,14 +57,17 @@ class QdrantVectorStore(VectorStore):
                     payload={
                         "chunk_id": chunk.id,
                         "source_type": chunk.source_type,
-                        "document_id": chunk.document_id,
+                        "document_part_id": chunk.document_part_id,
                         "device_id": chunk.device_id,
                         "index": chunk.index,
                         "metadata": chunk.metadata,
+                        "unit_locator": chunk.unit_locator,
                     },
                 )
             ],
         )
+
+        return chunk_id_to_uuid(chunk.id)
 
     def search(
         self, 
@@ -89,10 +93,11 @@ class QdrantVectorStore(VectorStore):
             chunk = Chunk(
                 id=hit.payload["chunk_id"],
                 source_type = hit.payload["source_type"],
-                document_id=hit.payload["document_id"],
+                document_part_id=hit.payload["document_part_id"],
                 device_id=hit.payload["device_id"],
                 index=hit.payload["index"],
                 metadata=hit.payload.get("metadata", {}),
+                unit_locator=hit.payload.get("unit_locator", "")
             )
             # Qdrant returns similarity scores, higher = more similar
             score = hit.score if hasattr(hit, 'score') else 0.0
@@ -113,13 +118,6 @@ class QdrantVectorStore(VectorStore):
     def query(self, vector: List[float], top_k: int = 10) -> List[Tuple[Chunk, float]]:
         return self.search(vector, top_k)
 
-    def remove_chunks(self, chunk_ids: List[str]) -> None:
-        point_ids = [chunk_id_to_uuid(cid) for cid in chunk_ids]
-        self.client.delete_points(
-            collection_name=COLLECTION,
-            points=point_ids
-        )
-    
     def delete_collection(self) -> None:
         if os.environ.get("ALLOW_VECTOR_CLEAR", "false").lower() != "1":
             raise PermissionError("Deleting the vector store collection is not allowed.")
@@ -136,8 +134,9 @@ class QdrantVectorStore(VectorStore):
             with_payload=True,
         )
 
-        if result is None or not result[0].payload:
-            raise ValueError(f"Chunk with id {chunk_id} not found in Qdrant.")
+        if result is None or len(result) == 0:
+            logger.warning(f"Chunk with id {chunk_id} not found in Qdrant.")
+            return None
             
         result = result[0]
 
@@ -145,9 +144,31 @@ class QdrantVectorStore(VectorStore):
         chunk = Chunk(
             id=payload["chunk_id"],
             source_type=payload["source_type"],
-            document_id=payload["document_id"],
+            document_part_id=payload["document_part_id"],
             device_id=payload["device_id"],
             index=payload["index"],
             metadata=payload.get("metadata", {}),
+            unit_locator=payload.get("unit_locator", "")
         )
         return chunk
+    
+    def count_chunks(self) -> int:
+        self._ensure_collection()
+        info = self.client.get_collection(COLLECTION)
+        return info.points_count
+    
+    def remove_chunks(self, chunk_ids: List[str]) -> None:
+        point_ids = [chunk_id_to_uuid(cid) for cid in chunk_ids]
+        self.client.delete(
+            collection_name=COLLECTION,
+            points_selector=PointIdsList(points=point_ids)
+        )
+
+    def chunk_exists(self, chunk_id: str) -> bool:
+        point_id = chunk_id_to_uuid(chunk_id)
+        result = self.client.retrieve(
+            collection_name=COLLECTION,
+            ids=[point_id],
+            with_payload=False,
+        )
+        return result is not None and len(result) > 0 

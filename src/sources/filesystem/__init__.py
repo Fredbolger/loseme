@@ -3,6 +3,7 @@ from .filesystem_model import FilesystemIndexingScope, FilesystemIngestRequest
 from .pdf_extractor import PDFExtractor
 from .plaintext_extractor import PlainTextExtractor
 from .python_extractor import PythonExtractor
+from .html_extractor import HTMLExtractor
 
 __all__ = [
     "FilesystemIngestionSource",

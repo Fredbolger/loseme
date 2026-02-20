@@ -1,6 +1,6 @@
 import hashlib
-from src.sources.base.models import Document
-from src.core.ids import make_logical_document_id
+from src.sources.base.models import Document, DocumentPart
+from src.core.ids import make_logical_document_part_id
 from pipeline.chunking.simple_chunker import SimpleTextChunker
 from pipeline.chunking.semantic_chunker import SemanticChunker
 from pipeline.embeddings.dummy import DummyEmbeddingProvider
@@ -8,22 +8,25 @@ from pipeline.embeddings.dummy import DummyEmbeddingProvider
 def test_chunk_ids_deterministic_simple_chunker():
     text = "abcdef"
     checksum = hashlib.sha256(text.encode()).hexdigest()
-    doc_id = make_logical_document_id(text)
-
-    doc = Document(
-        id=doc_id,
-        checksum=checksum,
-        source_type="filesystem",
-        source_id="src",
-        device_id="dev",
-        source_path="/x",
-        text="",
-        docker_path="/y",
-    )
+    source_instance_id = "src"
+    doc_id = make_logical_document_part_id(source_instance_id=source_instance_id, unit_locator="filesystem:/x")
 
     chunker = SimpleTextChunker(chunk_size=3, overlap=0)
-    ids1 = [c.id for c in chunker.chunk(doc, text)[0]]
-    ids2 = [c.id for c in chunker.chunk(doc, text)[0]]
+    part = DocumentPart(text=text, 
+                        document_part_id=doc_id,
+                        checksum=checksum,
+                        source_type="filesystem",
+                        source_instance_id="src",
+                        device_id="dev",
+                        source_path="/x",
+                        unit_locator="loc", 
+                        content_type="text/plain", 
+                        extractor_name="test", 
+                        extractor_version="1.0")
+
+
+    ids1 = [c.id for c in chunker.chunk(part)[0]]
+    ids2 = [c.id for c in chunker.chunk(part)[0]]
 
     assert ids1 == ids2
 
@@ -37,18 +40,8 @@ def test_chunk_ids_deterministic_semantic_chunker():
     assert len(text) > max_chars
 
     checksum = hashlib.sha256(text.encode()).hexdigest()
-    doc_id = make_logical_document_id(text)
-
-    doc = Document(
-        id=doc_id,
-        checksum=checksum,
-        source_type="filesystem",
-        source_id="src",
-        device_id="dev",
-        source_path="/x",
-        text="",
-        docker_path="/y",
-    )
+    source_instance_id = "src"
+    doc_id = make_logical_document_part_id(source_instance_id=source_instance_id, unit_locator="filesystem:/x")
 
     embedder = DummyEmbeddingProvider()
     chunker = SemanticChunker(
@@ -56,8 +49,20 @@ def test_chunk_ids_deterministic_semantic_chunker():
         max_chars=max_chars,
         embedder=embedder,
     )
-
-    ids1 = [c.id for c in chunker.chunk(doc, text)[0]]
-    ids2 = [c.id for c in chunker.chunk(doc, text)[0]]
+    
+    part = DocumentPart(text=text,
+                        document_part_id=doc_id,
+                        checksum=checksum,
+                        source_type="filesystem",
+                        source_instance_id="src",
+                        device_id="dev",
+                        source_path="/x",
+                        unit_locator="loc", 
+                        content_type="text/plain", 
+                        extractor_name="test", 
+                        extractor_version="1.0")
+    
+    ids1 = [c.id for c in chunker.chunk(part)[0]]
+    ids2 = [c.id for c in chunker.chunk(part)[0]]
 
     assert ids1 == ids2

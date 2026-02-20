@@ -45,6 +45,18 @@ class ExtractorRegistry:
     def list_extractors(self) -> List[str]:
         return [extractor.name for extractor in self.extractors]
 
+    def can_extract_content_type(self, content_type: str) -> bool:
+        for extractor in self.extractors:
+            if extractor.can_extract_content_type(content_type):
+                return True
+        return False
+
+    def get_extractor_for_content_type(self, content_type: str) -> Optional[DocumentExtractor]:
+        for extractor in self.extractors:
+            if extractor.can_extract_content_type(content_type):
+                return extractor
+        return None
+
 class IndexingScopeRegistry():
     def __init__(self):
         self._types: Dict[str, Type[IndexingScope]] = {}

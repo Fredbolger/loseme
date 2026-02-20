@@ -14,18 +14,40 @@ from src.core.ids import make_source_instance_id
 import logging
 logger = logging.getLogger(__name__)
 
+class DocumentPart(BaseModel):
+    text: Optional[str] = None
+    document_part_id: str
+    source_type: str
+    checksum: str
+    device_id: str
+    source_path: str
+    source_instance_id: str
+    unit_locator: str
+    content_type: str
+    extractor_name: str
+    extractor_version: str
+    metadata_json: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    scope_json: dict = Field(default_factory=dict)
+        
+    @field_validator('scope_json')
+    def validate_scope_json(cls, v):
+        if not isinstance(v, dict):
+            raise ValueError('scope_json must be a dictionary')
+        return v
+
 class Document(BaseModel):
     id: str
     source_type: Literal["filesystem", "thunderbird"]
-    source_id: str
+    source_id: str # logical id that uniquely identifies the source of this document, e.g. "filesystem:/path/to/file.txt" or "thunderbird:message-id"
     device_id: str
     source_path: str
-    text: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
     checksum: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-
+    parts: Optional[List[DocumentPart]] = Field(default_factory=list)
 
     def __init__(self, **data):
         if (
@@ -39,12 +61,43 @@ class Document(BaseModel):
                 source_path=Path(data["source_path"]),
                 device_id=data["device_id"],
             )
+
         super().__init__(**data)
 
     def to_dict(self):
         d = self.model_dump()
         d["source_path"] = str(d["source_path"])
         return d
+
+    def add_part(self, part: DocumentPart):
+        if self.parts is None:
+            self.parts = []
+        self.parts.append(part)
+    
+    @classmethod
+    def from_dict(cls, data: dict) -> Document:
+        document = cls(
+            id=data["id"],
+            source_type=data["source_type"],
+            source_id=data["source_id"],
+            device_id=data["device_id"],
+            source_path=data["source_path"],
+            metadata=data.get("metadata", {}),
+            checksum=data["checksum"],
+            created_at=data.get("created_at"),
+            updated_at=data.get("updated_at"),
+        )
+        for part in data.get("parts", []):
+            document.add_part(DocumentPart(**part))
+        return document
+
+    @classmethod
+    def deserialize(cls, data: dict) -> Document:
+        if data["source_type"] == "filesystem":
+            return cls.from_dict(data)
+        elif data["source_type"] == "thunderbird":
+            from src.sources.thunderbird.thunderbird_model import ThunderbirdDocument
+            return ThunderbirdDocument.from_dict(data)
 
     @field_validator('id')
     def id_must_not_be_empty(cls, v):
@@ -80,12 +133,13 @@ class Chunk(BaseModel):
     id: str
     source_type: str  # e.g., "text", "image", etc.
     text: Optional[str] = None
-    document_id: str
+    document_part_id: str
     device_id: str
+    unit_locator: str
     index: int
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
-    @field_validator('id', 'document_id')
+    @field_validator('id', 'document_part_id')
     def ids_must_not_be_empty(cls, v):
         if not v:
             raise ValueError('IDs must not be empty')
@@ -113,6 +167,11 @@ class IndexingScope(BaseModel):
         """Return a locator that uniquely identifies the source of this scope."""
         pass
     
+    @abstractmethod
+    def serialize(self) -> dict:
+        """Serialize the scope to a dictionary."""
+        pass
+
     @classmethod
     def deserialize(cls, data: dict) -> "IndexingScope":
         from .registry import indexing_scope_registry
@@ -128,6 +187,8 @@ class IndexingScope(BaseModel):
 
         raise ValueError(f"Unknown scope type: {scope_type}")
 
+    
+
 class IndexingRun(BaseModel):
     id: str
     celery_id: str = "0"
@@ -139,6 +200,8 @@ class IndexingRun(BaseModel):
     discovered_document_count: int = 0
     indexed_document_count: int = 0
     stop_requested: bool = False
+    is_discovering: bool = True
+    is_indexing: bool = False
 
     @field_validator('id')
     def id_must_not_be_empty(cls, v):
@@ -163,7 +226,7 @@ class IngestionSource(BaseModel):
         Must be pure, no side effects.
         """
         raise NotImplementedError
-    
+   
     @abstractmethod
     def extract_by_document_id(self, document_id: str) -> Optional[Document]:
         """
@@ -215,3 +278,8 @@ class OpenDescriptor:
     target: str            # path, url, message-id, etc.
     extra: dict | None = None
     os_command: str | None = None
+
+class ProcessableUnit(BaseModel):
+    locator: str
+    mime_type: str
+    checksum: str | None

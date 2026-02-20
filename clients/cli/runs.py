@@ -21,6 +21,19 @@ def list():
     else:
         for run in r.json()["runs"]:
             typer.echo(run)
+@run_app.command()
+def stop(run_id: str):
+    r = httpx.post(f"{API_URL}/runs/request_stop/{run_id}")
+    r.raise_for_status()
+
+    typer.echo(r.json())
+
+@run_app.command()
+def start(run_id: str):
+    r = httpx.post(f"{API_URL}/runs/start_indexing/{run_id}")
+    r.raise_for_status()
+    
+    typer.echo(r.json())
 
 @run_app.command()
 def stop_latest(source_type: str):
@@ -69,7 +82,7 @@ def resume_latest(source_type: str):
         )
         logger.info(
             f"Processing email {doc.source_path} (ID: {doc.id}) "
-            f"with size {len(doc.text)} characters"
+            f"with {len(doc.texts)} text units and content types {doc.content_types} "
         )
 
         documents_batch.append(
@@ -83,7 +96,7 @@ def resume_latest(source_type: str):
                 "created_at": doc.created_at.isoformat(),
                 "updated_at": doc.updated_at.isoformat(),
                 "metadata": doc.metadata,
-                "text": doc.text,
+                "texts": doc.texts,
             }
         )
 
@@ -98,5 +111,6 @@ def resume_latest(source_type: str):
         typer.echo("No documents found.")
         raise typer.Exit(code=0)
     typer.echo("Resumed Thunderbird ingestion completed successfully.")
+
 
 

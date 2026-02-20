@@ -21,18 +21,6 @@ async def add_source(request: AddSourceRequest):
     logger.info(f"Added monitored source {source_id} of type {request.source_type} with locator {scope.locator}")
     return {"source_id": source_id}
 
-"""
-@router.get("/{source_id}")
-async def get_source(source_id: str):
-    logger.debug(f"Received request to get source with ID {source_id}")
-    source = get_monitored_source_by_id(source_id)
-    if source is None:
-        logger.warning(f"Monitored source with ID {source_id} not found")
-        return {"error": "Source not found"}
-    logger.info(f"Retrieved monitored source with ID {source_id}")
-    return source
-"""
-
 @router.post("/{source_id}/update")
 async def update_source(source_id: str, last_seen_fingerprint: str = None, last_checked_at: str = None, last_ingested_at: str = None, enabled: bool = None):
     logger.debug(f"Received request to update source with ID {source_id}")

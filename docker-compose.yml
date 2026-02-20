@@ -62,7 +62,7 @@ services:
     depends_on:
       - qdrant_test
       - api
-    command: pytest -v -s  -o log_cli_level=DEBUG
+    command: pytest -v -s -o log_cli_level=DEBUG
   
   docs:
     build:

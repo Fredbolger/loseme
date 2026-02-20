@@ -3,7 +3,7 @@ import os
 import logging
 from typing import List, Tuple
 from qdrant_client import QdrantClient, models
-from qdrant_client.models import PointStruct, VectorParams, Distance, SparseVector, SparseIndexParams, MultiVectorConfig, MultiVectorComparator, SparseVectorParams
+from qdrant_client.models import PointStruct, VectorParams, Distance, SparseVector, SparseIndexParams, MultiVectorConfig, MultiVectorComparator, SparseVectorParams, PointIdsList
 from qdrant_client.http.exceptions import UnexpectedResponse
 
 from src.core.config import EMBEDDING_MODEL
@@ -58,6 +58,8 @@ class QdrantVectorStoreHybrid(VectorStore):
             )
     
     def add(self, chunk: Chunk, embedding: EmbeddingOutput) -> None:
+        logger.debug(f"Adding chunk with ID {chunk.id} to Qdrant collection '{COLLECTION}'")
+        logger.debug(f"Embedding has keys: {embedding.__dict__.keys()}")
         self._ensure_collection()
         dense_vector = embedding.dense  # Assuming embedding.dense is a list of floats
         if len(dense_vector) != VECTOR_SIZE:
@@ -87,14 +89,16 @@ class QdrantVectorStoreHybrid(VectorStore):
                     payload={
                         "chunk_id": chunk.id,
                         "source_type": chunk.source_type,
-                        "document_id": chunk.document_id,
+                        "document_part_id": chunk.document_part_id,
                         "device_id": chunk.device_id,
                         "index": chunk.index,
                         "metadata": chunk.metadata,
+                        "unit_locator": chunk.unit_locator,
                     },
                 )
             ],
         )
+        return chunk_id_to_uuid(chunk.id)
     
     def create_sparse_vector(self, sparse_data):
         """Convert BGE-M3 sparse output to Qdrant sparse vector format"""
@@ -172,10 +176,11 @@ class QdrantVectorStoreHybrid(VectorStore):
             chunk = Chunk(
                 id=hit.payload["chunk_id"],
                 source_type = hit.payload["source_type"],
-                document_id=hit.payload["document_id"],
+                document_part_id=hit.payload["document_part_id"],
                 device_id=hit.payload["device_id"],
                 index=hit.payload["index"],
                 metadata=hit.payload.get("metadata", {}),
+                unit_locator=hit.payload.get("unit_locator", "")
             )
             score = hit.score if hit.score is not None else 0.0
             results.append((chunk, score))
@@ -194,13 +199,6 @@ class QdrantVectorStoreHybrid(VectorStore):
 
     def query(self, vector: List[float], top_k: int = 10) -> List[Tuple[Chunk, float]]:
         return self.search(vector, top_k)
-
-    def remove_chunks(self, chunk_ids: List[str]) -> None:
-        point_ids = [chunk_id_to_uuid(cid) for cid in chunk_ids]
-        self.client.delete_points(
-            collection_name=COLLECTION,
-            points=point_ids
-        )
     
     def delete_collection(self) -> None:
         if os.environ.get("ALLOW_VECTOR_CLEAR", "false").lower() != "1":
@@ -218,18 +216,33 @@ class QdrantVectorStoreHybrid(VectorStore):
             with_payload=True,
         )
 
-        if result is None or not result[0].payload:
-            raise ValueError(f"Chunk with id {chunk_id} not found in Qdrant.")
-            
+        if result is None or len(result) == 0:
+            logger.warning(f"Chunk with ID {chunk_id} not found in Qdrant collection '{COLLECTION}'")
+            return None
+
         result = result[0]
 
         payload = result.payload
         chunk = Chunk(
             id=payload["chunk_id"],
             source_type=payload["source_type"],
-            document_id=payload["document_id"],
+            document_part_id=payload["document_part_id"],
             device_id=payload["device_id"],
             index=payload["index"],
             metadata=payload.get("metadata", {}),
+            unit_locator=payload.get("unit_locator", "")
         )
         return chunk
+
+    def count_chunks(self) -> int:
+        self._ensure_collection()
+        stats = self.client.get_collection(collection_name=COLLECTION)
+        return stats.points_count
+    
+    def remove_chunks(self, chunk_ids: List[str]) -> None:
+        point_ids = [chunk_id_to_uuid(cid) for cid in chunk_ids]
+        self.client.delete(
+            collection_name=COLLECTION,
+            points_selector=PointIdsList(points=point_ids)
+        )
+

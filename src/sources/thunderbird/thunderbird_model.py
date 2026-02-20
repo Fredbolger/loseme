@@ -31,6 +31,25 @@ class ThunderbirdDocument(Document):
 
         return data
 
+    @classmethod
+    def from_dict(cls, data: dict) -> "ThunderbirdDocument":
+        thunderbird_doc = cls(
+            id=data["id"],
+            checksum=data["checksum"],
+            source_type=data["source_type"],
+            source_id=data["source_id"],
+            device_id=data["device_id"],
+            source_path=data["source_path"],
+            metadata=data.get("metadata", {}),
+            mbox_path=data["mbox_path"],
+            message_id=data["message_id"],
+        )
+        for part in data.get("parts", []):
+            from src.sources.base.models import DocumentPart
+            thunderbird_doc.add_part(DocumentPart(**part))
+
+        return thunderbird_doc
+
 class ThunderbirdIndexingScope(IndexingScope):
     type: Literal["thunderbird"] = "thunderbird"
     mbox_path: str
