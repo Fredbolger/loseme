@@ -138,7 +138,20 @@ def ingest_document_part(req: IngestDocumentPartRequest):
             if not chunk.text:
                 logger.warning(f"Chunk with ID {chunk.id} has no text. Generating empty embedding.")
             embeddings = embedding_provider.embed_document(text_to_embed)
-            store.add(chunk, embeddings)
+
+            max_retries = 3
+
+            for attempt in range(1, max_retries + 1):
+                try:
+                    store.add(chunk, embeddings)
+                    break  # Success! Exit the loop
+                except Exception as e:
+                    if attempt == max_retries:
+                        logger.error(f"Failed to add chunk with ID {chunk.id} after {max_retries} attempts: {str(e)}")
+                        raise
+                    else:
+                        logger.warning(f"Error adding chunk with ID {chunk.id} (attempt {attempt}): {str(e)}. Retrying...")
+
 
         # Always mark as processed after successful ingestion
         mark_document_part_processed(run_id=req.run_id, document_part_id=req.document_part_id, chunk_ids=[c.id for c in chunks])

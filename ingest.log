@@ -50,3 +50,22 @@
 2026-02-14 20:23:06,666 - clients.cli.queue - INFO - Document parts in queue for run_id 415ca617-9142-4822-b4a4-a568ac958faf:
 2026-02-14 21:17:19,782 - clients.cli.queue - INFO - Document parts in queue for run_id 415ca617-9142-4822-b4a4-a568ac958faf:
 2026-02-20 14:26:59,703 - clients.cli.queue - INFO - Document parts in queue for run_id 39eae1cf-1bce-4bc7-afc4-424c68012374:
+2026-02-20 15:15:02,865 - __main__ - DEBUG - Open descriptor response: {'source_type': 'thunderbird', 'target': '/home/ben/.thunderbird/1ln9s74m.default-release/ImapMail/secureimap.t-online.de/INBOX::Message-ID:<PR3P195MB0651EDA135A0B70FB1B589BEB26BA@PR3P195MB0651.EURP195.PROD.OUTLOOK.COM>', 'extra': None, 'os_command': None}
+2026-02-20 15:15:02,865 - __main__ - DEBUG - Open descriptor response: {'source_type': 'thunderbird', 'target': '/home/ben/.thunderbird/1ln9s74m.default-release/ImapMail/secureimap.t-online.de/INBOX::Message-ID:<PR3P195MB0651EDA135A0B70FB1B589BEB26BA@PR3P195MB0651.EURP195.PROD.OUTLOOK.COM>', 'extra': None, 'os_command': None}
+2026-02-20 15:15:19,530 - __main__ - DEBUG - Open descriptor response: {'source_type': 'thunderbird', 'target': '/home/ben/.thunderbird/1ln9s74m.default-release/ImapMail/secureimap.t-online.de/INBOX::Message-ID:<PR3P195MB0651EDA135A0B70FB1B589BEB26BA@PR3P195MB0651.EURP195.PROD.OUTLOOK.COM>', 'extra': None, 'os_command': None}
+2026-02-20 15:15:19,530 - __main__ - DEBUG - Open descriptor response: {'source_type': 'thunderbird', 'target': '/home/ben/.thunderbird/1ln9s74m.default-release/ImapMail/secureimap.t-online.de/INBOX::Message-ID:<PR3P195MB0651EDA135A0B70FB1B589BEB26BA@PR3P195MB0651.EURP195.PROD.OUTLOOK.COM>', 'extra': None, 'os_command': None}
+2026-02-20 15:17:34,410 - clients.cli.queue - INFO - Document parts in queue for run_id 39eae1cf-1bce-4bc7-afc4-424c68012374:
+2026-02-20 15:17:44,454 - clients.cli.queue - INFO - Document parts in queue for run_id 9a4bd562-4625-4c63-a89b-9cea2262b259:
+2026-02-20 15:17:59,524 - clients.cli.queue - INFO - Document parts in queue for run_id 9a4bd562-4625-4c63-a89b-9cea2262b259:
+2026-02-20 15:18:02,556 - clients.cli.queue - INFO - Document parts in queue for run_id 9a4bd562-4625-4c63-a89b-9cea2262b259:
+2026-02-20 15:18:06,785 - clients.cli.queue - INFO - Document parts in queue for run_id 9a4bd562-4625-4c63-a89b-9cea2262b259:
+2026-02-20 15:18:41,661 - clients.cli.queue - INFO - Document parts in queue for run_id 9a4bd562-4625-4c63-a89b-9cea2262b259:
+2026-02-20 15:22:47,157 - clients.cli.queue - INFO - Document parts in queue for run_id 9a4bd562-4625-4c63-a89b-9cea2262b259:
+2026-02-20 15:23:00,204 - clients.cli.queue - INFO - Document parts in queue for run_id 9a4bd562-4625-4c63-a89b-9cea2262b259:
+2026-02-20 15:50:03,688 - clients.cli.queue - INFO - Document parts in queue for run_id 9a4bd562-4625-4c63-a89b-9cea2262b259:
+2026-02-20 16:08:27,603 - clients.cli.queue - INFO - Document parts in queue for run_id 9a4bd562-4625-4c63-a89b-9cea2262b259:
+2026-02-20 16:23:30,143 - clients.cli.queue - INFO - Document parts in queue for run_id 9a4bd562-4625-4c63-a89b-9cea2262b259:
+2026-02-20 16:38:50,622 - clients.cli.queue - ERROR - Error fetching queue for run_id 9a4bd562-4625-4c63-a89b-9cea2262b259: timed out
+2026-02-20 16:39:00,106 - clients.cli.queue - ERROR - Error fetching queue for run_id 9a4bd562-4625-4c63-a89b-9cea2262b259: timed out
+2026-02-20 16:39:11,342 - clients.cli.queue - ERROR - Error fetching queue for run_id 9a4bd562-4625-4c63-a89b-9cea2262b259: timed out
+2026-02-20 17:12:12,817 - clients.cli.queue - INFO - Document parts in queue for run_id 9a4bd562-4625-4c63-a89b-9cea2262b259:
