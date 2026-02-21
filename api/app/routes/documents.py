@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 from fastapi import HTTPException, APIRouter
-from storage.metadata_db.document_parts import upsert_document_part, retrieve_scope_by_document_part_id, get_document_part_by_id, get_all_document_parts_by_source_instance_id
+from storage.metadata_db.document_parts import (upsert_document_part,
+retrieve_scope_by_document_part_id, get_document_part_by_id,
+get_all_document_parts_by_source_instance_id, get_document_stats)
 from storage.metadata_db.indexing_runs import increment_discovered_count
 from src.sources.base.models import IngestionSource, Document, DocumentPart
 from typing import Optional
@@ -34,6 +36,11 @@ class DocumentPartResponse(BaseModel):
 
 class BatchGetRequest(BaseModel):
     document_part_ids: list[str]
+
+class DocumentStatResponse(BaseModel):
+    total_document_parts: int
+    total_sources: int
+    total_devices: int
 
 @router.post("/add_discovered_document_part")
 def add_discovered_document_part_endpoint(req: AddDiscoveredDocumentPartRequest):
@@ -126,31 +133,22 @@ def get_all_document_parts_endpoint() -> list[DocumentPartResponse]:
 
     return document_parts
 
-'''
-@router.get("/get_all_documents", response_model=AllDocumentsResponse)
-def get_all_documents_endpoint() -> AllDocumentsResponse:
+@router.get("/stats", response_model=DocumentStatResponse)
+def get_document_stats_endpoint() -> DocumentStatResponse:
     """
-    Retrieve all documents in the system.
+    Retrieve statistics about documents in the system.
+
     Returns:
-        List of all documents.
+        A dictionary containing document statistics.
     """
+    
+    stats = get_document_stats()
+    return DocumentStatResponse(
+        total_document_parts=stats.get("total_parts", 0),
+        total_sources=stats.get("total_sources", 0),
+        total_devices=stats.get("total_devices", 0)
+    )
 
-    recieved_documents = get_all_document_ids()
-    document_ids = [doc["document_id"] for doc in recieved_documents]
-    source_ids = [doc["source_instance_id"] for doc in recieved_documents]
-    documents = []
-    for doc_id, source_id in zip(document_ids, source_ids):
-        if doc_id is None:
-            logger.warning(f"Document with source_id {source_id} has no document_id. Skipping.")
-            continue
-        if source_id is None:
-            logger.warning(f"Document with ID {doc_id} has no source_id. Skipping.")
-            continue
-        parts = get_all_parts(doc_id)
-        documents.append(DocumentPartsResponse(document_id=doc_id, source_instance_id=source_id, parts=parts))
-
-    return AllDocumentsResponse(documents=documents)
-'''
 
 @router.get("/{document_part_id}")
 def get_document_part(document_part_id: str):
@@ -168,8 +166,9 @@ def get_document_part(document_part_id: str):
     """
     document_part = get_document_part_by_id(document_part_id)
     
-    if not document:
-        raise HTTPException(status_code=404, detail=f"Document with ID {document_id} not found.")
+    if not document_part:
+        logger.warning(f"Document part with ID {document_part_id} not found.")
+        raise HTTPException(status_code=404, detail=f"Document with ID {document_part_id} not found.")
     
     return {"document_part": document_part}
 
