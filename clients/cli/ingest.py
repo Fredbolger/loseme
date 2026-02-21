@@ -1,7 +1,5 @@
-import asyncio
 import typer 
 from datetime import datetime, timezone
-import asyncio
 from pathlib import Path
 import httpx
 import json
