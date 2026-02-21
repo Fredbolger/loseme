@@ -69,3 +69,10 @@
 2026-02-20 16:39:00,106 - clients.cli.queue - ERROR - Error fetching queue for run_id 9a4bd562-4625-4c63-a89b-9cea2262b259: timed out
 2026-02-20 16:39:11,342 - clients.cli.queue - ERROR - Error fetching queue for run_id 9a4bd562-4625-4c63-a89b-9cea2262b259: timed out
 2026-02-20 17:12:12,817 - clients.cli.queue - INFO - Document parts in queue for run_id 9a4bd562-4625-4c63-a89b-9cea2262b259:
+2026-02-21 10:27:22,645 - clients.cli.queue - INFO - Document parts in queue for run_id 9a4bd562-4625-4c63-a89b-9cea2262b259:
+2026-02-21 10:27:24,875 - clients.cli.queue - INFO - Document parts in queue for run_id 9a4bd562-4625-4c63-a89b-9cea2262b259:
+2026-02-21 10:27:32,060 - clients.cli.queue - INFO - Document parts in queue for run_id 9a4bd562-4625-4c63-a89b-9cea2262b259:
+2026-02-21 10:30:57,677 - clients.cli.queue - INFO - Document parts in queue for run_id 9a4bd562-4625-4c63-a89b-9cea2262b259:
+2026-02-21 11:53:17,129 - clients.cli.queue - ERROR - Error fetching queue for run_id 98bc1746-1597-482d-892b-815012b69c53: timed out
+2026-02-21 11:53:43,291 - clients.cli.queue - ERROR - Error fetching queue for run_id 98bc1746-1597-482d-892b-815012b69c53: timed out
+2026-02-21 11:54:05,121 - clients.cli.queue - ERROR - Error fetching queue for run_id 9a4bd562-4625-4c63-a89b-9cea2262b259: timed out
