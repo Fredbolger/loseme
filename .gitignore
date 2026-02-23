@@ -11,3 +11,4 @@ data/wiki_corpus/
 docs/_build/*
 docker-compose.yml.my
 docker-compose.yml.bak
+ingest.log
