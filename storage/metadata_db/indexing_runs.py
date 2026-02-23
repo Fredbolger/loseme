@@ -208,13 +208,13 @@ def show_runs(truncate_completed: bool = True) -> list[IndexingRun]:
     )
 
     runs = []
-    completed_found = False
+    #completed_found = False
 
     for row in rows:
-        if truncate_completed and row["status"] == "completed":
-            if completed_found:
-                continue
-            completed_found = True
+        #if truncate_completed and row["status"] == "completed":
+        #    if completed_found:
+        #        continue
+        #    completed_found = True
 
         runs.append(
             IndexingRun(

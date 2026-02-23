@@ -215,10 +215,12 @@ def run_indexing_process(run_id: str):
 
         if r.get("accepted") == False:
             logger.error(f"Failed to ingest document part {document_part['document_part_id']} in run {run_id}: {r.get('reason', 'Unknown error')}")
+
         else:
             logger.debug(f"Successfully ingested document part {document_part['document_part_id']} in run {run_id}")
-            # Remove the part from the queue after processing
-            remove_document_part_from_queue(run_id, document_part["document_part_id"])
+        
+        # Remove the part from the queue after processing
+        remove_document_part_from_queue(run_id, document_part["document_part_id"])
         
         del document_part
 
