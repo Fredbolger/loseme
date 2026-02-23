@@ -434,6 +434,28 @@ h2 { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; }
   color: var(--muted);
 }
 
+/* ── Runs tab ── */
+.run-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+  animation: fadeUp 0.35s ease both;
+  transition: border-color 0.15s;
+}
+.run-card:hover {
+  border-color: var(--accent);
+}
+
+/* Small danger button variant */
+.btn-danger {
+  background: var(--danger);
+}
+.btn-sm {
+  padding: 5px 12px;
+  font-size: 12px;
+}
+
 /* ── Result cards ── */
 .result-card {
   background: var(--surface);
