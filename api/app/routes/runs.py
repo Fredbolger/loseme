@@ -104,6 +104,20 @@ def list_indexing_runs():
         ]
     }
 
+@router.post("/stop_all")
+def stop_all_indexing_runs():
+    runs = show_runs()
+    for run in runs:
+        request_stop(run.id)
+        stop_indexing(run.id)
+        update_status(run.id, "interrupted")
+        logger.info(f"Stop requested for indexing run {run.id}.")
+
+    return {
+        "status": "stop_requested_for_all",
+        "affected_runs": [run.id for run in runs],
+    }
+
 @router.post("/increment_discovered/{run_id}")
 def increment_discovered_documents(run_id: str):
     increment_discovered_count(run_id)

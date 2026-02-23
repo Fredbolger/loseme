@@ -29,6 +29,13 @@ def stop(run_id: str):
     typer.echo(r.json())
 
 @run_app.command()
+def stop_all():
+    r = httpx.post(f"{API_URL}/runs/stop_all")
+    r.raise_for_status()
+
+    typer.echo(r.json())
+
+@run_app.command()
 def start(run_id: str):
     r = httpx.post(f"{API_URL}/runs/start_indexing/{run_id}")
     r.raise_for_status()
