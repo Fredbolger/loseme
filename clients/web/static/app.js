@@ -1,5 +1,5 @@
-import { mount as mountIndex, unmount as unmountIndex }   from '../bootstrap/views/index.js';
-import { mount as mountSearch, unmount as unmountSearch } from '../bootstrap/views/search.js';
+import { mount as mountIndex, unmount as unmountIndex }   from './views/index.js';
+import { mount as mountSearch, unmount as unmountSearch } from './views/search.js';
 
 // ── Shared state ────────────────────────────────────────────
 export let API_BASE = 'http://localhost:8000';

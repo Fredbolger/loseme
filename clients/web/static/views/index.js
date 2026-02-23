@@ -56,7 +56,7 @@ async function loadStats() {
     api.get('/documents/stats'),
     api.get('/chunks/number_of_chunks'),
   ]);
-  document.getElementById('statDocs').textContent    = stats.total_parts   ?? '—';
+  document.getElementById('statDocs').textContent    = stats.total_document_parts   ?? '—';
   document.getElementById('statSources').textContent = stats.total_sources  ?? '—';
   document.getElementById('statDevices').textContent = stats.total_devices  ?? '—';
   document.getElementById('statChunks').textContent  = chunks.number_of_chunks ?? '—';
