@@ -1,5 +1,7 @@
 import { mount as mountIndex, unmount as unmountIndex }   from './views/index.js';
 import { mount as mountSearch, unmount as unmountSearch } from './views/search.js';
+import { mount as mountRuns, unmount as unmountRuns }   from './views/runs.js';
+
 
 // ── Shared state ────────────────────────────────────────────
 export let API_BASE = 'http://localhost:8000';
@@ -47,6 +49,7 @@ export const api = {
 const VIEWS = {
   index:  { mount: mountIndex,  unmount: unmountIndex  },
   search: { mount: mountSearch, unmount: unmountSearch },
+  runs:   { mount: mountRuns,   unmount: unmountRuns   },
 };
 
 let currentTab = null;
