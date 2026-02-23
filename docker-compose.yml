@@ -41,7 +41,7 @@ services:
     ports:
       - 3000:3000
     environment:
-      - LOSEME_API_URL=http://api:8000
+      - LOSEME_API_URL=http://localhost:8000
     command: uvicorn main:app --host 0.0.0.0 --port 3000 --reload
 
   qdrant_test:
