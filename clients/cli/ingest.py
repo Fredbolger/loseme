@@ -104,8 +104,14 @@ def queue_filesystem_logic(
     try: 
         for doc in source.iter_documents():
             for part in doc.parts:
-                logger.debug(f"Ingesting text: {part.text[:30]}... from file {part.source_path} (Document Part ID: {part.document_part_id})")
-                queue_document_part(run_id, part, scope)                
+                try:
+                    logger.debug(f"Ingesting text: {part.text[:30]}... from file {part.source_path} (Document Part ID: {part.document_part_id})")
+                    queue_document_part(run_id, part, scope)                
+                except Exception as e:
+                    logger.warning(
+                        f"Skipping document part {part.document_part_id} "
+                        f"({part.source_path}): {e}"
+                    )
         
         # Once all documents are queued, we can mark the run as not discovering anymore
         httpx.post(
