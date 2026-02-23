@@ -33,6 +33,17 @@ services:
     volumes:
       - qdrant_data:/qdrant/storage
   
+  web_client:
+    build:
+      context: ./clients/web
+      dockerfile: Dockerfile
+    image: loseme-web-client:latest
+    ports:
+      - 3000:3000
+    environment:
+      - LOSEME_API_URL=http://api:8000
+    command: uvicorn main:app --host 0.0.0.0 --port 3000 --reload
+
   qdrant_test:
     image: qdrant/qdrant
     profiles: ["test"]

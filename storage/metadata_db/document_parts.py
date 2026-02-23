@@ -202,3 +202,18 @@ def remove_document_parts_by_id(document_part_ids: List[str]) -> None:
         """,
         tuple(document_part_ids),
     )
+
+def get_document_stats() -> dict:
+    row = fetch_one(
+        """
+        SELECT
+            COUNT(*) AS total_document_parts,
+            COUNT(DISTINCT source_instance_id) AS total_sources,
+            COUNT(DISTINCT device_id) AS total_devices
+        FROM document_parts
+        """,
+    )
+    if row:
+        return dict(row)
+    else:
+        return {"total_document_parts": 0, "total_sources": 0, "total_devices": 0}
