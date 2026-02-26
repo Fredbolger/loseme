@@ -44,6 +44,7 @@ class FilesystemIngestionSource(IngestionSource):
         self.should_stop = should_stop
         logger.debug(f"Initialized FilesystemIngestionSource with scope: {self.scope.serialize()}")
         logger.debug(f"Extractor registry contains: {list(self.extractor_registry.list_extractors())}")
+
     def _walk_files(self):
         """
         Walk through all files in scope.directories.

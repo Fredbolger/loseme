@@ -55,7 +55,6 @@ Documentation
    :maxdepth: 2
    :caption: API Reference
 
-   api/collectors
    api/pipeline
    api/storage
    api/domain
