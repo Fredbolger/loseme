@@ -217,3 +217,20 @@ def get_document_stats() -> dict:
         return dict(row)
     else:
         return {"total_document_parts": 0, "total_sources": 0, "total_devices": 0}
+
+def get_document_stats_per_source() -> List[dict]:
+    rows = fetch_all(
+        """
+        SELECT
+            ms.id AS source_id,
+            dp.source_type,
+            dp.scope_json,
+            COUNT(*) AS document_part_count
+        FROM document_parts dp
+        JOIN monitored_sources ms 
+            ON ms.scope_json = dp.scope_json
+            AND ms.source_type = dp.source_type
+        GROUP BY ms.id, dp.source_type, dp.scope_json
+        """,
+    )
+    return [dict(row) for row in rows]

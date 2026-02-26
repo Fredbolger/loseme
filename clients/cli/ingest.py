@@ -70,6 +70,8 @@ def queue_filesystem_logic(
     logger.info(f"Starting filesystem queuing for {path}")
     
     # resolve the absolute path to ensure consistency in source_instance_id generation and logging
+    if type(path) is str:
+        path = Path(path)
     path = path.resolve()
 
     scope = FilesystemIndexingScope(

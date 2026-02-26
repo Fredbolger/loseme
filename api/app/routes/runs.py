@@ -61,6 +61,7 @@ def is_stop_requested_endpoint(run_id: str):
 @router.post("/request_stop/{run_id}")
 def request_stop_endpoint(run_id: str):
     request_stop(run_id)
+    update_status(run_id, "interrupted")
     logger.info(f"Stop requested for indexing run {run_id}")
     return {
         "run_id": run_id,

@@ -7,6 +7,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from storage.metadata_db.document_parts_queue import add_document_part_to_queue, get_next_document_part_from_queue, get_all_document_parts_in_queue_for_run, clear_queue_for_run, get_all_document_parts_in_queue, clear_all_queues
+from storage.metadata_db.indexing_runs import increment_discovered_count
 
 router = APIRouter(prefix="/queue", tags=["queue"])
 
@@ -36,6 +37,7 @@ class QueueGetResponse(BaseModel):
 def add_to_queue(request: QueueAddRequest):
     try:
         add_document_part_to_queue(part=request.part.model_dump(), run_id=request.run_id)
+        increment_discovered_count(run_id=request.run_id)
         logger.debug(f"Document part {request.part.document_part_id} added to queue successfully")
         return {"status": "success"}
     except Exception as e:

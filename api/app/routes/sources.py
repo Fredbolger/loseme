@@ -1,8 +1,12 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from storage.metadata_db.monitor_sources import add_monitored_source, get_monitored_source_by_id, update_monitored_source_check_times, list_all_monitored_sources
+from storage.metadata_db.indexing_runs import create_run, update_status, increment_discovered_count, stop_discovery
 from src.sources.base.models import IndexingScope
+from src.sources.filesystem import FilesystemIngestionSource
+from src.sources.thunderbird import ThunderbirdIngestionSource
 import json
+from datetime import datetime, timezone
 import logging
 
 logger = logging.getLogger(__name__)
@@ -34,9 +38,11 @@ async def update_source(source_id: str, last_seen_fingerprint: str = None, last_
     logger.info(f"Updated monitored source with ID {source_id}")
     return {"status": "success"}
 
+
 @router.get("/get_all_sources")
 async def get_all_sources():
     logger.debug("Received request to list all monitored sources")
     sources = list_all_monitored_sources()
     logger.info(f"Retrieved {len(sources)} monitored sources")
     return {"sources": sources}
+
