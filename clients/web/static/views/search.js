@@ -61,6 +61,11 @@ function setView(mode) {
   if (lastResults.length) renderResults(lastResults, lastEnriched, lastMaxScore);
 }
 
+// Escape HTML
+function escHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 // ── Search ───────────────────────────────────────────────────
 async function runSearch() {
   const query = document.getElementById('searchQuery').value.trim();
@@ -156,7 +161,15 @@ function renderResults(results, enriched, maxScore) {
 }
 
 function resultCard(r, part, maxScore, animIdx) {
+  console.log('resultCard r:', r);
   const path     = part.source_path || r.metadata?.source_path || r.document_part_id || '—';
+  const safePath = escHtml(path);
+  const displayPath = path.includes('::Message-ID:')
+        ? safePath.split('/').pop()
+        : safePath.split('/').slice(-2).join('/');
+  const basePath = path.includes('::Message-ID:')
+  ? path.split('::Message-ID:')[0].split('/').pop()  // e.g. "Sent"
+  : path.split('/').pop();
   const type     = part.source_type || r.metadata?.source_type || '—';
   const pct      = (r.score / maxScore) * 100;
   const scoreStr = r.score < 2 ? r.score.toFixed(3) : r.score.toFixed(1);
@@ -166,10 +179,10 @@ function resultCard(r, part, maxScore, animIdx) {
   return `<div class="result-card" style="animation-delay:${animIdx * 0.04}s">
     <div class="result-header" onclick="this.nextElementSibling.classList.toggle('open')">
       <div class="result-left">
-        <div class="result-path" title="${path}">${path}</div>
+        <div class="result-path" title="${safePath}">${displayPath}</div>
         <div class="result-meta-row">
           <span class="source-type-tag ${type}">${type}</span>
-          <span style="font-size:11px;font-family:'Space Mono',monospace;color:var(--muted)">chunk #${r.metadata?.index ?? '?'}</span>
+          <span style="font-size:11px;font-family:'Space Mono',monospace;color:var(--muted)">Source: ${basePath}</span>
           ${part.extractor_name ? `<span style="font-size:11px;font-family:'Space Mono',monospace;color:var(--muted)">${part.extractor_name}</span>` : ''}
         </div>
       </div>
@@ -180,7 +193,7 @@ function resultCard(r, part, maxScore, animIdx) {
     </div>
     <div class="result-body">
       <div class="meta-grid">
-        ${metaItem('Source Path', path)}
+        ${metaItem('Source Path', safePath)}
         ${metaItem('Chunk ID', r.chunk_id)}
         ${metaItem('Document Part ID', r.document_part_id)}
         ${metaItem('Device', r.device_id || '—')}

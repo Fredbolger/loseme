@@ -14,6 +14,10 @@ from storage.metadata_db.document_parts import upsert_document_part, get_documen
 from storage.vector_db.runtime import get_vector_store
 from src.core.wiring import build_embedding_provider, build_chunker
 import logging
+import httpx
+import os 
+
+API_URL = os.environ.get("LOSEME_API_URL", "http://localhost:8000")
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +31,7 @@ def get_data_root() -> Path:
     ).resolve()
 
 router = APIRouter(prefix="/ingest", tags=["ingestion"])
+
 
 class IngestDocumentPartRequest(BaseModel):
     run_id: str
@@ -53,7 +58,7 @@ def ingest_document_part(req: IngestDocumentPartRequest):
     if req.run_id not in [run.id for run in all_runs]:
         raise HTTPException(status_code=404, detail=f"Run with ID {req.run_id} not found")
 
-    increment_discovered_count(run_id=req.run_id)
+    #increment_discovered_count(run_id=req.run_id)
     
     skip_part = False
     old_part = get_document_part_by_id(req.document_part_id)

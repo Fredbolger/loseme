@@ -2,7 +2,8 @@ from pydantic import BaseModel
 from fastapi import HTTPException, APIRouter
 from storage.metadata_db.document_parts import (upsert_document_part,
 retrieve_scope_by_document_part_id, get_document_part_by_id,
-get_all_document_parts_by_source_instance_id, get_document_stats)
+get_all_document_parts_by_source_instance_id, get_document_stats,
+                                                get_document_stats_per_source)
 from storage.metadata_db.indexing_runs import increment_discovered_count
 from src.sources.base.models import IngestionSource, Document, DocumentPart
 from typing import Optional
@@ -150,6 +151,20 @@ def get_document_stats_endpoint() -> DocumentStatResponse:
         total_devices=stats.get("total_devices", 0)
     )
 
+
+@router.get("/stats/per_source")
+def get_document_stats_per_source_endpoint():
+    """
+    Retrieve statistics about documents grouped by source instance ID.
+
+    Returns:
+        A list of dictionaries containing document statistics per source instance ID.
+    """
+    from storage.metadata_db.document_parts import get_document_stats_per_source
+
+    stats_per_source = get_document_stats_per_source()
+    logger.debug(f"Document stats per source retrieved: {stats_per_source}")
+    return {"stats_per_source": stats_per_source}
 
 @router.get("/{document_part_id}")
 def get_document_part(document_part_id: str):
