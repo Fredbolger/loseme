@@ -23,4 +23,4 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
-    return FileResponse("static/index.html")
+    return FileResponse("static/views/index.html")

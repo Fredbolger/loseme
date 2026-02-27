@@ -8,7 +8,7 @@ from src.sources.base.models import IngestionSource, Document, OpenDescriptor, D
 from src.core.ids import make_logical_document_part_id, make_source_instance_id
 from storage.metadata_db.document import get_document_by_id
 from src.sources.base.registry import extractor_registry, ExtractorRegistry, ingestion_source_registry
-from src.sources.base.docker_path_translation import host_path_to_container, container_path_to_host
+from src.sources.base.docker_path_translation import host_path_to_container, container_path_to_host, is_running_in_docker
 from fnmatch import fnmatch
 import logging
 import os
@@ -21,9 +21,6 @@ device_id = os.environ.get("LOSEME_DEVICE_ID", os.uname().nodename)
 
 if device_id is None:
     raise ValueError("LOSEME_DEVICE_ID environment variable is not set.")
-
-def is_running_in_docker():
-    return os.path.exists("/.dockerenv")
 
 suffix_command_dict = {
     '.txt': 'vim',

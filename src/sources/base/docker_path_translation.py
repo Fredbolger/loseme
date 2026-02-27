@@ -4,6 +4,9 @@ from pathlib import Path
 LOSEME_HOST_ROOT = os.getenv("LOSEME_HOST_ROOT")
 LOSEME_CONTAINER_ROOT = os.getenv("LOSEME_CONTAINER_ROOT")
 
+def is_running_in_docker():
+    return os.path.exists("/.dockerenv")
+
 def host_path_to_container(host_path: str) -> Path:
     """Translate a host absolute path to its container equivalent."""
     if not LOSEME_HOST_ROOT or not LOSEME_CONTAINER_ROOT:
