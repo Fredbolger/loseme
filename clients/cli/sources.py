@@ -42,7 +42,10 @@ def add_thunderbird_source(
     """
     Add a Thunderbird mailbox as a monitored source.
     """
+    add_thunderbird_source_logic(mbox=mbox, ignore_from=ignore_from)
 
+
+def add_thunderbird_source_logic(mbox: str, ignore_from: List[str]):
     # if the provided path is a directory, look for mbox files inside it and recursively add them as sources
     if Path(mbox).is_dir():
         logger.info(
@@ -94,6 +97,10 @@ def add_filesystem_source(
     """
     Add a local filesystem directory as a monitored source.
     """
+    add_filesystem_source_logic(path=path, recursive=recursive, include_patterns=include_patterns, exclude_patterns=exclude_patterns)
+
+
+def add_filesystem_source_logic(path: Path, recursive: bool, include_patterns: List[str], exclude_patterns: List[str]):
 
     logger.info(f"Adding Filesystem monitored source for {path}")
 
@@ -115,7 +122,6 @@ def add_filesystem_source(
 
     source_id = response.json().get("source_id")
     typer.echo(f"Added Filesystem monitored source with ID: {source_id}")
-
 
 @sources_app.command("list")
 def list_monitored_sources():
@@ -146,6 +152,9 @@ def scan_sources():
 def scan_source(
     source_id: str = typer.Argument(..., help="ID of the monitored source to scan"),
 ):
+    scan_source_logic(source_id=source_id)
+
+def scan_source_logic(source_id: str):
     r = httpx.get(f"{API_URL}/sources/get_all_sources")
     r.raise_for_status()
 

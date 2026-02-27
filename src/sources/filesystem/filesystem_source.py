@@ -8,6 +8,7 @@ from src.sources.base.models import IngestionSource, Document, OpenDescriptor, D
 from src.core.ids import make_logical_document_part_id, make_source_instance_id
 from storage.metadata_db.document import get_document_by_id
 from src.sources.base.registry import extractor_registry, ExtractorRegistry, ingestion_source_registry
+from src.sources.base.docker_path_translation import host_path_to_container, container_path_to_host
 from fnmatch import fnmatch
 import logging
 import os
@@ -20,6 +21,9 @@ device_id = os.environ.get("LOSEME_DEVICE_ID", os.uname().nodename)
 
 if device_id is None:
     raise ValueError("LOSEME_DEVICE_ID environment variable is not set.")
+
+def is_running_in_docker():
+    return os.path.exists("/.dockerenv")
 
 suffix_command_dict = {
     '.txt': 'vim',
@@ -53,13 +57,25 @@ class FilesystemIngestionSource(IngestionSource):
         all_files = []
 
         # Check if self.scope.directories is actually a file
-        if len(self.scope.directories) == 1 and self.scope.directories[0].is_file():
-            root = self.scope.directories[0].parent
-            path = self.scope.directories[0]
+        scope_directories = self.scope.directories
+
+        if is_running_in_docker():
+            logger.debug("Running in Docker, translating scope directories to host paths for file walking")
+            scope_directories = [host_path_to_container(str(dir)) for dir in self.scope.directories]
+            logger.debug(f"Translated scope directories: {scope_directories}")
+        
+        #if len(self.scope.directories) == 1 and self.scope.directories[0].is_file():
+        if len(scope_directories) == 1 and Path(scope_directories[0]).is_file():
+            #root = self.scope.directories[0].parent
+            root = Path(scope_directories[0]).parent
+            #path = self.scope.directories[0]
+            path = Path(scope_directories[0])
+            #all_files.append((root, path))
             all_files.append((root, path))
             return all_files
             
-        for directory in self.scope.directories:
+        #for directory in self.scope.directories:
+        for directory in scope_directories:
             root = Path(directory)
             for path in root.rglob("*"):
                 if path.is_file():
@@ -76,18 +92,26 @@ class FilesystemIngestionSource(IngestionSource):
         Iterate over documents in the scope. This should not simply recycle list_documents()
         but actually yield documents one by one for memory efficiency.
         """
-        for root_path in self.scope.directories:
-            logger.debug(f"Walking through directory: {root_path}")
+        scope_directories = self.scope.directories
+        
+        if is_running_in_docker():
+            logger.debug("Running in Docker, translating scope directories to host paths for document iteration")
+            scope_directories = [host_path_to_container(str(dir)) for dir in self.scope.directories]
+            logger.debug(f"Translated scope directories: {scope_directories}")
+
+        for docker_root_path, root_path in zip(scope_directories, self.scope.directories):
+            logger.debug(f"Walking through directory: {docker_root_path}")
+            docker_root = Path(docker_root_path)
             root = Path(root_path)
-            for path in root.rglob("*"):
-                logger.debug(f"Processing path: {path}")
+            for docker_path in docker_root.rglob("*"):
+                logger.debug(f"Processing path: {docker_path}")
                 if self.should_stop():
                     logger.info("Stop requested, terminating filesystem ingestion source.")
                     break
 
-                if path.is_file():
-                    logger.debug(f"Found file: {path}")
-                    rel_path = path.relative_to(root).as_posix()
+                if docker_path.is_file():
+                    logger.debug(f"Found file: {docker_path}")
+                    rel_path = docker_path.relative_to(docker_root).as_posix()
                     
                     if self.scope.exclude_patterns and any(
                         fnmatch(rel_path, pattern) for pattern in self.scope.exclude_patterns
@@ -98,12 +122,13 @@ class FilesystemIngestionSource(IngestionSource):
                         fnmatch(rel_path, pattern) for pattern in self.scope.include_patterns
                     ):
                         continue
-
-                    extracted = self.extractor_registry.extract(path)
+                    
+                    extracted = self.extractor_registry.extract(docker_path)
+                    
                     if extracted is None:
-                        logger.warning(f"No suitable extractor found for file: {path}, skipping.")
+                        logger.warning(f"No suitable extractor found for file: {docker_path}, skipping.")
                         continue
-                    logger.debug(f"Extracted content from {path} with content type {extracted.content_types[0]}")
+                    logger.debug(f"Extracted content from {docker_path} with content type {extracted.content_types[0]}")
 
                     document_checksum = hashlib.sha256(
                            extracted.text().strip().encode("utf-8")
@@ -111,7 +136,7 @@ class FilesystemIngestionSource(IngestionSource):
 
                     source_instance_id = make_source_instance_id(
                             source_type="filesystem",
-                            source_path=path,
+                            source_path=container_path_to_host(str(docker_path)),
                             device_id=device_id,
                     )
                     doc_id = make_logical_document_part_id(
@@ -124,14 +149,14 @@ class FilesystemIngestionSource(IngestionSource):
                         source_type="filesystem",
                         source_id=source_instance_id,
                         device_id=device_id,
-                        source_path=str(path),
+                        source_path=str(container_path_to_host(str(docker_path))),
                         checksum=document_checksum,
-                        created_at=datetime.fromtimestamp(path.stat().st_ctime),
-                        updated_at=datetime.fromtimestamp(path.stat().st_mtime),
+                        created_at=datetime.fromtimestamp(docker_path.stat().st_ctime),
+                        updated_at=datetime.fromtimestamp(docker_path.stat().st_mtime),
                         metadata={
                             **extracted_metadata,
                             "relative_path": rel_path,
-                            "size": path.stat().st_size,
+                            "size": docker_path.stat().st_size,
                         },
                     )
                     
@@ -141,9 +166,10 @@ class FilesystemIngestionSource(IngestionSource):
                                         source_type="filesystem",
                                         checksum=document_checksum,
                                         device_id=device_id,
-                                        source_path=str(path),
+                                        source_path=str(container_path_to_host(str(docker_path))),
                                         source_instance_id=source_instance_id,
-                                        unit_locator=f"filesystem:{path}",
+                                        #unit_locator=f"filesystem:{path}",
+                                        unit_locator=f"filesystem:{container_path_to_host(str(docker_path))}",
                                         content_type=extracted.content_types[0],
                                         extractor_name=extracted.extractor_names[0],
                                         extractor_version=extracted.extractor_versions[0],
