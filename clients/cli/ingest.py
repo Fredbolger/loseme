@@ -42,7 +42,7 @@ def queue_document_part(run_id: str, part: DocumentPart, scope: IndexingScope):
             },
             "run_id": run_id,
         },
-        timeout=1.0,
+        timeout=5.0,
     )
     response.raise_for_status()
     logger.info(f"Queued document part with unit_locator {part.unit_locator} and content_type {part.content_type} for file {part.source_path} (Document Part ID: {part.document_part_id})")
@@ -109,6 +109,7 @@ def queue_filesystem_logic(
                 try:
                     logger.debug(f"Ingesting text: {part.text[:30]}... from file {part.source_path} (Document Part ID: {part.document_part_id})")
                     queue_document_part(run_id, part, scope)                
+
                 except Exception as e:
                     logger.warning(
                         f"Skipping document part {part.document_part_id} "
