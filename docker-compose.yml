@@ -12,6 +12,8 @@ services:
       - LOSEME_CHUNKER=semantic
       - LOSEME_EMBEDDING_MODEL=bge-m3
       - LOSEME_VECTOR_STORAGE=qdrant-hybrid
+      - LOSEME_HOST_ROOT=/home/ben
+      - LOSEME_CONTAINER_ROOT=/mnt/userdata      
       - HF_HOME=/root/.cache/huggingface
       - TRANSFORMERS_CACHE=/root/.cache/huggingface
       - LOSEME_USE_CUDA=true
@@ -19,12 +21,17 @@ services:
       - .:/app
       - metadata:/var/lib/loseme/metadata
       - hf_cache:/root/.cache/huggingface
+      # Map host directories to container directories for file access
+      - /home/ben/.thunderbird:/mnt/userdata/.thunderbird
+      - /home/ben/.nb:/mnt/userdata/.nb
     command: uvicorn api.app.main:app --host 0.0.0.0 --port 8000 --log-level info --reload
     deploy:
       resources:
         reservations:
           devices:
             - capabilities: [gpu]
+    depends_on:
+      - qdrant
 
   qdrant:
     image: qdrant/qdrant
