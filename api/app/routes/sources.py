@@ -49,7 +49,7 @@ async def get_all_sources():
 @router.post("/scan/{source_id}")
 async def scan_source(source_id: str, background_tasks: BackgroundTasks):
     from clients.cli.sources import scan_source_logic
-    from clients.cli.ingest import queue_filesystem_logic 
+    from clients.cli.ingest import queue_filesystem_logic, queue_thunderbird_logic
     from api.app.routes.runs import create_indexing_run, start_indexing_run
     logger.debug(f"Received request to scan source with ID {source_id}")
      
@@ -66,19 +66,28 @@ async def scan_source(source_id: str, background_tasks: BackgroundTasks):
         raise HTTPException(status_code=404, detail="Source not found")
 
     source_type = source["source_type"]
-    if source_type != "filesystem":
+    if source_type not in ["filesystem", "thunderbird"]:
         logger.error(f"Currently unsupported source type {source_type} for scanning from the API")
         raise HTTPException(status_code=400, detail=f"Currently unsupported source type {source_type} for scanning")
 
-    for directory in source["scope"].directories:
-        logger.info(f"Scheduling background task to queue the filesystem logic for directory {directory} of source ID {source_id}")
-
+    if source_type == "thunderbird":
+        logger.info(f"Scheduling background task to queue the Thunderbird ingestion logic for source ID {source_id}")
         background_tasks.add_task(
-            queue_filesystem_logic,
-            path=directory,
-            recursive=source["scope"].recursive,
-            include_patterns=source["scope"].include_patterns,
-            exclude_patterns=source["scope"].exclude_patterns,
+            queue_thunderbird_logic,
+            mbox=source["scope"].mbox_path,
+            ignore_from=[p["value"] for p in source["scope"].ignore_patterns if p["field"] == "from"],
         )
+
+    elif source_type == "filesystem":
+        for directory in source["scope"].directories:
+            logger.info(f"Scheduling background task to queue the filesystem logic for directory {directory} of source ID {source_id}")
+
+            background_tasks.add_task(
+                queue_filesystem_logic,
+                path=directory,
+                recursive=source["scope"].recursive,
+                include_patterns=source["scope"].include_patterns,
+                exclude_patterns=source["scope"].exclude_patterns,
+            )
         
     return {"status": "scan_started", "source_id": source_id}

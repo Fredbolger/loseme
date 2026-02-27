@@ -8,6 +8,7 @@ from .thunderbird_model import ThunderbirdIndexingScope, ThunderbirdDocument
 from src.sources.base.models import IngestionSource, OpenDescriptor, DocumentPart
 from src.core.ids import make_logical_document_part_id, make_source_instance_id, make_thunderbird_source_id
 from src.sources.base.registry import extractor_registry, ingestion_source_registry
+from src.sources.base.docker_path_translation import host_path_to_container, container_path_to_host, is_running_in_docker
 from fnmatch import fnmatch
 from email.header import decode_header, make_header
 from email.utils import parsedate_to_datetime
@@ -76,8 +77,12 @@ class ThunderbirdIngestionSource(IngestionSource):
         return self._metadata
 
     def iter_documents(self) -> List[ThunderbirdDocument]:
-        mbox = mailbox.mbox(self.mbox_path)
-        logger.debug(f"Opened mbox file at {self.mbox_path} with {len(mbox)} messages.")
+        if is_running_in_docker():
+            mbox_docker_path = host_path_to_container(self.mbox_path)
+        else:
+            mbox_docker_path = self.mbox_path
+        mbox = mailbox.mbox(mbox_docker_path)
+        logger.debug(f"Opened mbox file at {mbox_docker_path} with {len(mbox)} messages.")
 
         for index in mbox.iterkeys():
             if self.should_stop():
