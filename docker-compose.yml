@@ -13,7 +13,7 @@ services:
       - LOSEME_EMBEDDING_MODEL=bge-m3
       - LOSEME_VECTOR_STORAGE=qdrant-hybrid
       - LOSEME_HOST_ROOT=/home/ben
-      - LOSEME_CONTAINER_ROOT=/mnt/userdata      
+      - LOSEME_CONTAINER_ROOT=/mnt/userdata
       - HF_HOME=/root/.cache/huggingface
       - TRANSFORMERS_CACHE=/root/.cache/huggingface
       - LOSEME_USE_CUDA=true
