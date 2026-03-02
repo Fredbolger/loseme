@@ -188,3 +188,106 @@ def get_document_part(document_part_id: str):
     
     return {"document_part": document_part}
 
+
+@router.get("/preview/{document_part_id}")
+def preview_document(document_part_id: str):
+    logger.debug(f"Previewing document part with ID: {document_part_id}")
+    doc_part = get_document_part_by_id(document_part_id)
+    if doc_part is None:
+        raise HTTPException(404, "Document not found")
+
+    source_type, scope = retrieve_scope_by_document_part_id(document_part_id)
+
+    if source_type == "thunderbird":
+        # Parse source_path to get mbox path and message ID
+        source_path_parts = doc_part["source_path"].split("::Message-ID:")
+        mbox_path = source_path_parts[0]
+        message_id = source_path_parts[1]
+
+        from src.sources.base.docker_path_translation import host_path_to_container
+        import mailbox, email as emaillib
+        from email.header import decode_header, make_header
+
+        container_mbox_path = host_path_to_container(mbox_path)
+        logger.debug(f"Translated host mbox path '{mbox_path}' to container mbox path '{container_mbox_path}'")
+        mbox = mailbox.mbox(str(container_mbox_path))
+        mbox._generate_toc()
+
+        target_message = None
+        for msg in mbox:
+            if msg.get("Message-ID") == message_id:
+                target_message = msg
+                break
+        
+        if target_message is None:
+            raise HTTPException(404, "Email message not found in mbox")
+
+        def decode_header_str(val):
+            return str(make_header(decode_header(val or "")))
+
+        # Extract raw HTML and plain text bodies directly
+        body_html = None
+        body_text = None
+        if target_message.is_multipart():
+            for part in target_message.walk():
+                ct = part.get_content_type()
+                if ct == "text/html" and body_html is None:
+                    body_html = part.get_payload(decode=True).decode(
+                        part.get_content_charset() or "utf-8", errors="replace"
+                    )
+                elif ct == "text/plain" and body_text is None:
+                    body_text = part.get_payload(decode=True).decode(
+                        part.get_content_charset() or "utf-8", errors="replace"
+                    )
+        else:
+            payload = target_message.get_payload(decode=True)
+            if payload:
+                text = payload.decode(
+                    target_message.get_content_charset() or "utf-8", errors="replace"
+                )
+                if target_message.get_content_type() == "text/html":
+                    body_html = text
+                else:
+                    body_text = text
+
+        return {
+            "source_type": "thunderbird",
+            "subject": decode_header_str(target_message.get("Subject")),
+            "from":    decode_header_str(target_message.get("From")),
+            "to":      decode_header_str(target_message.get("To")),
+            "date":    target_message.get("Date", ""),
+            "body_html": body_html,
+            "body_text": body_text,
+        }
+
+    raise HTTPException(400, f"Preview not supported for source type: {source_type}")
+
+"""
+@router.get("/preview/{document_part_id}")
+def preview_document(document_part_id: str):
+    doc_part = get_document_part_by_id(document_part_id)
+    if doc_part is None:
+        raise HTTPException(404, "Document not found")
+
+    source_type, scope = retrieve_scope_by_document_part_id(document_part_id)
+
+    if source_type == "thunderbird":
+        source = IngestionSource.from_scope(scope, should_stop=lambda: False)
+        part = source.extract_by_document_part_id(document_part_id)
+
+        if part is None:
+            raise HTTPException(404, "Email message not found in mbox")
+
+        metadata = part.metadata_json or {}
+        return {
+            "source_type": "thunderbird",
+            "subject":    metadata.get("subject", ""),
+            "from":       metadata.get("from", ""),
+            "to":         metadata.get("to", ""),
+            "date":       metadata.get("date", ""),
+            "body_html":  part.text if part.content_type == "text/html" else None,
+            "body_text":  part.text if part.content_type == "text/plain" else None,
+        }
+
+    raise HTTPException(400, f"Preview not supported for source type: {source_type}")
+"""

@@ -7,6 +7,7 @@ from datetime import datetime
 from .thunderbird_model import ThunderbirdIndexingScope, ThunderbirdDocument
 from src.sources.base.models import IngestionSource, OpenDescriptor, DocumentPart
 from src.core.ids import make_logical_document_part_id, make_source_instance_id, make_thunderbird_source_id
+from storage.metadata_db.document_parts import get_document_part_by_id
 from src.sources.base.registry import extractor_registry, ingestion_source_registry
 from src.sources.base.docker_path_translation import host_path_to_container, container_path_to_host, is_running_in_docker
 from fnmatch import fnmatch
@@ -203,6 +204,51 @@ class ThunderbirdIngestionSource(IngestionSource):
             source_type="thunderbird",
             target=email_document["source_path"],
         )
+    
+    def extract_by_document_part_id(self,
+                                    document_part_id: str
+                                    ) -> Optional[DocumentPart]:
+        """
+        Extract a single thunderbird message part's content by its document part ID.
+        """
+        doc_part_record = get_document_part_by_id(document_part_id)
+        if doc_part_record is None:
+            raise ValueError(f"Document part with ID {document_part_id} not found in metadata database.")
+            return None
+        logger.debug(f"Retrieved document part record for ID {document_part_id}: {doc_part_record}")
+        message_id = doc_part_record["source_path"].split("::Message-ID:")[-1]
+        unit_locator = doc_part_record["unit_locator"]
+        mbox_path = self.mbox_path
+        if is_running_in_docker():
+            mbox_path = host_path_to_container(mbox_path)
+
+        mbox = mailbox.mbox(mbox_path)
+        logger.debug(f"Searching for document part ID {document_part_id} in mbox {mbox_path} with Message-ID {message_id} and unit locator {unit_locator}.")
+        for message in mbox:
+            if message.get("Message-ID") == message_id:
+                extraction_result = registry.get_extractor("thunderbird").extract_message_text(message)
+                for part_id, locator in enumerate(extraction_result.unit_locators):
+                    if locator == unit_locator:
+                        part_text = extraction_result.texts[part_id]
+                        checksum = hashlib.sha256(part_text.strip().encode("utf-8")).hexdigest()
+                        return DocumentPart(
+                            document_part_id=document_part_id,
+                            text=part_text,
+                            checksum=checksum,
+                            device_id=device_id,
+                            source_path=f"{mbox_path}::Message-ID:{message_id}",
+                            source_type="thunderbird",
+                            source_instance_id=doc_part_record["source_instance_id"],
+                            unit_locator=locator,
+                            content_type=extraction_result.content_types[part_id],
+                            extractor_name=extraction_result.extractor_names[part_id],
+                            extractor_version=extraction_result.extractor_versions[part_id],
+                            metadata_json=extraction_result.metadata[part_id],
+                            created_at=doc_part_record["created_at"],
+                            updated_at=doc_part_record["updated_at"],
+                        )
+
+
 
     def extract_by_document_id(self,
                              document_id: str
