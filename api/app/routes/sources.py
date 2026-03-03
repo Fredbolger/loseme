@@ -91,3 +91,46 @@ async def scan_source(source_id: str, background_tasks: BackgroundTasks):
             )
         
     return {"status": "scan_started", "source_id": source_id}
+
+from fastapi import HTTPException
+from fastapi.responses import JSONResponse
+
+@router.get("/delete/{source_id}")
+def delete_source(
+    source_id: str,
+    dry_run: bool = True,
+    confirm: bool = False  # New parameter for confirmation
+):
+    logger.debug(f"Received request to delete source with ID {source_id}")
+
+    source = get_monitored_source_by_id(source_id)
+    if not source:
+        logger.error(f"Source with ID {source_id} not found for deletion")
+        raise HTTPException(status_code=404, detail="Source not found")
+
+    if dry_run:
+        logger.info(f"Dry run enabled - not actually deleting source with ID {source_id}")
+        return {
+            "status": "dry_run",
+            "source_id": source_id,
+            "source_details": source,  # Return source details for confirmation
+            "message": "This is a dry run. To proceed with deletion, set `confirm=True`."
+        }
+
+    if not confirm:
+        return {
+            "status": "confirmation_required",
+            "source_id": source_id,
+            "source_details": source,
+            "message": "Deletion is irreversible. Please confirm by setting `confirm=True`."
+        }
+
+    # Proceed with deletion
+    scope_dict = source["scope"].serialize()
+    scope_json = json.dumps(scope_dict)
+    logger.debug(f"Deleting all document parts for source ID {source_id} with scope {scope_json} and source type {source['source_type']} from the database and vector store")
+    delete_all_parts_for_scope(source["source_type"], scope_json)
+    delete_monitored_source(source_id)
+
+    return {"status": "deleted", "source_id": source_id}
+
