@@ -141,3 +141,12 @@ def list_all_monitored_sources() -> list:
             "created_at": row[8],
         })
     return sources
+
+def delete_monitored_source(source_id: str) -> None:
+    execute(
+        """
+        DELETE FROM monitored_sources
+        WHERE id = ?
+        """,
+        (source_id,),
+    )

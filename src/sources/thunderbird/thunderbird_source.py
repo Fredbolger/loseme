@@ -1,23 +1,33 @@
-import os
-from pathlib import Path
-from typing import List, Optional, Callable
-from pydantic import PrivateAttr
 import hashlib
+import json
+import logging
+import mailbox
+import os
+import warnings
 from datetime import datetime
-from .thunderbird_model import ThunderbirdIndexingScope, ThunderbirdDocument
-from src.sources.base.models import IngestionSource, OpenDescriptor, DocumentPart
-from src.core.ids import make_logical_document_part_id, make_source_instance_id, make_thunderbird_source_id
-from storage.metadata_db.document_parts import get_document_part_by_id
-from src.sources.base.registry import extractor_registry, ingestion_source_registry
-from src.sources.base.docker_path_translation import host_path_to_container, container_path_to_host, is_running_in_docker
-from fnmatch import fnmatch
 from email.header import decode_header, make_header
 from email.utils import parsedate_to_datetime
-import mailbox
-import logging
-import os
-import json
-import warnings
+from fnmatch import fnmatch
+from pathlib import Path
+from typing import Callable, List, Optional
+
+from pydantic import PrivateAttr
+
+from src.core.ids import (
+    make_logical_document_part_id,
+    make_source_instance_id,
+    make_thunderbird_source_id,
+)
+from src.sources.base.docker_path_translation import (
+    container_path_to_host,
+    host_path_to_container,
+    is_running_in_docker,
+)
+from src.sources.base.models import DocumentPart, IngestionSource, OpenDescriptor
+from src.sources.base.registry import extractor_registry, ingestion_source_registry
+from storage.metadata_db.document_parts import get_document_part_by_id
+
+from .thunderbird_model import ThunderbirdDocument, ThunderbirdIndexingScope
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +37,7 @@ registry = extractor_registry
 
 if device_id is None:
     raise ValueError("LOSEME_DEVICE_ID environment variable is not set.")
-    
+
 import mailbox
 from email.message import Message
 from pathlib import Path
@@ -41,16 +51,18 @@ class ThunderbirdIngestionSource(IngestionSource):
         scope (ThunderbirdIndexingScope): The indexing scope for Thunderbird.
         ignore_patterns (Optional[List[dict]]): List of ignore patterns to filter out emails.
 
-    """ 
+    """
+
     _mbox_path: Path = PrivateAttr()
     _ignore_patterns: List[dict] = PrivateAttr()
     _metadata: dict = PrivateAttr()
 
-    def __init__(self, 
-                 scope: ThunderbirdIndexingScope, 
-                 should_stop: Optional[Callable[[], bool]] = None,
-                 update_if_changed_after : Optional[datetime] = None
-                 ):
+    def __init__(
+        self,
+        scope: ThunderbirdIndexingScope,
+        should_stop: Optional[Callable[[], bool]] = None,
+        update_if_changed_after: Optional[datetime] = None,
+    ):
         super().__init__(scope=scope, should_stop=should_stop)
         self.scope = scope
         self._mbox_path = scope.mbox_path
@@ -62,10 +74,10 @@ class ThunderbirdIngestionSource(IngestionSource):
             "source_instance_id": make_source_instance_id(
                 source_type="thunderbird",
                 source_path=Path(self._mbox_path),
-                device_id=device_id
-                ),
+                device_id=device_id,
+            ),
         }
-    
+
     @property
     def mbox_path(self) -> Path:
         return self._mbox_path
@@ -73,6 +85,7 @@ class ThunderbirdIngestionSource(IngestionSource):
     @property
     def ignore_patterns(self) -> List[dict]:
         return self._ignore_patterns
+
     @property
     def metadata(self) -> dict:
         return self._metadata
@@ -83,19 +96,21 @@ class ThunderbirdIngestionSource(IngestionSource):
         else:
             mbox_docker_path = self.mbox_path
         mbox = mailbox.mbox(mbox_docker_path)
-        logger.debug(f"Opened mbox file at {mbox_docker_path} with {len(mbox)} messages.")
+        logger.debug(
+            f"Opened mbox file at {mbox_docker_path} with {len(mbox)} messages."
+        )
 
         for index in mbox.iterkeys():
             if self.should_stop():
                 logger.info("Stop requested, terminating Thunderbird ingestion source.")
                 break
-            message_doc =  mbox.get(index)
-        # Filter by metadata ignore patterns
+            message_doc = mbox.get(index)
+            # Filter by metadata ignore patterns
             if self.ignore_patterns:
                 skip = False
                 for pattern in self.ignore_patterns:
-                    field = pattern.get("field") # e.g. "From", "Subject"
-                    value = pattern.get("value") # e.g. "*@spam.com"
+                    field = pattern.get("field")  # e.g. "From", "Subject"
+                    value = pattern.get("value")  # e.g. "*@spam.com"
 
                     if field and value:
                         field_value = message_doc.get(field)
@@ -108,46 +123,55 @@ class ThunderbirdIngestionSource(IngestionSource):
                             break
                 if skip:
                     continue
-            logger.debug(f"Processing email with Message-ID {message_doc.get('Message-ID')} from mbox {self.mbox_path}.")
+            logger.debug(
+                f"Processing email with Message-ID {message_doc.get('Message-ID')} from mbox {self.mbox_path}."
+            )
             try:
-                email_doc = self._build_email_document(message=message_doc,
-                                                       mbox_path=str(self.mbox_path))
-            
+                email_doc = self._build_email_document(
+                    message=message_doc, 
+                    mbox_path=str(self.mbox_path),
+                    index=index
+                )
+
                 yield email_doc
 
             except Exception as e:
-                logger.error(f"Error processing email with Message-ID {message_doc.get('Message-ID')} from mbox {self.mbox_path}: {e}")
+                logger.error(
+                    f"Error processing email with Message-ID {message_doc.get('Message-ID')} from mbox {self.mbox_path}: {e}"
+                )
                 continue
 
     def _build_email_document(
         self,
         message: Message,
         mbox_path: str,
-        ) -> ThunderbirdDocument:
+        index: Optional[int] = None,
+    ) -> ThunderbirdDocument:
         message_id = message.get("Message-ID")
         if not message_id:
-            warnings.warn(f"Email message in {mbox_path} is missing Message-ID header. Using fallback ID.", UserWarning)
+            warnings.warn(
+                f"Email message in {mbox_path} is missing Message-ID header. Using fallback ID.",
+                UserWarning,
+            )
             message_id = self._fallback_message_id(message)
-            
+
         doc_id = make_thunderbird_source_id(
-                device_id=device_id,
-                mbox_path=mbox_path,
-                message_id=message_id
-                )
+            device_id=device_id, mbox_path=mbox_path, message_id=message_id
+        )
         source_instance_id = make_source_instance_id(
-                source_type="thunderbird",
-                source_path=Path(mbox_path) / f"Message-ID:{message_id}",
-                device_id=device_id
-                )
-    
+            source_type="thunderbird",
+            source_path=Path(mbox_path) / f"Message-ID:{message_id}",
+            device_id=device_id,
+        )
+
         received_date = self.extract_datetime(message)
-        extraction_result = registry.get_extractor("thunderbird").extract_message_text(message)
+        extraction_result = registry.get_extractor("thunderbird").extract_message_text(
+            message
+        )
         texts = extraction_result.texts
         merged_text = "\n".join(texts)
-        checksum = hashlib.sha256(
-                    merged_text.strip().encode("utf-8")
-                    ).hexdigest() 
-        
+        checksum = hashlib.sha256(merged_text.strip().encode("utf-8")).hexdigest()
+
         thunderbird_document = ThunderbirdDocument(
             id=doc_id,
             source_type="thunderbird",
@@ -161,6 +185,7 @@ class ThunderbirdIngestionSource(IngestionSource):
                 "from": message.get("From"),
                 "to": message.get("To"),
                 "date": message.get("Date"),
+                "index": index,
             },
         )
         for part_id, part_text in enumerate(extraction_result.texts):
@@ -182,7 +207,10 @@ class ThunderbirdIngestionSource(IngestionSource):
                 metadata_json=extraction_result.metadata[part_id],
                 created_at=received_date or datetime.utcnow(),
                 updated_at=received_date or datetime.utcnow(),
-                )
+            )
+            
+            # Add the index to the part metadata for traceability
+            part.metadata_json["index"] = index
 
             thunderbird_document.add_part(part)
 
@@ -204,18 +232,22 @@ class ThunderbirdIngestionSource(IngestionSource):
             source_type="thunderbird",
             target=email_document["source_path"],
         )
-    
-    def extract_by_document_part_id(self,
-                                    document_part_id: str
-                                    ) -> Optional[DocumentPart]:
+
+    def extract_by_document_part_id(
+        self, document_part_id: str
+    ) -> Optional[DocumentPart]:
         """
         Extract a single thunderbird message part's content by its document part ID.
         """
         doc_part_record = get_document_part_by_id(document_part_id)
         if doc_part_record is None:
-            raise ValueError(f"Document part with ID {document_part_id} not found in metadata database.")
+            raise ValueError(
+                f"Document part with ID {document_part_id} not found in metadata database."
+            )
             return None
-        logger.debug(f"Retrieved document part record for ID {document_part_id}: {doc_part_record}")
+        logger.debug(
+            f"Retrieved document part record for ID {document_part_id}: {doc_part_record}"
+        )
         message_id = doc_part_record["source_path"].split("::Message-ID:")[-1]
         unit_locator = doc_part_record["unit_locator"]
         mbox_path = self.mbox_path
@@ -223,15 +255,21 @@ class ThunderbirdIngestionSource(IngestionSource):
             mbox_path = host_path_to_container(mbox_path)
 
         mbox = mailbox.mbox(mbox_path)
-        logger.debug(f"Searching for document part ID {document_part_id} in mbox {mbox_path} with Message-ID {message_id} and unit locator {unit_locator}.")
+        logger.debug(
+            f"Searching for document part ID {document_part_id} in mbox {mbox_path} with Message-ID {message_id} and unit locator {unit_locator}."
+        )
         for message in mbox:
             if message.get("Message-ID") == message_id:
-                extraction_result = registry.get_extractor("thunderbird").extract_message_text(message)
+                extraction_result = registry.get_extractor(
+                    "thunderbird"
+                ).extract_message_text(message)
                 for part_id, locator in enumerate(extraction_result.unit_locators):
                     if locator == unit_locator:
                         part_text = extraction_result.texts[part_id]
-                        checksum = hashlib.sha256(part_text.strip().encode("utf-8")).hexdigest()
-                        return DocumentPart(
+                        checksum = hashlib.sha256(
+                            part_text.strip().encode("utf-8")
+                        ).hexdigest()
+                        part = DocumentPart(
                             document_part_id=document_part_id,
                             text=part_text,
                             checksum=checksum,
@@ -242,17 +280,19 @@ class ThunderbirdIngestionSource(IngestionSource):
                             unit_locator=locator,
                             content_type=extraction_result.content_types[part_id],
                             extractor_name=extraction_result.extractor_names[part_id],
-                            extractor_version=extraction_result.extractor_versions[part_id],
+                            extractor_version=extraction_result.extractor_versions[
+                                part_id
+                            ],
                             metadata_json=extraction_result.metadata[part_id],
                             created_at=doc_part_record["created_at"],
                             updated_at=doc_part_record["updated_at"],
                         )
+                        part.metadata_json["index"] = doc_part_record.get("metadata_json", {}).get("index")
+                
+                        return part
 
 
-
-    def extract_by_document_id(self,
-                             document_id: str
-                               ) -> Optional[ThunderbirdDocument]:
+    def extract_by_document_id(self, document_id: str) -> Optional[ThunderbirdDocument]:
         """
         Extract a single email document's content by its document ID.
         """
@@ -260,50 +300,54 @@ class ThunderbirdIngestionSource(IngestionSource):
         doc_record = get_document_by_id(document_id)
 
         if doc_record is None:
-            raise ValueError(f"Document with ID {document_id} not found in metadata database.")
+            raise ValueError(
+                f"Document with ID {document_id} not found in metadata database."
+            )
             return None
 
         logger.debug(f"Retrieved document record for ID {document_id}: {doc_record}")
 
         mbox_path = self.mbox_path
         mbox = mailbox.mbox(mbox_path)
-        
+
         logger.debug(f"Searching for document ID {document_id} in mbox {mbox_path}.")
-    
+
         for message in mbox:
             email_doc = self._build_email_document(
-                message=message,
-                mbox_path=str(mbox_path)
+                message=message, mbox_path=str(mbox_path)
             )
             if email_doc.id == document_id:
                 return email_doc
 
-        raise ValueError(f"Document with ID {document_id} not found in mbox {mbox_path}.")
+        raise ValueError(
+            f"Document with ID {document_id} not found in mbox {mbox_path}."
+        )
         return None
-    
-    def extract_by_document_ids(self,
-                                 document_ids: List[str]
-                                   ) -> List[ThunderbirdDocument]:
+
+    def extract_by_document_ids(
+        self, document_ids: List[str]
+    ) -> List[ThunderbirdDocument]:
         """
         Extract multiple email documents' content by their document IDs.
         """
 
         doc_records = [get_document_by_id(doc_id) for doc_id in document_ids]
-        found_doc_ids = {doc['document_id'] for doc in doc_records if doc is not None}
+        found_doc_ids = {doc["document_id"] for doc in doc_records if doc is not None}
 
-        logger.debug(f"Retrieved document records for IDs {document_ids}: {doc_records}")
+        logger.debug(
+            f"Retrieved document records for IDs {document_ids}: {doc_records}"
+        )
 
         mbox_path = self.mbox_path
         mbox = mailbox.mbox(mbox_path)
-        
+
         logger.debug(f"Searching for document IDs {document_ids} in mbox {mbox_path}.")
 
         extracted_documents = []
 
         for message in mbox:
             email_doc = self._build_email_document(
-                message=message,
-                mbox_path=str(mbox_path)
+                message=message, mbox_path=str(mbox_path)
             )
             if email_doc.id in found_doc_ids:
                 extracted_documents.append(email_doc)
@@ -312,7 +356,9 @@ class ThunderbirdIngestionSource(IngestionSource):
 
         if len(extracted_documents) < len(found_doc_ids):
             missing_ids = found_doc_ids - {doc.id for doc in extracted_documents}
-            logger.warning(f"Documents with IDs {missing_ids} not found in mbox {mbox_path}.")
+            logger.warning(
+                f"Documents with IDs {missing_ids} not found in mbox {mbox_path}."
+            )
 
         return extracted_documents
 
@@ -326,6 +372,5 @@ class ThunderbirdIngestionSource(IngestionSource):
                 except (TypeError, ValueError):
                     continue
 
-        
 
 ingestion_source_registry.register_source("thunderbird", ThunderbirdIngestionSource)

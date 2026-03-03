@@ -234,3 +234,46 @@ def get_document_stats_per_source() -> List[dict]:
         """,
     )
     return [dict(row) for row in rows]
+
+def delete_all_parts_for_scope(source_type: str, scope_json: str) -> None:
+    from storage.vector_db.runtime import get_vector_store
+    
+    # First we need to delete all the chunks associated with the document parts that match the scope, to avoid orphaned chunks in the vector store
+    
+    rows = fetch_all(
+            """
+            SELECT chunk_ids
+            FROM document_parts
+            WHERE source_type = ? AND scope_json = ?
+            """,
+            (source_type, scope_json),
+        )
+    chunk_ids_to_delete = []
+    BATCH_SIZE = 100
+    delteted_chunks_count = 0
+
+    vector_store = get_vector_store()
+    for row in rows:
+        if row["chunk_ids"]:
+            chunk_ids = json.loads(row["chunk_ids"])
+            chunk_ids_to_delete.extend(chunk_ids)
+
+            # Delete in batches to avoid overwhelming the vector store
+            if len(chunk_ids_to_delete) >= BATCH_SIZE:
+                delteted_chunks_count += len(chunk_ids_to_delete)
+                vector_store.remove_chunks(chunk_ids_to_delete)
+                chunk_ids_to_delete = []
+            
+    # Delete any remaining chunk ids
+    if chunk_ids_to_delete:
+        delteted_chunks_count += len(chunk_ids_to_delete)
+        vector_store.remove_chunks(chunk_ids_to_delete) 
+
+    execute(
+        """
+        DELETE FROM document_parts
+        WHERE source_type = ? AND scope_json = ?
+        """,
+        (source_type, scope_json),
+    )
+
