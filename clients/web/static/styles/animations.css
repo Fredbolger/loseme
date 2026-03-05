@@ -1,0 +1,13 @@
+/* ── Animations & Keyframes ──────────────────────────────────
+   All @keyframes definitions live here so they're easy to find
+   and not duplicated across files.
+   ──────────────────────────────────────────────────────────── */
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

@@ -1,0 +1,231 @@
+/* ── Components: Reusable UI pieces ──────────────────────────
+   Buttons, badges, cards, tags, loading states, error messages.
+   These are used across multiple tabs — not tab-specific.
+   ──────────────────────────────────────────────────────────── */
+
+/* ── Buttons ── */
+.btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+.btn:hover { opacity: 0.85; transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.btn-danger { background: var(--danger); }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+
+/* ── Badge ── */
+.badge {
+  font-size: 11px;
+  font-family: 'Space Mono', monospace;
+  background: var(--tag-bg);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 2px 8px;
+  color: var(--muted);
+}
+
+/* ── Source type tags ── */
+.source-type-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--tag-bg);
+  border: 1px solid var(--border);
+  color: var(--accent);
+}
+.source-type-tag.thunderbird { color: #f97066; }
+.source-type-tag.filesystem  { color: var(--accent2); }
+
+/* ── Status dot ── */
+.dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+.dot.green { background: var(--accent2); box-shadow: 0 0 5px var(--accent2); }
+.dot.muted { background: var(--muted); }
+
+/* ── Loading state ── */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 50px;
+  color: var(--muted);
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  gap: 10px;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ── Empty / error states ── */
+.empty-state {
+  padding: 50px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  font-family: 'Space Mono', monospace;
+}
+
+.error-msg {
+  background: rgba(249,112,102,0.08);
+  border: 1px solid rgba(249,112,102,0.25);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: var(--danger);
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  margin-bottom: 20px;
+}
+
+/* ── Stat cards (Index tab) ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: 36px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+  position: relative;
+  overflow: hidden;
+  animation: fadeUp 0.4s ease both;
+}
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.stat-card:hover::before { opacity: 1; }
+
+.stat-label {
+  font-size: 10px;
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.stat-value.accent { color: var(--accent); }
+.stat-value.green  { color: var(--accent2); }
+
+/* ── Source tree (Index tab) ── */
+.sources-grid { display: flex; flex-direction: column; gap: 6px; }
+.source-tree-item { display: flex; flex-direction: column; gap: 4px; }
+
+.source-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  animation: fadeUp 0.4s ease both;
+  transition: border-color 0.15s;
+}
+.source-card.has-children { cursor: pointer; }
+.source-card.has-children:hover { border-color: var(--accent); }
+
+.source-card-inner { display: flex; align-items: center; gap: 12px; }
+
+.source-chevron {
+  font-size: 10px;
+  color: var(--muted);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+  width: 12px;
+  text-align: center;
+}
+.source-chevron.open { transform: rotate(90deg); }
+
+.source-card-body { flex: 1; min-width: 0; }
+
+.source-children {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 12px;
+  border-left: 1px solid var(--border);
+}
+.source-children.open { display: flex; }
+
+.source-child-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  transition: border-color 0.15s;
+}
+.source-child-card:hover { border-color: var(--muted); }
+
+.source-path {
+  font-size: 12px;
+  font-family: 'Space Mono', monospace;
+  color: var(--muted);
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+.source-instance-id {
+  font-size: 11px;
+  font-family: 'Space Mono', monospace;
+  color: var(--muted);
+}
+
+.source-meta { display: flex; gap: 12px; font-size: 11px; color: var(--muted); }
+
+/* ── View toggle (flat / grouped) ── */
+.view-toggle { display: flex; gap: 2px; }
+
+.view-btn {
+  background: var(--tag-bg);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.view-btn:first-child { border-radius: 6px 0 0 6px; }
+.view-btn:last-child  { border-radius: 0 6px 6px 0; border-left: none; }
+.view-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+.view-btn:not(.active):hover { border-color: var(--accent); color: var(--accent); }

@@ -1,0 +1,41 @@
+/* ── Base: Design tokens, reset, body, typography ────────────
+   This is the single source of truth for all colours and fonts.
+   Everything else uses var(--name) to reference these.
+   ──────────────────────────────────────────────────────────── */
+
+:root {
+  --bg:       #0c0c0f;
+  --surface:  #13131a;
+  --border:   #1e1e2e;
+  --accent:   #7c6af7;
+  --accent2:  #3ecf8e;
+  --text:     #e8e6f0;
+  --muted:    #5a5870;
+  --danger:   #f97066;
+  --tag-bg:   #1a1a2e;
+}
+
+/* Box model reset — every element includes padding/border in its width */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Subtle grid background on the whole page */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: 0;
+}
