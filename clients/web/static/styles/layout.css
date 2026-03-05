@@ -18,6 +18,11 @@
   border-bottom: 1px solid var(--border);
 }
 
+#shell {
+  flex-shrink: 0;
+  max-height: 100vh;
+}
+
 /* ── Logo ── */
 .header-left  { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .header-center { flex: 1; display: flex; justify-content: center; }
@@ -129,6 +134,7 @@
 #app.app--search {
   width: 100%;
   height: calc(100vh - 52px);
+  max-height: calc(100vh - 52px);
   display: flex;
   flex-direction: column;
   overflow: hidden;

@@ -66,6 +66,13 @@
   gap: 4px;
 }
 
+.sw-sidebar-list {
+  overflow-y: hidden;
+}
+.sw-sidebar-list:hover {
+  overflow-y: auto;
+}
+
 /* ── Result card ── */
 .sw-result-card {
   padding: 8px 10px;
@@ -299,6 +306,13 @@ mark.sw-highlight {
   color: var(--muted);
   line-height: 1.65;
   font-family: 'IBM Plex Sans', sans-serif;
+}
+
+.sw-answer-body {
+  overflow-y: hidden;
+}
+.sw-answer-body:hover {
+  overflow-y: auto;
 }
 
 /* ── Answer text ── */
