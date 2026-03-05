@@ -4,6 +4,7 @@ from .pdf_extractor import PDFExtractor
 from .plaintext_extractor import PlainTextExtractor
 from .python_extractor import PythonExtractor
 from .html_extractor import HTMLExtractor
+from .eml_extractor import EMLExtractor
 
 __all__ = [
     "FilesystemIngestionSource",
@@ -12,4 +13,6 @@ __all__ = [
     "PDFExtractor",
     "PlainTextExtractor",
     "PythonExtractor",
+    "HTMLExtractor",
+    "EMLExtractor",
 ]

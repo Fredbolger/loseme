@@ -4,6 +4,7 @@ from storage.metadata_db.document_parts import (upsert_document_part,
 retrieve_scope_by_document_part_id, get_document_part_by_id,
 get_all_document_parts_by_source_instance_id, get_document_stats,
                                                 get_document_stats_per_source)
+from api.preview import preview_registry
 from storage.metadata_db.indexing_runs import increment_discovered_count
 from src.sources.base.models import IngestionSource, Document, DocumentPart
 from typing import Optional
@@ -191,76 +192,19 @@ def get_document_part(document_part_id: str):
 
 @router.get("/preview/{document_part_id}")
 def preview_document(document_part_id: str):
-    logger.debug(f"Previewing document part with ID: {document_part_id}")
+    logger.debug(f"Preview request received for document_part_id: {document_part_id}")
     doc_part = get_document_part_by_id(document_part_id)
     if doc_part is None:
         raise HTTPException(404, "Document not found")
 
-    source_type, scope = retrieve_scope_by_document_part_id(document_part_id)
+    source_type, _ = retrieve_scope_by_document_part_id(document_part_id)
 
-    if source_type == "thunderbird":
-        # Parse source_path to get mbox path and message ID
-        source_path_parts = doc_part["source_path"].split("::Message-ID:")
-        mbox_path = source_path_parts[0]
-        message_id = source_path_parts[1]
+    generator = preview_registry.get_generator(source_type, doc_part)
+    if generator is None:
+        raise HTTPException(400, f"Preview not supported for source_type='{source_type}', "
+                                 f"path='{doc_part.get('source_path')}'")
 
-        from src.sources.base.docker_path_translation import host_path_to_container
-        import mailbox, email as emaillib
-        from email.header import decode_header, make_header
-
-        container_mbox_path = host_path_to_container(mbox_path)
-        logger.debug(f"Translated host mbox path '{mbox_path}' to container mbox path '{container_mbox_path}'")
-        mbox = mailbox.mbox(str(container_mbox_path))
-        mbox._generate_toc()
-
-        target_message = None
-        for msg in mbox:
-            if msg.get("Message-ID") == message_id:
-                target_message = msg
-                break
-        
-        if target_message is None:
-            raise HTTPException(404, "Email message not found in mbox")
-
-        def decode_header_str(val):
-            return str(make_header(decode_header(val or "")))
-
-        # Extract raw HTML and plain text bodies directly
-        body_html = None
-        body_text = None
-        if target_message.is_multipart():
-            for part in target_message.walk():
-                ct = part.get_content_type()
-                if ct == "text/html" and body_html is None:
-                    body_html = part.get_payload(decode=True).decode(
-                        part.get_content_charset() or "utf-8", errors="replace"
-                    )
-                elif ct == "text/plain" and body_text is None:
-                    body_text = part.get_payload(decode=True).decode(
-                        part.get_content_charset() or "utf-8", errors="replace"
-                    )
-        else:
-            payload = target_message.get_payload(decode=True)
-            if payload:
-                text = payload.decode(
-                    target_message.get_content_charset() or "utf-8", errors="replace"
-                )
-                if target_message.get_content_type() == "text/html":
-                    body_html = text
-                else:
-                    body_text = text
-
-        return {
-            "source_type": "thunderbird",
-            "subject": decode_header_str(target_message.get("Subject")),
-            "from":    decode_header_str(target_message.get("From")),
-            "to":      decode_header_str(target_message.get("To")),
-            "date":    target_message.get("Date", ""),
-            "body_html": body_html,
-            "body_text": body_text,
-        }
-
-    raise HTTPException(400, f"Preview not supported for source type: {source_type}")
+    return generator.generate(doc_part).to_dict()
 
 """
 @router.get("/preview/{document_part_id}")

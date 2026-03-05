@@ -55,7 +55,7 @@ class FilesystemIndexingScope(IndexingScope):
         # Guard against character explosion (belt + suspenders)
         if any(len(str(p)) == 1 for p in directories):
             raise ValueError(f"Invalid directories value: {raw_dirs!r}")
-        
+
         return cls(
             directories=directories,
             recursive=data.get("recursive", True),
