@@ -1,43 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LoseMe · Dashboard</title>
+<title>LoSeMe · Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<!-- Single entry point — main.css @imports all other CSS files -->
 <link rel="stylesheet" href="/static/styles/main.css">
 </head>
 <body>
 
-<div class="container">
-  <header>
-    <div class="header-top">
-      <div>
-        <div class="logo">LoseMe</div>
-        <h1>Index <span>Dashboard</span></h1>
-      </div>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-        <div class="api-config">
-          <label for="apiBase">API</label>
-          <input type="text" id="apiBase" value="" placeholder="http://localhost:8000">
-        </div>
-        <button class="btn" id="refreshBtn">⟳ Refresh</button>
+<!-- ── Shell: visible on all tabs ── -->
+<div id="shell">
+  <header id="shell-header">
+    <div class="header-left">
+      <div class="logo-mark">⬡</div>
+      <div class="logo-text">LO<span>SE</span>ME</div>
+    </div>
+
+    <div class="header-center">
+      <div class="tabs">
+        <div class="tab" data-tab="index">Dashboard</div>
+        <div class="tab" data-tab="search">Search</div>
+        <div class="tab" data-tab="runs">Runs</div>
       </div>
     </div>
 
-    <div class="tabs">
-      <div class="tab" data-tab="index">Index</div>
-      <div class="tab" data-tab="search">Search</div>
-      <div class="tab" data-tab="runs">Runs</div>
+    <div class="header-right">
+      <div class="api-config">
+        <label for="apiBase">API</label>
+        <input type="text" id="apiBase" value="" placeholder="http://localhost:8000">
+      </div>
+      <button class="btn btn-ghost" id="refreshBtn" title="Refresh" style="display:none;">⟳</button>
+      <button class="btn btn-ghost btn-icon" id="themeToggle" title="Toggle theme" aria-label="Toggle theme">
+        <span class="theme-icon-dark">☀</span>
+        <span class="theme-icon-light">☾</span>
+      </button>
     </div>
   </header>
 
   <div id="errorMsg" class="error-msg" style="display:none;"></div>
-  <main id="app"></main>
-  <div style="height:40px;"></div>
 </div>
+
+<!-- ── Tab content mounts here ── -->
+<main id="app"></main>
 
 <script type="module" src="/static/app.js"></script>
 </body>
