@@ -27,7 +27,7 @@ export function fmtDate(iso) {
     if (diff < 60000) return 'just now';
     if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
     if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+    return d.toLocaleDateString('de-DE', { month: 'short', day: 'numeric', year: '2-digit' });
   } catch { return iso; }
 }
 
@@ -44,6 +44,24 @@ export const api = {
     }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
   },
 };
+
+// ── Theme ────────────────────────────────────────────────────
+const THEME_KEY = 'sw-theme';
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem(THEME_KEY, theme);
+}
+
+function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY) || 'dark';
+  applyTheme(saved);
+
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+  });
+}
 
 // ── Router ──────────────────────────────────────────────────
 const VIEWS = {
@@ -65,7 +83,7 @@ function switchTab(name) {
   });
 
   clearError();
-  refreshBtn.style.display = name === 'index' ? '' : 'none';
+  refreshBtn.style.display = '';
   VIEWS[name].mount(app);
 }
 
@@ -77,13 +95,27 @@ refreshBtn.addEventListener('click', () => {
   }
 });
 
-// Tab clicks
+refreshBtn.addEventListener('click', () => {
+  if (currentTab && VIEWS[currentTab]) {
+    VIEWS[currentTab].unmount();
+    VIEWS[currentTab].mount(app);
+  }
+});
+
 document.querySelectorAll('.tab').forEach(t => {
   t.addEventListener('click', () => switchTab(t.dataset.tab));
 });
 
+
+
+// Tab clicks
+//document.querySelectorAll('.tab').forEach(t => {
+// t.addEventListener('click', () => switchTab(t.dataset.tab));
+//});
+
 // ── Bootstrap ───────────────────────────────────────────────
 async function bootstrap() {
+  initTheme();
   try {
     const config = await fetch('/config').then(r => r.json());
     API_BASE = config.api_url;

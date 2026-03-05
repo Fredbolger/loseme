@@ -1,41 +1,76 @@
-/* ── Base: Design tokens, reset, body, typography ────────────
-   This is the single source of truth for all colours and fonts.
-   Everything else uses var(--name) to reference these.
+/* ── Base: Design tokens, reset, typography ──────────────────
+   Dark theme is the default. Light theme is activated by
+   setting data-theme="light" on <html>.
    ──────────────────────────────────────────────────────────── */
 
-:root {
+/* ── Dark theme (default) ── */
+:root,
+[data-theme="dark"] {
   --bg:       #0c0c0f;
   --surface:  #13131a;
+  --surface2: #0f0f15;
   --border:   #1e1e2e;
+  --border2:  #252538;
   --accent:   #7c6af7;
   --accent2:  #3ecf8e;
   --text:     #e8e6f0;
+  --text-mid: #a8a4c0;
   --muted:    #5a5870;
   --danger:   #f97066;
   --tag-bg:   #1a1a2e;
+  --highlight-bg:     rgba(124,106,247,0.18);
+  --highlight-border: rgba(124,106,247,0.8);
 }
 
-/* Box model reset — every element includes padding/border in its width */
-* { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── Light theme ── */
+[data-theme="light"] {
+  --bg:       #f5f5fa;
+  --surface:  #ffffff;
+  --surface2: #f0f0f7;
+  --border:   #e0dff0;
+  --border2:  #d4d3e8;
+  --accent:   #5b4fe9;
+  --accent2:  #0891b2;
+  --text:     #1a1828;
+  --text-mid: #4a4760;
+  --muted:    #8a87a8;
+  --danger:   #dc2626;
+  --tag-bg:   #ededf8;
+  --highlight-bg:     rgba(91,79,233,0.12);
+  --highlight-border: rgba(91,79,233,0.7);
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;   /* the search tab manages its own scroll */
+}
 
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Syne', sans-serif;
+  font-family: 'IBM Plex Sans', 'Syne', sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
+  transition: background 0.2s, color 0.2s;
 }
 
-/* Subtle grid background on the whole page */
+/* Subtle dot-grid on the page background */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   background-image:
-    linear-gradient(var(--border) 1px, transparent 1px),
-    linear-gradient(90deg, var(--border) 1px, transparent 1px);
-  background-size: 40px 40px;
-  opacity: 0.3;
+    radial-gradient(circle, var(--border) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.35;
   pointer-events: none;
   z-index: 0;
 }
+
+::-webkit-scrollbar              { width: 5px; height: 5px; }
+::-webkit-scrollbar-track        { background: transparent; }
+::-webkit-scrollbar-thumb        { background: var(--border2); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover  { background: var(--muted); }
