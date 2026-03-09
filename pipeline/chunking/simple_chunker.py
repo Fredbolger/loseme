@@ -42,7 +42,6 @@ class SimpleTextChunker:
                     document_part_id=part.document_part_id,
                     document_checksum=part.checksum,
                     device_id=part.device_id,
-                    source_path=part.source_path,
                     unit_locator=part.unit_locator,
                     index=index,
                     content=chunk_text,

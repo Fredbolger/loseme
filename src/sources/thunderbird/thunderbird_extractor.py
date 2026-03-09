@@ -39,6 +39,9 @@ class ThunderbirdExtractor(DocumentExtractor):
         # We won't implement byte extraction for Thunderbird emails
         return False
 
+    def can_extract_content_type(self, content_type: str) -> bool:
+        return content_type.lower() in self.supported_mime_types
+
     def _extract_part(self, part) -> DocumentExtractionResult:
         # This function extracts a single part of the email
         # It should only operate on non-multipart parts
