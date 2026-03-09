@@ -125,59 +125,119 @@ class FilesystemIngestionSource(IngestionSource):
                     if extracted is None:
                         logger.warning(f"No suitable extractor found for file: {docker_path}, skipping.")
                         continue
-                    logger.debug(f"Extracted content from {docker_path} with content type {extracted.content_types[0]}")
 
-                    document_checksum = hashlib.sha256(
-                           extracted.text().strip().encode("utf-8")
-                           ).hexdigest()
+                    if extracted.is_multipart:
+                        # Handle multipart (e.g. EML with attachments)
+                        document_checksum = hashlib.sha256(
+                            "".join(extracted.texts).strip().encode("utf-8")
+                        ).hexdigest()
 
-                    source_instance_id = make_source_instance_id(
+                        source_instance_id = make_source_instance_id(
                             source_type="filesystem",
                             source_path=container_path_to_host(str(docker_path)),
                             device_id=device_id,
-                    )
-                    doc_id = make_logical_document_part_id(
-                            source_instance_id=source_instance_id,
-                            unit_locator=extracted.unit_locators[0]
-                    )
-                    extracted_metadata = extracted.metadata[0]
-                    document = Document(
-                        id=doc_id,
-                        source_type="filesystem",
-                        source_id=source_instance_id,
-                        device_id=device_id,
-                        source_path=str(container_path_to_host(str(docker_path))),
-                        checksum=document_checksum,
-                        created_at=datetime.fromtimestamp(docker_path.stat().st_ctime),
-                        updated_at=datetime.fromtimestamp(docker_path.stat().st_mtime),
-                        metadata={
-                            **extracted_metadata,
-                            "relative_path": rel_path,
-                            "size": docker_path.stat().st_size,
-                        },
-                    )
-                    
-                    document.add_part(DocumentPart(
-                                        document_part_id=doc_id,
-                                        text=extracted.text(),
-                                        source_type="filesystem",
-                                        checksum=document_checksum,
-                                        device_id=device_id,
-                                        source_path=str(container_path_to_host(str(docker_path))),
-                                        source_instance_id=source_instance_id,
-                                        #unit_locator=f"filesystem:{path}",
-                                        unit_locator=f"filesystem:{container_path_to_host(str(docker_path))}",
-                                        content_type=extracted.content_types[0],
-                                        extractor_name=extracted.extractor_names[0],
-                                        extractor_version=extracted.extractor_versions[0],
-                                        metadata_json=extracted.metadata[0],
-                                        created_at=document.created_at,
-                                        updated_at=document.updated_at,
-                                        )
-                    )
-            
-                    yield document
-    
+                        )
+
+                        document = Document(
+                            id=source_instance_id,
+                            source_type="filesystem",
+                            source_id=source_instance_id,
+                            device_id=device_id,
+                            source_path=str(container_path_to_host(str(docker_path))),
+                            checksum=document_checksum,
+                            created_at=datetime.fromtimestamp(docker_path.stat().st_ctime),
+                            updated_at=datetime.fromtimestamp(docker_path.stat().st_mtime),
+                            metadata={
+                                "relative_path": rel_path,
+                                "size": docker_path.stat().st_size,
+                            },
+                        )
+
+                        for i, (text, content_type, meta, unit_locator, extractor_name, extractor_version) in enumerate(zip(
+                            extracted.texts,
+                            extracted.content_types,
+                            extracted.metadata,
+                            extracted.unit_locators,
+                            extracted.extractor_names,
+                            extracted.extractor_versions,
+                        )):
+                            part_id = make_logical_document_part_id(
+                                source_instance_id=source_instance_id,
+                                unit_locator=unit_locator,
+                            )
+                            document.add_part(DocumentPart(
+                                document_part_id=part_id,
+                                text=text,
+                                source_type="filesystem",
+                                checksum=hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                                device_id=device_id,
+                                source_path=str(container_path_to_host(str(docker_path))),
+                                source_instance_id=source_instance_id,
+                                unit_locator=unit_locator,
+                                content_type=content_type,
+                                extractor_name=extractor_name,
+                                extractor_version=extractor_version,
+                                metadata_json=meta,
+                                created_at=document.created_at,
+                                updated_at=document.updated_at,
+                            ))
+
+                        yield document
+
+                    else:
+                        logger.debug(f"Extracted content from {docker_path} with content type {extracted.content_types[0]}")
+
+                        document_checksum = hashlib.sha256(
+                               extracted.text().strip().encode("utf-8")
+                               ).hexdigest()
+
+                        source_instance_id = make_source_instance_id(
+                                source_type="filesystem",
+                                source_path=container_path_to_host(str(docker_path)),
+                                device_id=device_id,
+                        )
+                        doc_id = make_logical_document_part_id(
+                                source_instance_id=source_instance_id,
+                                unit_locator=extracted.unit_locators[0]
+                        )
+                        extracted_metadata = extracted.metadata[0]
+                        document = Document(
+                            id=doc_id,
+                            source_type="filesystem",
+                            source_id=source_instance_id,
+                            device_id=device_id,
+                            source_path=str(container_path_to_host(str(docker_path))),
+                            checksum=document_checksum,
+                            created_at=datetime.fromtimestamp(docker_path.stat().st_ctime),
+                            updated_at=datetime.fromtimestamp(docker_path.stat().st_mtime),
+                            metadata={
+                                **extracted_metadata,
+                                "relative_path": rel_path,
+                                "size": docker_path.stat().st_size,
+                            },
+                        )
+                        
+                        document.add_part(DocumentPart(
+                                            document_part_id=doc_id,
+                                            text=extracted.text(),
+                                            source_type="filesystem",
+                                            checksum=document_checksum,
+                                            device_id=device_id,
+                                            source_path=str(container_path_to_host(str(docker_path))),
+                                            source_instance_id=source_instance_id,
+                                            #unit_locator=f"filesystem:{path}",
+                                            unit_locator=f"filesystem:{container_path_to_host(str(docker_path))}",
+                                            content_type=extracted.content_types[0],
+                                            extractor_name=extracted.extractor_names[0],
+                                            extractor_version=extracted.extractor_versions[0],
+                                            metadata_json=extracted.metadata[0],
+                                            created_at=document.created_at,
+                                            updated_at=document.updated_at,
+                                            )
+                        )
+                
+                        yield document
+        
     def extract_by_document_id(self,
                              document_id: str
                                ) -> Optional[Document]:

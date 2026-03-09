@@ -134,8 +134,9 @@ def queue_filesystem_logic(
             json={"error_message": str(e)},
         )
         
-
+        import traceback
         logger.error(f"Error during filesystem queuing: {e}")
+        logger.error(traceback.format_exc())
 
 @ingest_app.command("thunderbird")
 def ingest_thunderbird(

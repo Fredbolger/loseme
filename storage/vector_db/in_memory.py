@@ -1,8 +1,8 @@
 from typing import List, Tuple
 import math
 
-from src.domain.models import Chunk
-from storage.vector_db.base import VectorStore
+from src.sources.base.models import Chunk
+from storage.vector_db.vector_store import VectorStore
 
 
 class InMemoryVectorStore(VectorStore):
@@ -72,3 +72,9 @@ class InMemoryVectorStore(VectorStore):
     
     def dimension(self) -> int:
         return self._dimension
+
+    def query(self, vector: List[float], top_k: int = 10) -> List[Tuple[Chunk, float]]:
+        return self.search(vector, top_k)
+
+    def remove_chunks(self, chunk_ids: List[str]) -> None:
+        self._data = [(c, v) for c, v in self._data if c.id not in chunk_ids]

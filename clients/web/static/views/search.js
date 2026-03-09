@@ -388,16 +388,22 @@ async function streamLLMAnswer(query, results, enriched) {
   spinner.style.display = 'inline-block';
   panel.innerHTML = '<div class="sw-answer-streaming" id="swAnswerText"></div>';
 
-  // Build context from top-5 results
-  const context = results.slice(0, 5).map((r, i) => {
-    const ep   = enriched[r.document_part_id];
+  // Build context from top-10 results
+  const contextParts = await Promise.all(results.slice(0, 10).map(async (r, i) => {
+    const ep   = lastEnriched[r.document_part_id];
     const part = ep?.part || ep || {};
-    const text = part.text
-      || r.chunks?.map(c => c.metadata?.text || '').join('\n\n')
-      || '';
     const name = basename(part.source_path || r.document_part_id);
-    return `[Source ${i + 1}: ${name}]\n${text.substring(0, 800)}`;
-  }).join('\n\n---\n\n');
+    try {
+      const prev = await api.get(`/documents/preview/${r.document_part_id}`);
+      const text = prev.text || prev.body_text || '';
+      return `[Source ${i + 1}: ${name}]\n${text.substring(0, 800)}`;
+    } catch {
+      return `[Source ${i + 1}: ${name}]\n(preview unavailable)`;
+    }
+  }));
+
+  const context = contextParts.join('\n\n---\n\n');
+
 
   let fullText = '';
   const textEl = document.getElementById('swAnswerText');
@@ -430,38 +436,31 @@ function clearAnswerPanel() {
 }
 
 async function fetchLLMStream(query, context, onToken) {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
+  const ollamaBase = document.getElementById('apiBase').value.replace(/\/$/, '').replace(':8000', ':11434');
+
+  const response = await fetch(`${ollamaBase}/api/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model:      'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      stream:     true,
-      system:     'You are a precise knowledge assistant. Answer the user\'s question using ONLY the provided document excerpts. Cite sources inline using [Source N] notation. Be concise and accurate. If the answer is not found in the sources, say so clearly.',
-      messages:   [{ role: 'user', content: `Question: ${query}\n\nDocument excerpts:\n\n${context}` }],
+        model:  'mistral:7b',   // change to whichever model you have pulled
+      prompt: `You are a precise knowledge assistant. Answer the user's question using ONLY the provided document excerpts. Cite sources inline using [Source N] notation. Be concise and accurate. If the answer is not found in the sources, say so clearly.\n\nQuestion: ${query}\n\nDocument excerpts:\n\n${context}`,
+      stream: true,
     }),
   });
 
-  if (!response.ok) throw new Error(`Anthropic API ${response.status}`);
+  if (!response.ok) throw new Error(`Ollama API ${response.status}`);
 
   const reader  = response.body.getReader();
   const decoder = new TextDecoder();
-  let   buffer  = '';
 
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop();
+    const lines = decoder.decode(value, { stream: true }).split('\n').filter(Boolean);
     for (const line of lines) {
-      if (!line.startsWith('data: ')) continue;
-      const raw = line.slice(6).trim();
-      if (raw === '[DONE]') return;
       try {
-        const parsed = JSON.parse(raw);
-        const token  = parsed.delta?.text || parsed.delta?.delta?.text || '';
-        if (token) onToken(token);
+        const parsed = JSON.parse(line);
+        if (parsed.response) onToken(parsed.response);
       } catch {}
     }
   }

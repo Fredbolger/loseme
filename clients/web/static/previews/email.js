@@ -21,7 +21,7 @@ export async function render(body, partId, _path) {
         <div class="email-headers">
           <div class="email-header-row">
             <span class="email-header-key">From</span>
-            <span class="email-header-val">${escHtml(data.from || '—')}</span>
+            <span class="email-header-val">${escHtml(data.from_ || '—')}</span>
           </div>
           <div class="email-header-row">
             <span class="email-header-key">To</span>
