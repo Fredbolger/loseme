@@ -129,8 +129,9 @@ class FilesystemIngestionSource(IngestionSource):
                     if extracted.is_multipart:
                         # Handle multipart (e.g. EML with attachments)
                         document_checksum = hashlib.sha256(
-                            "".join(extracted.texts).strip().encode("utf-8")
-                        ).hexdigest()
+                           # "".join(extracted.texts).strip().encode("utf-8")
+                           docker_path.read_bytes()
+                           ).hexdigest()
 
                         source_instance_id = make_source_instance_id(
                             source_type="filesystem",

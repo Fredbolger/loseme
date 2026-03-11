@@ -10,7 +10,7 @@ class SimpleTextChunker:
     Suitable for Phase 1 validation of the pipeline.
     """
 
-    def __init__(self, chunk_size: int = 500, overlap: int = 50):
+    def __init__(self, chunk_size: int = 1000, overlap: int = 100):
         if overlap >= chunk_size:
             raise ValueError("overlap must be smaller than chunk_size")
         self.chunk_size = chunk_size

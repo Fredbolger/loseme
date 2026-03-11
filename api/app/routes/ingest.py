@@ -91,7 +91,8 @@ def ingest_document_part(req: IngestDocumentPartRequest):
 
         if old_part:
             if old_part["chunk_ids"] is None:
-                raise ValueError(f"Existing document part with ID {req.document_part_id} has no chunk_ids. Cannot remove old chunks.")
+                #raise ValueError(f"Existing document part with ID {req.document_part_id} has no chunk_ids. Cannot remove old chunks.")
+                logger.warning(f"Existing document part with ID {req.document_part_id} has no chunk_ids. Skipping chunk removal.")
             else:
                 store.remove_chunks(chunk_ids=old_part["chunk_ids"])
         else:
