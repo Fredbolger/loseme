@@ -1,7 +1,6 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import List, Dict, Any
-from src.sources.base.models import Chunk
 
 from storage.vector_db.runtime import (
     get_vector_store,
