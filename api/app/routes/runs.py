@@ -87,6 +87,7 @@ def load_latest_indexing_run(source_type: str):
         "ignore_patterns": scope.ignore_patterns if hasattr(scope, 'ignore_patterns') else None,
     }
 
+
 @router.get("/list")
 def list_indexing_runs():
     runs = show_runs()

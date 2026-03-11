@@ -10,6 +10,10 @@ def build_chunker():
         from pipeline.chunking.semantic_chunker import SemanticChunker
         return SemanticChunker(embedder=embedder)
 
+    elif CHUNKER_TYPE == "sentence":
+        from pipeline.chunking.sentence_chunker import SentenceAwareChunker
+        return SentenceAwareChunker()
+
     from pipeline.chunking.simple_chunker import SimpleTextChunker
     return SimpleTextChunker()
 
