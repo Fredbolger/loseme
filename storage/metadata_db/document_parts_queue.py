@@ -13,6 +13,10 @@ def add_document_part_to_queue(
     Add a document part to the processing queue.
     This is used for parts that need to be processed asynchronously, such as extracting text from a PDF.
     """
+    if check_if_document_part_in_queue(run_id, part["document_part_id"]):
+        logger.debug(f"Document part with ID {part['document_part_id']} is already in the queue for run_id {run_id}. Skipping adding to queue.")
+        return
+
     execute(
         """
         INSERT INTO document_parts_queue (
@@ -163,3 +167,19 @@ def clear_all_queues() -> None:
         DELETE FROM document_parts_queue
         """
     )
+
+def check_if_document_part_in_queue(run_id: str, document_part_id: str) -> bool:
+    """
+    Check if a specific document part is currently in the queue for a given run_id.
+    This can be used to avoid adding duplicate parts to the queue.
+    """
+    row = fetch_one(
+        """
+        SELECT 1
+        FROM document_parts_queue
+        WHERE run_id = ? AND document_part_id = ?
+        """,
+        (run_id, document_part_id)
+    )
+
+    return row is not None
