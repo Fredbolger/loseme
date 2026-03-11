@@ -4,6 +4,7 @@ from storage.metadata_db.document_parts_queue import get_next_document_part_from
 from storage.metadata_db.document_parts import get_stale_parts, remove_document_parts_by_id
 from api.app.routes.ingest import ingest_document_part, IngestDocumentPartRequest
 from src.sources.base.models import IndexingScope
+from clients.cli.ingest import queue_filesystem_logic, queue_thunderbird_logic
 import json
 import logging
 import time
@@ -68,6 +69,21 @@ def request_stop_endpoint(run_id: str):
         "status": "stop_requested",
     }
 
+@router.get("/clear_all_runs")
+def clear_all_runs(
+        confirm: bool = False):
+    from storage.metadata_db.indexing_runs import clear_all_runs
+    if not confirm:
+        return {
+            "error": "This action will delete all indexing run records. To confirm, set confirm=true in the query parameters.",
+            "status": "confirmation_required",
+        }
+    clear_all_runs()
+    return {
+        "status": "all_runs_cleared",
+    }
+
+
 @router.get("/resume_latest/{source_type}")
 def load_latest_indexing_run(source_type: str):
     run = load_latest_interrupted(source_type)
@@ -87,6 +103,67 @@ def load_latest_indexing_run(source_type: str):
         "ignore_patterns": scope.ignore_patterns if hasattr(scope, 'ignore_patterns') else None,
     }
 
+
+@router.get("/resume/{run_id}")
+async def resume_indexing_run(run_id: str, background_tasks: BackgroundTasks):
+    run = load_run_by_id(run_id)
+    scope = run.scope
+
+    if not run:
+        return {
+            "error": "Indexing run not found",
+            "run_id": None,
+        }
+
+    if scope.type not in ["thunderbird", "filesystem"]:
+        return {
+            "error": f"Unsupported source type {scope.type} for resuming from the API",
+            "run_id": run_id,
+        }
+
+    # update the run status to running before resuming the background tasks
+    update_status(run_id, "running")
+
+    if scope.type == "thunderbird":
+        logger.info(f"Scheduling background task to resume the Thunderbird ingestion logic for run ID {run_id}")
+         
+        background_tasks.add_task(
+            queue_thunderbird_logic,
+            mbox=scope.mbox_path,
+            ignore_from=[p["value"] for p in scope.ignore_patterns if p["field"] == "from"],
+            run_id=run_id,
+        )
+        
+
+        return {
+            "run_id": run.id,
+            "status": run.status,
+            "started_at": run.start_time.isoformat(),
+            "mbox_path": scope.mbox_path if hasattr(scope, 'mbox_path') else None,
+            "ignore_patterns": scope.ignore_patterns if hasattr(scope, 'ignore_patterns') else None,
+        }
+
+    elif scope.type == "filesystem":
+        for directory in scope.directories:
+            logger.info(f"Scheduling background task to resume the filesystem logic for directory {directory} of run ID {run_id}")
+            background_tasks.add_task(
+                queue_filesystem_logic,
+                path=directory,
+                recursive=scope.recursive,
+                include_patterns=scope.include_patterns,
+                exclude_patterns=scope.exclude_patterns,
+                run_id=run_id,
+            )
+
+        return {
+            "run_id": run.id,
+            "status": run.status,
+            "started_at": run.start_time.isoformat(),
+            "directories": scope.directories if hasattr(scope, 'directories') else None,
+            "recursive": scope.recursive if hasattr(scope, 'recursive') else None,
+            "include_patterns": scope.include_patterns if hasattr(scope, 'include_patterns') else None,
+            "exclude_patterns": scope.exclude_patterns if hasattr(scope, 'exclude_patterns') else None,
+        }
 
 @router.get("/list")
 def list_indexing_runs():
