@@ -8,14 +8,14 @@ logger = logging.getLogger(__name__)
 def add_document_part_to_queue(
     part: dict,
     run_id: str,
-) -> None:
+) -> dict:
     """
     Add a document part to the processing queue.
     This is used for parts that need to be processed asynchronously, such as extracting text from a PDF.
     """
     if check_if_document_part_in_queue(run_id, part["document_part_id"]):
         logger.debug(f"Document part with ID {part['document_part_id']} is already in the queue for run_id {run_id}. Skipping adding to queue.")
-        return
+        return {"status": "already_in_queue"}
 
     execute(
         """
@@ -58,6 +58,8 @@ def add_document_part_to_queue(
             json.dumps(part.get("scope_json"))
             ),
     )
+
+    return {"status": "added_to_queue"}
 
 def get_next_document_part_from_queue(run_id: str) -> Optional[dict]:
     """

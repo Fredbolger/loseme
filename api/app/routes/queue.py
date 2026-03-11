@@ -36,10 +36,15 @@ class QueueGetResponse(BaseModel):
 @router.post("/add")
 def add_to_queue(request: QueueAddRequest):
     try:
-        add_document_part_to_queue(part=request.part.model_dump(), run_id=request.run_id)
+        response = add_document_part_to_queue(part=request.part.model_dump(), run_id=request.run_id)
+        if response.get("status") == "already_in_queue": 
+            logger.debug(f"Document part {request.part.document_part_id} is already in the queue for run_id {request.run_id}. Skipping adding to queue.")
+            return {"status": "already_in_queue"}
+        
         increment_discovered_count(run_id=request.run_id)
         logger.debug(f"Document part {request.part.document_part_id} added to queue successfully")
         return {"status": "success"}
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

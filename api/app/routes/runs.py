@@ -1,5 +1,5 @@
 from fastapi import APIRouter, BackgroundTasks
-from storage.metadata_db.indexing_runs import create_run, load_latest_run_by_type, request_stop, show_runs, increment_discovered_count, load_latest_interrupted, load_run_by_id, stop_indexing, update_status, stop_discovery, is_stop_requested, set_run_resume
+from storage.metadata_db.indexing_runs import create_run, load_latest_run_by_type, request_stop, show_runs, increment_discovered_count, load_latest_interrupted, load_run_by_id, stop_indexing, update_status, stop_discovery, set_run_resume
 from storage.metadata_db.document_parts_queue import get_next_document_part_from_queue, remove_document_part_from_queue
 from storage.metadata_db.document_parts import get_stale_parts, remove_document_parts_by_id
 from api.app.routes.ingest import ingest_document_part, IngestDocumentPartRequest

@@ -168,6 +168,7 @@ def load_latest_run_by_type(
         is_indexing=bool(row["is_indexing"]),
     )
 
+
 def clear_all_runs() -> None:
     """
     Clear all indexing runs from the database. Use with caution.
