@@ -73,6 +73,28 @@ def create_run(
         is_indexing=False,
     )
 
+def delete_run(run_id: str) -> None:
+    execute(
+        """
+        DELETE FROM indexing_runs
+        WHERE id = ?
+        """,
+        (run_id,),
+    )
+
+def is_discovering(run_id: str) -> bool:
+    row = fetch_one(
+        """
+        SELECT is_discovering
+        FROM indexing_runs
+        WHERE id = ?
+        """,
+        (run_id,),
+    )
+    if row is None:
+        raise ValueError(f"Indexing run with ID {run_id} not found.")
+    return bool(row["is_discovering"])
+
 def load_latest_run_by_scope(
     scope: IndexingScope,
 ) -> Optional[IndexingRun]:

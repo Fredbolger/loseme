@@ -45,7 +45,7 @@ const TEMPLATE = `
       <div class="sw-empty-state">
         <div class="sw-empty-icon" style="font-size:48px;opacity:0.12;">◈</div>
         <div class="sw-empty-title">No document selected</div>
-        <div class="sw-empty-text">Run a search — the top result opens here automatically</div>
+        <div class="sw-empty-text">Run a search</div>
       </div>
     </div>
   </main>
@@ -53,7 +53,7 @@ const TEMPLATE = `
   <!-- ── Right: LLM answer ── -->
   <aside class="sw-answer-panel" id="swAnswerPanel">
     <div class="sw-answer-header">
-      <span class="sw-answer-label">AI Answer</span>
+      <span class="sw-answer-label">LLM Answer</span>
       <span class="sw-spinner" id="swAnswerSpinner" style="display:none;"></span>
     </div>
     <div class="sw-answer-body" id="swAnswerBody">
