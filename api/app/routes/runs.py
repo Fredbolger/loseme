@@ -59,6 +59,16 @@ def is_stop_requested_endpoint(run_id: str):
         "stop_requested": stop_requested,
     }
 
+@router.post("/delete/{run_id}")
+def delete_indexing_run(run_id: str):
+    from storage.metadata_db.indexing_runs import delete_run
+    delete_run(run_id)
+    logger.info(f"Deleted indexing run {run_id}")
+    return {
+        "run_id": run_id,
+        "status": "deleted",
+    }
+
 @router.post("/request_stop/{run_id}")
 def request_stop_endpoint(run_id: str):
     request_stop(run_id)
@@ -104,7 +114,7 @@ def load_latest_indexing_run(source_type: str):
     }
 
 
-@router.get("/resume/{run_id}")
+@router.post("/resume/{run_id}")
 async def resume_indexing_run(run_id: str, background_tasks: BackgroundTasks):
     run = load_run_by_id(run_id)
     scope = run.scope
@@ -241,6 +251,15 @@ def start_indexing_run(run_id: str, background_tasks: BackgroundTasks):
 @router.post("/discovering_stopped/{run_id}")
 def mark_discovering_stopped(run_id: str):
     stop_discovery(run_id)
+
+@router.get("/is_discovering/{run_id}")
+def is_discovering(run_id: str):
+    from storage.metadata_db.indexing_runs import is_discovering
+    discovering = is_discovering(run_id)
+    return {
+        "run_id": run_id,
+        "is_discovering": discovering,
+    }
 
 def run_indexing_process(run_id: str):
     logger.info(f"Background indexing process started for run {run_id}")

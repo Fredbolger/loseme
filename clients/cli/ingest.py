@@ -101,6 +101,10 @@ def queue_filesystem_logic(
     else:
         logger.info(f"Using existing run ID {run_id} for filesystem queuing for {path}")
     
+    run_is_discovering_response = httpx.get(f"{API_URL}/runs/is_discovering/{run_id}")
+    run_is_discovering_response.raise_for_status()
+    run_is_discovering = run_is_discovering_response.json().get("is_discovering", False)
+
     # Start indexing for the run
     indexing_response = httpx.post(
         f"{API_URL}/runs/start_indexing/{run_id}"
@@ -109,6 +113,10 @@ def queue_filesystem_logic(
     logger.info(f"Started indexing for run {run_id}. Beginning to queue document parts for filesystem at {path} with recursive={recursive}. Status is: {indexing_response.json().get('status')}")
 
     try: 
+        if not run_is_discovering:
+            logger.warning(f"Run {run_id} is marked as 'not discovering' at the start of queuing.")
+            return
+
         for doc in source.iter_documents():
             # Check if the run has been requested to stop before processing each document
             # if yes, break out of the loop to stop queuing more document parts
@@ -193,6 +201,10 @@ def queue_thunderbird_logic(
     else:
         logger.info(f"Using existing run ID {run_id} for Thunderbird queuing for {mbox}")
 
+    is_discovering_response = httpx.get(f"{API_URL}/runs/is_discovering/{run_id}")
+    is_discovering_response.raise_for_status()
+    is_discovering = is_discovering_response.json().get("is_discovering", False)
+
     # Start indexing for the run
     indexing_response = httpx.post(
         f"{API_URL}/runs/start_indexing/{run_id}"
@@ -201,6 +213,10 @@ def queue_thunderbird_logic(
     logger.info(f"Started indexing for run {run_id}. Beginning to queue document parts for Thunderbird mailbox at {mbox} with ignore_from={ignore_from}. Status is: {indexing_response.json().get('status')}")
 
     try:
+        if not is_discovering:
+            logger.warning(f"Run {run_id} is marked as 'not discovering' at the start of queuing.")
+            return
+
         for doc in source.iter_documents():
             # Check if the run has been requested to stop before processing each document
             # if yes, break out of the loop to stop queuing more document parts

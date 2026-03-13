@@ -200,12 +200,22 @@ function render() {
   container.querySelectorAll('.stop-run-btn').forEach(btn => {
     btn.addEventListener('click', () => stopRun(btn.dataset.id, btn));
   });
+  // Wire resume buttons after DOM update
+  container.querySelectorAll('.resume-run-btn').forEach(btn => {
+    btn.addEventListener('click', () => resumeRun(btn.dataset.id, btn));
+  });
+  // Wire delete buttons after DOM update
+  container.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.addEventListener('click', () => deleteRun(btn.dataset.id, btn));
+  });
 }
 
 // ── Card ─────────────────────────────────────────────────────
 function runCard(run) {
   const color   = STATUS_COLOR[run.status] ?? 'var(--muted)';
   const canStop = run.status === 'running' || run.status === 'starting';
+  const canResume = run.status === 'interrupted';
+  const canDelete = run.status !== 'running' && run.status !== 'starting';
   const disc    = run.discovered_document_count ?? 0;
   const idx     = run.indexed_document_count    ?? 0;
   const pct     = disc > 0 ? Math.min(100, (idx / disc) * 100) : 0;
@@ -247,7 +257,16 @@ function runCard(run) {
       </div>` : ''}
     </div>
 
-    ${canStop ? `<button class="btn btn-sm btn-danger stop-run-btn" data-id="${run.run_id}" style="margin-top:12px;">⏹ Stop</button>` : ''}
+    <div class="run-card-actions">
+      <div>
+        ${canStop ? `<button class="btn btn-sm btn-danger stop-run-btn" data-id="${run.run_id}">⏹ Stop</button>` : ''}
+        ${canResume ? `<button class="btn btn-sm btn-resume resume-run-btn" data-id="${run.run_id}">▶ Resume</button>` : ''}
+      </div>
+      <div>
+        ${canDelete ? `<button class="btn btn-sm btn-delete" data-id="${run.run_id}">🗑 Delete</button>` : ''}
+      </div>
+    </div>
+
   </div>`;
 }
 
@@ -261,6 +280,29 @@ async function stopRun(runId, btn) {
     showError('Could not stop run: ' + e.message);
     btn.disabled = false; btn.textContent = '⏹ Stop';
   }
+}
+
+async function resumeRun(runId, btn) {
+    btn.disabled = true; btn.textContent = '…';
+    try {
+        await api.post(`/runs/resume/${runId}`);
+        await load();
+    } catch(e) {
+        showError('Could not resume run: ' + e.message);
+        btn.disabled = false; btn.textContent = '▶ Resume';
+    }
+}
+
+async function deleteRun(runId, btn) {
+    if (!confirm('Are you sure you want to delete this run? This action cannot be undone.')) return;
+    btn.disabled = true; btn.textContent = '…';
+    try {
+        await api.post(`/runs/delete/${runId}`);
+        await load();
+    } catch(e) {
+        showError('Could not delete run: ' + e.message);
+        btn.disabled = false; btn.textContent = '🗑 Delete';
+    }
 }
 
 async function stopAll() {

@@ -143,6 +143,13 @@
   margin-bottom: 12px;
 }
 
+.run-card-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+}
+
 .run-card-left { display: flex; flex-direction: column; gap: 6px; }
 .run-card-right { text-align: right; }
 
@@ -239,3 +246,11 @@
 /* ── Button variants (stop all / stop individual) ── */
 .btn-danger { background: var(--danger); }
 .btn-sm     { padding: 5px 12px; font-size: 12px; }
+.btn-resume {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-delete {
+  background: #b10030;
+  color: #fff;
+  }
