@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loseme-server"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic>=2.0",
+    "httpx",
+    "qdrant-client>=1.7.0",
+    "sentence-transformers>=2.6",
+    "transformers>=4.41",
+    "tokenizers>=0.15",
+    "einops",
+    "FlagEmbedding==1.3.2",
+    "pypdf",
+    "bs4",
+    "typer",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["api*", "pipeline*", "storage*", "preview*"]
