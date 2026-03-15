@@ -1,92 +1,69 @@
 services:
-  api:
-    build:
-      context: .
-      dockerfile: api/Dockerfile
-    image: loseme-api:latest
-    ports:
-      - "8000:8000"
-    environment:
-      - QDRANT_URL=http://qdrant:6333
-      - LOSEME_DEVICE_ID=MasterMind
-      - LOSEME_CHUNKER=semantic
-      - LOSEME_EMBEDDING_MODEL=bge-m3
-      - LOSEME_VECTOR_STORAGE=qdrant-hybrid
-      - LOSEME_HOST_ROOT=/home/ben
-      - LOSEME_CONTAINER_ROOT=/mnt/userdata
-      - HF_HOME=/root/.cache/huggingface
-      - TRANSFORMERS_CACHE=/root/.cache/huggingface
-      - LOSEME_USE_CUDA=true
-    volumes:
-      - .:/app
-      - metadata:/var/lib/loseme/metadata
-      - hf_cache:/root/.cache/huggingface
-      # Map host directories to container directories for file access
-      - /home/ben/.thunderbird:/mnt/userdata/.thunderbird
-      - /home/ben/.nb:/mnt/userdata/.nb
-    command: uvicorn api.app.main:app --host 0.0.0.0 --port 8000 --log-level info --reload
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: [gpu]
-    depends_on:
-      - qdrant
-
   qdrant:
     image: qdrant/qdrant
     ports:
       - "6333:6333"
     volumes:
       - qdrant_data:/qdrant/storage
-  
-  web_client:
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/6333' 2>/dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
+
+  server:
     build:
-      context: ./clients/web
+      context: ./server
       dockerfile: Dockerfile
-    image: loseme-web-client:latest
+    image: loseme-server:latest
     ports:
-      - 3000:3000
+      - "8000:8000"
     environment:
-      - LOSEME_API_URL=http://localhost:8000
-    command: uvicorn main:app --host 0.0.0.0 --port 3000 --reload
-
-  qdrant_test:
-    image: qdrant/qdrant
-    profiles: ["test"]
-    ports:
-      - "6334:6333"
+      - QDRANT_URL=http://qdrant:6333
+      - LOSEME_DEVICE_ID=${LOSEME_DEVICE_ID}
+      - LOSEME_EMBEDDING_MODEL=${LOSEME_EMBEDDING_MODEL}
+      - LOSEME_CHUNKER=${LOSEME_CHUNKER}
+      - LOSEME_VECTOR_STORAGE=${LOSEME_VECTOR_STORAGE}
+      - LOSEME_USE_CUDA=${LOSEME_USE_CUDA}
+      - HF_HOME=/root/.cache/huggingface
+      - TRANSFORMERS_CACHE=/root/.cache/huggingface
     volumes:
-      - qdrant_data_test:/qdrant/storage
-
-  test:
-    build:
-      context: .
-      dockerfile: api/Dockerfile
-    profiles: ["test"]
-    environment:
-      PYTHONPATH: /app
-      QDRANT_URL: http://qdrant_test:6333
-      ALLOW_VECTOR_CLEAR: "1"
-      LOSEME_DEVICE_ID: "test-device"
-      LOSEME_VECTOR_STORAGE: in-memory
-      LOSEME_EMBEDDING_MODEL: "sentence-transformer:all-MiniLM-L6-v2"
+      - metadata:/var/lib/loseme/metadata
+      - hf_cache:/root/.cache/huggingface
     depends_on:
-      - qdrant_test
-    command: pytest tests/ -v --tb=short
+      qdrant:
+        condition: service_healthy
 
-  docs:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+
+  client:
     build:
-      context: .
-      dockerfile: docker/docs.Dockerfile
+      context: ./client
+      dockerfile: Dockerfile
+    image: loseme-client:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - LOSEME_API_URL=http://server:8000
+      - LOSEME_PUBLIC_API_URL=http://localhost:8000
+      - LOSEME_DEVICE_ID=${LOSEME_DEVICE_ID}
+      - LOSEME_HOST_ROOT=${LOSEME_HOST_ROOT}
+      - LOSEME_CONTAINER_ROOT=/mnt/userdata
     volumes:
-      - .:/app  # Mount local files for live rebuilds
-    command: sh -c "make -C docs clean html"
+      - ${LOSEME_HOST_ROOT}:/mnt/userdata
 
 volumes:
   qdrant_data:
+    external: true
+    name: loseme_qdrant_data
   metadata:
-  qdrant_data_test:
-  metadata_test:
+    external: true
+    name: loseme_metadata
   hf_cache:
-
+    external: true
+    name: loseme_hf_cache
