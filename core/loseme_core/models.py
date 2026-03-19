@@ -93,12 +93,6 @@ class Document(BaseModel):
     def deserialize(cls, data: dict) -> Document:
         raise NotImplementedError("Document.deserialize is not implemented. Use the appropriate subclass based on source_type.")
 
-        #if data["source_type"] == "filesystem":
-        #    return cls.from_dict(data)
-        #elif data["source_type"] == "thunderbird":
-        #    from src.sources.thunderbird.thunderbird_model import ThunderbirdDocument
-        #    return ThunderbirdDocument.from_dict(data)
-
     @field_validator('id')
     def id_must_not_be_empty(cls, v):
         if not v:
@@ -175,20 +169,7 @@ class IndexingScope(BaseModel):
 
     @classmethod
     def deserialize(cls, data: dict) -> "IndexingScope":
-        from .registry import indexing_scope_registry
-        scope_type = data.get("type")
-
-        if scope_type == "filesystem":
-            return indexing_scope_registry.deserialize(data)
-            #return FilesystemIndexingScope.deserialize(data)
-
-        if scope_type == "thunderbird":
-            return indexing_scope_registry.deserialize(data)
-            #return ThunderbirdIndexingScope.deserialize(data)
-
-        raise ValueError(f"Unknown scope type: {scope_type}")
-
-    
+        raise NotImplementedError("IndexingScope.deserialize is not implemented. Use the appropriate subclass based on type.")    
 
 class IndexingRun(BaseModel):
     id: str
