@@ -4,10 +4,9 @@ import os
 from pathlib import Path
 from typing import List
 
-import httpx
 import typer
 
-from clients.cli.config import API_URL
+from clients.cli.config import API_URL, get_client
 from clients.cli.ingest import queue_filesystem_logic, queue_thunderbird_logic
 from src.sources.base.models import IndexingScope
 from src.sources.filesystem import FilesystemIndexingScope
@@ -70,13 +69,14 @@ def add_thunderbird_source_logic(mbox: str, ignore_from: List[str]):
         ignore_patterns=[{"field": "from", "value": v} for v in ignore_from],
     )
 
-    response = httpx.post(
-        f"{API_URL}/sources/add",
-        json={
-            "source_type": "thunderbird",
-            "scope": scope.serialize(),
-        },
-    )
+    with get_client() as client:
+        response = client.post(
+            f"{API_URL}/sources/add",
+            json={
+                "source_type": "thunderbird",
+                "scope": scope.serialize(),
+            },
+        )
     response.raise_for_status()
 
     source_id = response.json().get("source_id")
@@ -111,13 +111,14 @@ def add_filesystem_source_logic(path: Path, recursive: bool, include_patterns: L
         exclude_patterns=exclude_patterns,
     )
 
-    response = httpx.post(
-        f"{API_URL}/sources/add",
-        json={
-            "source_type": "filesystem",
-            "scope": scope.serialize(),
-        },
-    )
+    with get_client() as client:
+        response = client.post(
+            f"{API_URL}/sources/add",
+            json={
+                "source_type": "filesystem",
+                "scope": scope.serialize(),
+            },
+        )
     response.raise_for_status()
 
     source_id = response.json().get("source_id")
@@ -125,7 +126,8 @@ def add_filesystem_source_logic(path: Path, recursive: bool, include_patterns: L
 
 @sources_app.command("list")
 def list_monitored_sources():
-    r = httpx.get(f"{API_URL}/sources/get_all_sources")
+    with get_client() as client:
+        r = client.get(f"{API_URL}/sources/get_all_sources")
     r.raise_for_status()
 
     pretty_text = ""
@@ -155,7 +157,8 @@ def scan_source(
     scan_source_logic(source_id=source_id)
 
 def scan_source_logic(source_id: str):
-    r = httpx.get(f"{API_URL}/sources/get_all_sources")
+    with get_client() as client:
+        r = client.get(f"{API_URL}/sources/get_all_sources")
     r.raise_for_status()
 
     source = next(
@@ -196,7 +199,8 @@ def scan_source_logic(source_id: str):
 
 
 def scan_monitored_sources():
-    sources = httpx.get(f"{API_URL}/sources/get_all_sources")
+    with get_client() as client:
+        sources = client.get(f"{API_URL}/sources/get_all_sources")
     sources.raise_for_status()
 
     logger.info("Starting scan of monitored sources.")

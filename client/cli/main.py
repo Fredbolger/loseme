@@ -1,7 +1,6 @@
 import os
 import asyncio
 import typer
-import httpx
 import logging
 from pathlib import Path
 from typing import List, Dict, Any
@@ -9,7 +8,7 @@ from typing import List, Dict, Any
 from storage.metadata_db.indexing_runs import create_run
 from src.core.wiring import build_chunker
 
-from clients.cli.config import API_URL, BATCH_SIZE
+from clients.cli.config import API_URL, BATCH_SIZE, get_client
 from clients.cli.ingest import ingest_app 
 from clients.cli.sources import sources_app 
 from clients.cli.runs import run_app
@@ -25,10 +24,6 @@ app.add_typer(queue_app, name="queue")
 app.add_typer(database_app, name="database")
 
 logger = logging.getLogger(__name__)
-
-# Mute httpcore and httpx loggers to WARNING level
-logging.getLogger("httpcore").setLevel(logging.WARNING)
-logging.getLogger("httpx").setLevel(logging.WARNING)
 
 # add a file handler to log to a file
 file_handler = logging.FileHandler("ingest.log")
@@ -61,11 +56,12 @@ def search(
         False, "--interactive", "-i", help="Interactively open a search result"
     ),
 ):
-    r = httpx.post(
-        f"{API_URL}/search",
-        json={"query": query, "top_k": top_k},
-        timeout=30.0,
-    )
+    with get_client() as client:
+        r = client.post(
+            f"{API_URL}/search",
+            json={"query": query, "top_k": top_k},
+            timeout=30.0,
+        )
     r.raise_for_status()
 
     results = r.json()["results"]
@@ -75,11 +71,13 @@ def search(
         return
 
     payloads = [hit["document_part_id"] for hit in results]
-
-    doc_parts = httpx.post(
-        f"{API_URL}/documents/batch_get",
-        json={"document_part_ids": payloads},
-    )
+    
+    with get_client() as client:
+        doc_parts = client.post(
+            f"{API_URL}/documents/batch_get",
+            json={"document_part_ids": payloads},
+            timeout=30.0,
+        )
     doc_parts.raise_for_status()
 
     documents = {part["document_part_id"]: part for part in doc_parts.json().get("documents_parts", [])}
@@ -111,11 +109,13 @@ def search(
         try:
             i = int(choice) - 1
             doc = indexed[i]
-
-            descriptor_res = httpx.get(
-                f"{API_URL}/documents/open/{doc['document_part_id']}"
-                )
             
+            with get_client() as client:
+                descriptor_res = client.get(
+                    f"{API_URL}/documents/open/{doc['document_part_id']}",
+                    timeout=30.0,
+                )
+
             descriptor_res.raise_for_status()
             logger.debug(f"Open descriptor response: {descriptor_res.json()}")
 

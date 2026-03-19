@@ -9,6 +9,7 @@ from email.utils import parsedate_to_datetime
 from fnmatch import fnmatch
 from pathlib import Path
 from typing import Callable, List, Optional
+from cli.config import get_client
 
 from pydantic import PrivateAttr
 
@@ -39,7 +40,6 @@ import mailbox
 from email.message import Message
 from pathlib import Path
 import os
-import httpx
 
 API_URL = os.environ.get("LOSEME_API_URL", "http://localhost:8000")
 
@@ -239,7 +239,11 @@ class ThunderbirdIngestionSource(IngestionSource):
         """
         Extract a single thunderbird message part's content by its document part ID.
         """
-        response = httpx.get(f"{API_URL}/documents/by_id/{document_id}")
+
+        with get_client() as client:
+            response = client.get(f"/document_parts/by_id/{document_part_id}")
+
+
         if response.status_code == 404:
             return None
         response.raise_for_status()

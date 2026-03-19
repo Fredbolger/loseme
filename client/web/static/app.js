@@ -8,6 +8,8 @@ import { mount as mountStorage, unmount as unmountStorage } from './views/storag
 export let API_BASE = 'http://localhost:8000';
 export let CLIENT_BASE = 'http://localhost:3000';
 
+let _apiKey = '';
+
 export function getBase() {
   return document.getElementById('apiBase').value.replace(/\/$/, '');
 }
@@ -37,15 +39,26 @@ export function fmtDate(iso) {
   } catch { return iso; }
 }
 
+// ── Auth header helper ───────────────────────────────────────
+function authHeaders() {
+  const h = { 'Content-Type': 'application/json' };
+  if (_apiKey) h['X-API-Key'] = _apiKey;
+  return h;
+}
+ 
 // ── API client ──────────────────────────────────────────────
+// All calls go to the remote server (API_BASE) with the auth header.
+// Preview/serve calls use getClientBase() directly in the renderers —
+// those hit the local web client, not this api object.
 export const api = {
   get(path) {
-    return fetch(getBase() + path).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+    return fetch(getBase() + path, { headers: authHeaders() })
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
   },
   post(path, body) {
     return fetch(getBase() + path, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders(),
       body: JSON.stringify(body),
     }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
   },
@@ -114,24 +127,19 @@ document.querySelectorAll('.tab').forEach(t => {
 });
 
 
-
-// Tab clicks
-//document.querySelectorAll('.tab').forEach(t => {
-// t.addEventListener('click', () => switchTab(t.dataset.tab));
-//});
-
 // ── Bootstrap ───────────────────────────────────────────────
 async function bootstrap() {
   initTheme();
   try {
     const config = await fetch('/config').then(r => r.json());
-    API_BASE = config.api_url;
-    CLIENT_BASE = config.client_url
+    API_BASE    = config.api_url;
+    CLIENT_BASE = config.client_url;
+    _apiKey     = config.api_key ?? '';
     document.getElementById('apiBase').value = API_BASE;
   } catch {
-    // /config unreachable (e.g. opening file:// directly) — keep default
+    // /config unreachable (e.g. opening file:// directly) — keep defaults
   }
   switchTab('index');
 }
-
+ 
 bootstrap();

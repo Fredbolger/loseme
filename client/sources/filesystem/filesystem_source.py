@@ -6,13 +6,13 @@ from datetime import datetime
 from .filesystem_model import FilesystemIndexingScope 
 from loseme_core.models import IngestionSource, Document, OpenDescriptor, DocumentPart
 from loseme_core.ids import make_logical_document_part_id, make_source_instance_id
+from cli.config import get_client
 from extractors.registry import extractor_registry, ExtractorRegistry, ingestion_source_registry
 from sources.base.docker_path_translation import host_path_to_container, container_path_to_host, is_running_in_docker
 from fnmatch import fnmatch
 
 import logging
 import os
-import httpx
 
 API_URL = os.environ.get("LOSEME_API_URL", "http://localhost:8000")
 
@@ -253,7 +253,9 @@ class FilesystemIngestionSource(IngestionSource):
         """
 
         try:
-            response = httpx.get(f"{API_URL}/documents/by_id/{document_id}")
+            with get_client() as client:
+                response = client.get(f"/documents/by_id/{document_id}")
+
             if response.status_code == 404:
                 return None
             response.raise_for_status()

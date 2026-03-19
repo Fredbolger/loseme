@@ -1,0 +1,49 @@
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: loseme-server:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - QDRANT_URL=http://qdrant:6333
+      - LOSEME_DEVICE_ID=${LOSEME_DEVICE_ID:-server}
+      - LOSEME_CONTAINER_ROOT=${LOSEME_CONTAINER_ROOT:-}
+      - HF_HOME=/root/.cache/huggingface
+      - TRANSFORMERS_CACHE=/root/.cache/huggingface
+    volumes:
+      - metadata:/var/lib/loseme/metadata
+      - hf_cache:/root/.cache/huggingface
+      # Mount shared/NAS storage here if the server can reach it directly.
+      # Example: - /mnt/nas:/mnt/userdata
+    command: uvicorn api.app.main:app --host 0.0.0.0 --port 8000 --log-level info
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    env_file:
+      - .env.server
+
+  qdrant:
+    image: qdrant/qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/6333' 2>/dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
+
+
+volumes:
+  qdrant_data:
+  metadata:
+  hf_cache:
