@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel
+from typing import Optional
 from storage.metadata_db.sources import add_monitored_source, get_monitored_source_by_id, update_monitored_source_check_times, list_all_monitored_sources
 from loseme_core.models import IndexingScope
 import json
@@ -11,13 +12,15 @@ router = APIRouter(prefix="/sources", tags=["sources"])
 
 class AddSourceRequest(BaseModel):
     source_type: str
+    device_id: str
     scope: dict
 
 @router.post("/add")
 async def add_source(request: AddSourceRequest):
     logger.debug(f"Received request to add source of type {request.source_type} with scope {request.scope}")
     scope = IndexingScope.deserialize(request.scope)
-    source_id = add_monitored_source(request.source_type, scope)
+    device_id = request.device_id
+    source_id = add_monitored_source(request.source_type, device_id, scope)
     logger.info(f"Added monitored source {source_id} of type {request.source_type} with locator {scope.locator}")
     return {"source_id": source_id}
 
@@ -40,6 +43,7 @@ async def get_all_sources():
     logger.debug("Received request to list all monitored sources")
     sources = list_all_monitored_sources()
     logger.info(f"Retrieved {len(sources)} monitored sources")
+    logger.debug(f"Monitored sources: {sources}")
     return {"sources": sources}
 
 @router.get("/get/{source_id}")
@@ -144,3 +148,33 @@ def delete_source(
 
     return {"status": "deleted", "source_id": source_id}
 
+class EditSourceRequest(BaseModel):
+    source_id: str
+    source_type: Optional[str] = None
+    locator: Optional[str] = None
+    scope_json: Optional[dict] = None
+    device_id: Optional[str] = None
+    last_seen_fingerprint: Optional[str] = None
+    last_checked_at: Optional[str] = None
+    last_ingested_at: Optional[str] = None
+    enabled: Optional[bool] = None
+    created_at: Optional[str] = None
+
+
+@router.put("/edit/{source_id}")
+def edit_source(request: EditSourceRequest):
+    from storage.metadata_db.sources import edit_monitored_source
+    logger.debug(f"Received request to edit source with ID {request.source_id}")
+
+    source = get_monitored_source_by_id(request.source_id)
+    if not source:
+        logger.error(f"Source with ID {request.source_id} not found for editing")
+        raise HTTPException(status_code=404, detail="Source not found")
+
+    payload = request.dict(exclude_unset=True)
+    if "scope_json" in payload and payload["scope_json"] is not None:
+        payload["scope_json"] = json.dumps(payload["scope_json"])
+
+    payload.pop("source_id", None)
+
+    edit_monitored_source(request.source_id, **payload)

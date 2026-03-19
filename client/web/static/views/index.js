@@ -112,6 +112,10 @@ function getSourceId(s) {
   return s.source_instance_id || s.id;
 }
 
+function getSourceDeviceId(s) {
+    return s.device_id || "-";
+    }
+
 function pathParts(p) {
   return p.replace(/\\/g, '/').split('/').filter(Boolean);
 }
@@ -208,9 +212,10 @@ function renderNode(node, depth) {
                 ${s._docCount} doc${s._docCount !== 1 ? 's' : ''}
               </span>
             </div>
-            
-            <div class="source-instance-id" style="font-size:12px;color:var(--text-muted)">
-              ${getSourceId(s)}
+
+            <div class="source-instance-id" style="font-size:12px;color:var(--text-muted);display:flex;gap:16px;">
+              <span>${getSourceId(s)}</span>
+              <span>📱 ${getSourceDeviceId(s)}</span>
             </div>
 
             <div class="source-meta">
