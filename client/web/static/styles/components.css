@@ -24,7 +24,6 @@
 .btn:active   { transform: translateY(0); }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
-.btn-danger { background: var(--danger); }
 .btn-sm     { padding: 5px 12px; font-size: 12px; }
 
 .btn-ghost {
@@ -42,6 +41,16 @@
   font-size: 15px;
   border-radius: 7px;
 }
+
+/* ── Button variants (stop all / stop individual) ── */
+.btn-resume {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-delete {
+  background: #b10030;
+  color: #fff;
+  }
 
 /* ── Badge ── */
 .badge {
@@ -217,7 +226,13 @@
   line-height: 1.5;
 }
 
-.source-meta { display: flex; gap: 12px; font-size: 11px; color: var(--muted); }
+.source-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; 
+    font-size: 11px; 
+    color: var(--muted); 
+    }
 
 /* ── View toggle ── */
 .view-toggle { display: flex; gap: 2px; }

@@ -243,14 +243,3 @@
   transition: width 0.5s ease;
 }
 
-/* ── Button variants (stop all / stop individual) ── */
-.btn-danger { background: var(--danger); }
-.btn-sm     { padding: 5px 12px; font-size: 12px; }
-.btn-resume {
-  background: var(--accent);
-  color: #fff;
-}
-.btn-delete {
-  background: #b10030;
-  color: #fff;
-  }

@@ -214,20 +214,25 @@ function renderNode(node, depth) {
             </div>
 
             <div class="source-meta">
-              <span>
-                <span class="dot ${s.enabled !== false ? 'green' : 'muted'}"></span>
-                ${s.enabled !== false ? 'Active' : 'Disabled'}
-              </span>
-
-              <button class="btn btn-sm scan-source-btn" data-id="${s.id}">
-                ↺ Scan
-              </button>
-
-              ${s.last_ingested_at
-                ? '<span>↺ ' + fmtDate(s.last_ingested_at) + '</span>'
-                : ''}
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span>
+                  <span class="dot ${s.enabled !== false ? 'green' : 'muted'}"></span>
+                  ${s.enabled !== false ? 'Active' : 'Disabled'}
+                </span>
+                ${s.last_ingested_at
+                  ? '<span>↺ ' + fmtDate(s.last_ingested_at) + '</span>'
+                  : ''}
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; gap:6px;">
+                  <button class="btn btn-sm scan-source-btn" data-id="${s.id}">↺ Scan</button>
+                </div>
+                <div>
+                  <button class="btn btn-sm btn-delete" data-id="${s.id}">🗑 Delete</button>
+                </div>
+              </div>
             </div>
-
+            
           </div>
         </div>
       </div>
@@ -306,6 +311,12 @@ function renderSources(sources, statsMap = {}) {
       scanSource(btn.dataset.id, btn)
     );
   });
+  
+  grid.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.addEventListener('click', () =>
+      deleteSource(btn.dataset.id, btn)
+    );
+ });
 }
 
 async function scanSource(sourceId, btn) {
@@ -313,7 +324,7 @@ async function scanSource(sourceId, btn) {
   btn.textContent = '…';
 
   try {
-    await fetch(`${getClientBase()}/sources/scan/${sourceId}`, { method: 'POST' });
+    await api.post(`/sources/scan/${sourceId}`);
     btn.textContent = '✓ Queued';
     setTimeout(() => {
       btn.disabled = false;
@@ -323,5 +334,21 @@ async function scanSource(sourceId, btn) {
     showError('Could not start scan: ' + e.message);
     btn.disabled = false;
     btn.textContent = '↺ Scan';
+  }
+}
+
+async function deleteSource(sourceId, btn) {
+  if (!confirm('Are you sure you want to delete this source?...')) return;
+
+  btn.disabled = true;
+  btn.textContent = '…';
+
+  try {
+    await api.get(`/sources/delete/${sourceId}?dry_run=false&confirm=true`);
+    load(); // refresh the sources list
+  } catch (e) {
+    showError('Could not delete source: ' + e.message);
+    btn.disabled = false;
+    btn.textContent = '🗑 Delete';
   }
 }

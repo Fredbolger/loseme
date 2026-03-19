@@ -62,6 +62,12 @@ export const api = {
       body: JSON.stringify(body),
     }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
   },
+  delete(path) {
+    return fetch(getBase() + path, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+  },
 };
 
 // ── Theme ────────────────────────────────────────────────────
