@@ -1,0 +1,12 @@
+services:
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    image: loseme-client:latest
+    ports:
+      - "3000:3000"
+    env_file:
+      .env.client
+    volumes:
+      - ${LOSEME_HOST_ROOT}:/mnt/userdata

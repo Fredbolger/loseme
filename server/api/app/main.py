@@ -2,11 +2,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 import sys
-
-from api.app.routes import (ingest_router, health_router, search_router, document_router,
-chunk_router, runs_router, sources_router, queue_router, database_router)
+ 
+from api.app.routes import (
+    ingest_router, health_router, search_router, document_router,
+    chunk_router, runs_router, sources_router, queue_router, database_router
+)
+from api.app.core.auth import APIKeyMiddleware
 from contextlib import asynccontextmanager
 from storage.metadata_db.db import init_db
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -31,12 +35,13 @@ logger = logging.getLogger("api")  # Any name
 # mute httpx logger
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
-
+# ── Middleware (order matters — auth before CORS) ─────────────
+app.add_middleware(APIKeyMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*", "X-API-Key"],
 )
 
 
