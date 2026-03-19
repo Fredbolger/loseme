@@ -5,20 +5,20 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Any
 
-from clients.cli.config import API_URL, BATCH_SIZE, get_client
-from clients.cli.ingest import ingest_app 
-from clients.cli.sources import sources_app 
-from clients.cli.runs import run_app
-from clients.cli.queue import queue_app
-from clients.cli.database import database_app
+from cli.config import API_URL, BATCH_SIZE, get_client
+from cli.ingest import ingest_app 
+from cli.sources import sources_app 
+#from cli.runs import run_app
+#from cli.queue import queue_app
+#from cli.database import database_app
 
 app = typer.Typer(no_args_is_help=True)
 
 app.add_typer(ingest_app, name="ingest")
 app.add_typer(sources_app, name="sources")
-app.add_typer(run_app, name="run")
-app.add_typer(queue_app, name="queue")
-app.add_typer(database_app, name="database")
+#app.add_typer(run_app, name="run")
+#app.add_typer(queue_app, name="queue")
+#app.add_typer(database_app, name="database")
 
 logger = logging.getLogger(__name__)
 
