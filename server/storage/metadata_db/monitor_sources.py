@@ -2,10 +2,9 @@ import json
 import uuid
 from datetime import datetime
 from typing import Optional
-from pathlib import Path
 
 from storage.metadata_db.db import execute, fetch_one, fetch_all
-from src.sources.base.models import IndexingRun, IndexingScope
+from loseme_core.models import IndexingScope
 import logging
 logger = logging.getLogger(__name__)
 
