@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict, Any
+from api.app.cache import distribution_cache
 
 from loseme_core.models import Chunk
 from storage.vector_db.runtime import get_vector_store
@@ -103,3 +104,99 @@ def get_chunk_by_id(chunk_id: str) -> Chunk:
         metadata=chunk.metadata,
         unit_locator=chunk.unit_locator
     )
+
+
+@router.get("/stats/distribution")
+def get_chunk_distribution(chunker_name: str = None):
+    """Return char_len distribution and chiunks-per-doc distribution for the given chunker filter."""
+    from qdrant_client import QdrantClient
+    import os, collections
+
+    cache_key = f"distribution:{chunker_name or 'all'}"
+    cached = distribution_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    client = QdrantClient(url=os.getenv("QDRANT_URL", "http://qdrant:6333"))
+    COLLECTION = "chunks"
+
+    # We also need source_path to compute chunks-per-doc
+    char_lens = []
+    chunks_per_doc = collections.Counter()
+
+    # If filtering by chunker, we need to get the source_paths for those doc parts first
+    allowed_paths = None
+    if chunker_name and chunker_name != 'all':
+        from storage.metadata_db.db import fetch_all
+        rows = fetch_all(
+            "SELECT source_path FROM document_parts WHERE chunker_name = ?",
+            (chunker_name,)
+        )
+        allowed_paths = {row["source_path"] for row in rows}
+
+    offset = None
+    while True:
+        result, next_offset = client.scroll(
+            collection_name=COLLECTION,
+            limit=500,
+            offset=offset,
+            with_payload=True,
+            with_vectors=False,
+        )
+        for point in result:
+            path = point.payload.get("source_path", "unknown")
+            if allowed_paths is not None and path not in allowed_paths:
+                continue
+            meta = point.payload.get("metadata", {})
+            char_len = meta.get("char_len")
+            if char_len is not None:
+                char_lens.append(char_len)
+            chunks_per_doc[path] += 1
+
+    # filter chunks_per_doc too if needed
+        if next_offset is None:
+            break
+        offset = next_offset
+
+    if allowed_paths is not None:
+        chunks_per_doc = collections.Counter({
+            k: v for k, v in chunks_per_doc.items() if k in allowed_paths
+        })
+
+    # Build histogram buckets
+    CHAR_BUCKETS  = [0, 100, 300, 600, 900, 1200, 2000, 9_999_999]
+    CHAR_LABELS   = ['<100','100-300','300-600','600-900','900-1200','1200-2000','>2000']
+    DOC_BUCKETS   = [0, 1, 5, 10, 20, 50, 100, 9_999_999]
+    DOC_LABELS    = ['1','2-5','6-10','11-20','21-50','51-100','>100']
+
+    def make_hist(data, buckets, labels):
+        counts = [0] * len(labels)
+        for v in data:
+            for i in range(len(buckets) - 1):
+                if buckets[i] <= v < buckets[i+1]:
+                    counts[i] += 1
+                    break
+        return [{"label": l, "count": c} for l, c in zip(labels, counts)]
+
+    doc_counts = list(chunks_per_doc.values())
+
+    stats = {}
+    if char_lens:
+        s = sorted(char_lens)
+        n = len(s)
+        stats = {
+            "count": n,
+            "min": s[0], "max": s[-1],
+            "mean": round(sum(s)/n, 1),
+            "p50": s[n//2],
+            "p95": s[int(n*0.95)],
+        }
+
+    result = {
+        "char_len_histogram": make_hist(char_lens, CHAR_BUCKETS, CHAR_LABELS),
+        "chunks_per_doc_histogram": make_hist(doc_counts, DOC_BUCKETS, DOC_LABELS),
+        "stats": stats,
+        "total_chunks": len(char_lens),
+    }
+    distribution_cache.set(cache_key, result)
+    return result

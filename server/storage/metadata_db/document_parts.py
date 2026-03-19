@@ -32,12 +32,14 @@ def upsert_document_part(
             content_type,
             extractor_name,
             extractor_version,
+            chunker_name, 
+            chunker_version,
             created_at,
             updated_at,
             last_indexed_at,
             scope_json
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(document_part_id) DO UPDATE SET
             source_path = excluded.source_path,
             metadata_json = excluded.metadata_json,
@@ -47,6 +49,8 @@ def upsert_document_part(
             content_type = excluded.content_type,
             extractor_name = excluded.extractor_name,
             extractor_version = excluded.extractor_version,
+            chunker_name = excluded.chunker_name,
+            chunker_version = excluded.chunker_version,
             updated_at = excluded.updated_at,
             scope_json = excluded.scope_json
         """,
@@ -64,6 +68,7 @@ def upsert_document_part(
             part.get("content_type"),
             part.get("extractor_name"),
             part.get("extractor_version"),
+            part.get("chunker_name"), part.get("chunker_version"),
             datetime.fromisoformat(part["created_at"]).isoformat(),
             datetime.fromisoformat(part["updated_at"]).isoformat(),
             None,
@@ -218,6 +223,20 @@ def get_document_stats() -> dict:
         return dict(row)
     else:
         return {"total_document_parts": 0, "total_sources": 0, "total_devices": 0}
+
+def get_chunker_stats() -> List[dict]:
+    rows = fetch_all(
+        """
+        SELECT
+            chunker_name,
+            chunker_version,
+            COUNT(*) AS document_part_count
+        FROM document_parts
+        GROUP BY chunker_name, chunker_version
+        ORDER BY document_part_count DESC
+        """
+    )
+    return [dict(row) for row in rows]
 
 def get_document_stats_per_source() -> List[dict]:
     rows = fetch_all(

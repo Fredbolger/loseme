@@ -1,13 +1,21 @@
 from typing import List, Tuple
-from loseme_core.models import Document, Chunk, DocumentPart
+
+from loseme_core.models import Chunk, DocumentPart
 from loseme_core.ids import make_chunk_id
+
 
 class SimpleTextChunker:
     """
     Deterministic, simple text chunker.
     Splits text into fixed-size chunks with overlap.
-    Suitable for Phase 1 validation of the pipeline.
+
+    Note: chunks may split mid-word/mid-sentence. For semantic quality
+    prefer SentenceAwareChunker or SemanticChunker. Use this for fast
+    ingestion or as a baseline.
     """
+
+    name = "simple"
+    version = "1.0"
 
     def __init__(self, chunk_size: int = 1000, overlap: int = 100):
         if overlap >= chunk_size:
@@ -16,11 +24,14 @@ class SimpleTextChunker:
         self.overlap = overlap
 
     def chunk(self, part: DocumentPart) -> Tuple[List[Chunk], List[str]]:
+        if not part.text:
+            return [], []
 
         chunks = []
         chunk_texts = []
         start = 0
         index = 0
+        step = self.chunk_size - self.overlap
 
         while start < len(part.text):
             end = start + self.chunk_size
@@ -32,7 +43,6 @@ class SimpleTextChunker:
                 index=index,
             )
 
-            chunk_texts.append(chunk_text)
             chunks.append(
                 Chunk(
                     id=chunk_id,
@@ -43,28 +53,17 @@ class SimpleTextChunker:
                     device_id=part.device_id,
                     unit_locator=part.unit_locator,
                     index=index,
-                    content=chunk_text,
+                    text=chunk_text,
                     metadata={
                         "start": start,
                         "end": min(end, len(part.text)),
+                        "char_len": len(chunk_text),
                     },
                 )
             )
+            chunk_texts.append(chunk_text)
 
             index += 1
-            start = end - self.overlap
+            start += step
 
-        return (chunks, chunk_texts)
-    
-    """
-    def chunk_multipart(self, document: Document, texts: List[str], unit_locators: List[str]) -> (List[Chunk], List[str]):
-        all_chunks = []
-        all_texts = []
-
-        for text, unit_locator in zip(texts, unit_locators):
-            chunks, chunk_texts = self.chunk(document, text, unit_locator)
-            all_chunks.extend(chunks)
-            all_texts.extend(chunk_texts)
-
-        return all_chunks, all_texts
-    """
+        return chunks, chunk_texts

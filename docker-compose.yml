@@ -34,6 +34,8 @@ services:
     depends_on:
       qdrant:
         condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
     deploy:
       resources:

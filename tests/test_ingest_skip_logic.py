@@ -84,3 +84,25 @@ class TestReprocessOnChange:
         assert result.get("skipped") is not True, (
             "A changed extractor name must trigger re-processing"
         )
+
+    def test_changed_chunker_name_triggers_reprocess(self, setup_db):
+        part = make_part()
+        ingest_part(part, create_filesystem_run())
+
+        rechunked = part.model_copy(update={"chunker_name": "sentence"})
+        result = ingest_part(rechunked, create_filesystem_run())
+
+        assert result.get("skipped") is not True, (
+            "A changed chunker name must trigger re-processing"
+        )
+
+    def test_changed_chunker_version_triggers_reprocess(self, setup_db):
+        part = make_part()
+        ingest_part(part, create_filesystem_run())
+
+        upgraded = part.model_copy(update={"chunker_version": "2.0"})
+        result = ingest_part(upgraded, create_filesystem_run())
+
+        assert result.get("skipped") is not True, (
+            "A changed chunker version must trigger re-processing"
+        )

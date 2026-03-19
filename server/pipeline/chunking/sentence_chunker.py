@@ -35,6 +35,10 @@ class SentenceAwareChunker:
         Chunks shorter than this are merged into the next one (avoids tiny
         trailing chunks). Set to 0 to disable.
     """
+    
+    name = "sentence"
+    version = "1.0"
+
 
     def __init__(
         self,
