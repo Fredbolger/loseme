@@ -25,7 +25,8 @@ from sources.base.docker_path_translation import (
 from loseme_core.models import DocumentPart, IngestionSource, OpenDescriptor
 from extractors.registry import extractor_registry, ingestion_source_registry
 
-from .thunderbird_model import ThunderbirdDocument, ThunderbirdIndexingScope
+#from .thunderbird_model import ThunderbirdDocument, ThunderbirdIndexingScope
+from loseme_core.thunderbird_model import ThunderbirdDocument, ThunderbirdIndexingScope
 
 logger = logging.getLogger(__name__)
 

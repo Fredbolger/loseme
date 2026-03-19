@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import List, Optional, Callable
 import hashlib
 from datetime import datetime
-from .filesystem_model import FilesystemIndexingScope 
+from loseme_core.filesystem_model import FilesystemIndexingScope
 from loseme_core.models import IngestionSource, Document, OpenDescriptor, DocumentPart
 from loseme_core.ids import make_logical_document_part_id, make_source_instance_id
 from cli.config import get_client
