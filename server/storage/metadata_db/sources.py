@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 def _now() -> str:
     return datetime.utcnow().isoformat()
 
-def add_monitored_source(source_type: str, scope: IndexingScope) -> str:
+def add_monitored_source(source_type: str, device_id: str, scope: IndexingScope) -> str:
     source_id = str(uuid.uuid4())
     execute(
         """
@@ -26,9 +26,10 @@ def add_monitored_source(source_type: str, scope: IndexingScope) -> str:
             last_checked_at,
             last_ingested_at,
             enabled,
-            created_at
+            created_at,
+            device_id
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
         """,
         (
             source_id,
@@ -39,6 +40,7 @@ def add_monitored_source(source_type: str, scope: IndexingScope) -> str:
             None,
             None,
             _now(),
+            device_id,
         ),
     )
 
@@ -57,7 +59,8 @@ def get_monitored_source_by_id(source_id: str) -> Optional[dict]:
             last_checked_at,
             last_ingested_at,
             enabled,
-            created_at
+            created_at,
+            device_id
         FROM monitored_sources
         WHERE id = ?
         """,
@@ -76,6 +79,7 @@ def get_monitored_source_by_id(source_id: str) -> Optional[dict]:
         "last_ingested_at": row[6],
         "enabled": bool(row[7]),
         "created_at": row[8],
+        "device_id": row[9],
     }
 
 def update_monitored_source_check_times(
@@ -122,7 +126,8 @@ def list_all_monitored_sources() -> list:
             last_checked_at,
             last_ingested_at,
             enabled,
-            created_at
+            created_at,
+            device_id
         FROM monitored_sources
         """
     )
@@ -140,6 +145,7 @@ def list_all_monitored_sources() -> list:
             "last_ingested_at": row[6],
             "enabled": bool(row[7]),
             "created_at": row[8],
+            "device_id": row[9],
         })
     return sources
 
@@ -151,3 +157,35 @@ def delete_monitored_source(source_id: str) -> None:
         """,
         (source_id,),
     )
+
+def edit_monitored_source(source_id: str, **payload: dict) -> None:
+    fields = []
+    params = []
+
+    for key in [
+        "source_type",
+        "locator",
+        "scope_json",
+        "last_seen_fingerprint",
+        "last_checked_at",
+        "last_ingested_at",
+        "enabled",
+        "created_at",
+        "device_id",
+    ]:
+        if key in payload:
+            fields.append(f"{key} = ?")
+            params.append(payload[key])
+
+    if not fields:
+        return
+
+    params.append(source_id)
+
+    query = f"""
+        UPDATE monitored_sources
+        SET {', '.join(fields)}
+        WHERE id = ?
+    """
+
+    execute(query, tuple(params))
