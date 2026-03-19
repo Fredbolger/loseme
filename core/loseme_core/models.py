@@ -8,6 +8,8 @@ from typing_extensions import Literal
 from dataclasses import dataclass
 from abc import abstractmethod
 from loseme_core.ids import make_source_instance_id
+from loseme_core.thunderbird_model import ThunderbirdIndexingScope
+from loseme_core.filesystem_model import FilesystemIndexingScope
 
 import logging
 logger = logging.getLogger(__name__)
@@ -169,7 +171,19 @@ class IndexingScope(BaseModel):
 
     @classmethod
     def deserialize(cls, data: dict) -> "IndexingScope":
-        raise NotImplementedError("IndexingScope.deserialize is not implemented. Use the appropriate subclass based on type.")    
+        scope_type = data.get("type")
+
+        if scope_type == "filesystem":
+            #return indexing_scope_registry.deserialize(data)
+            return FilesystemIndexingScope.deserialize(data)
+
+        if scope_type == "thunderbird":
+            #return indexing_scope_registry.deserialize(data)
+            return ThunderbirdIndexingScope.deserialize(data)
+
+        raise ValueError(f"Unknown scope type: {scope_type}")
+
+    
 
 class IndexingRun(BaseModel):
     id: str
