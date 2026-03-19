@@ -1,4 +1,10 @@
 services:
+  core:
+    build:
+      context: ./core
+      dockerfile: Dockerfile
+    image: loseme-core:latest
+
   client:
     build:
       context: ./client
@@ -10,3 +16,6 @@ services:
       .env.client
     volumes:
       - ${LOSEME_HOST_ROOT}:/mnt/userdata
+    depends_on:
+      core:
+        condition: service_completed_successfully
