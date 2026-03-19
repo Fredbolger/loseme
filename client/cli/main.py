@@ -5,9 +5,6 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Any
 
-from loseme_core.storage.metadata_db.indexing_runs import create_run
-from src.core.wiring import build_chunker
-
 from clients.cli.config import API_URL, BATCH_SIZE, get_client
 from clients.cli.ingest import ingest_app 
 from clients.cli.sources import sources_app 
