@@ -1,4 +1,10 @@
 services:
+  core:
+    build:
+      context: ./core
+      dockerfile: Dockerfile
+    image: loseme-core:latest
+
   server:
     build:
       context: ./server
@@ -26,6 +32,8 @@ services:
     depends_on:
       qdrant:
         condition: service_healthy
+      core:
+        condition: service_completed_successfully
     env_file:
       - .env.server
 
