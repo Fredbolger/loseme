@@ -1,8 +1,8 @@
 from pydantic import Field, BaseModel 
 from pathlib import Path
 from typing import Literal
-from loseme_core.models import IndexingScope
-from extractors.registry import indexing_scope_registry
+from loseme_core.scope_models import IndexingScope
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -69,4 +69,3 @@ class FilesystemIngestRequest(BaseModel):
     include_patterns: list[str] = []
     exclude_patterns: list[str] = []
 
-indexing_scope_registry.register_scope("filesystem", FilesystemIndexingScope)
