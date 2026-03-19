@@ -48,6 +48,8 @@ def make_part(
         unit_locator=unit_locator,
         content_type="text/plain",
         extractor_name="txt_extractor",
+        chunker_name="simple",
+        chunker_version="1.0",
         extractor_version="1.0",
     )
 

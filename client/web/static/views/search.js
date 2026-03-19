@@ -84,10 +84,28 @@ const TEMPLATE = `
       </div>
     </div>
     <button class="btn sw-search-btn" id="swSearchBtn">Search</button>
+    <select class="btn sw-model-select" id="swModelSelect">
+      <option value="">Loading models…</option>
+    </select>
   </div>
   <div class="sw-searchbar-hint" id="swSearchHint">Press Enter or click Search</div>
 </div>
 `;
+
+// -- Load available models from Ollama and populate the model select dropdown.
+async function loadModels() {
+  const ollamaBase = document.getElementById('apiBase').value.replace(/\/$/, '').replace(':8000', ':11434');
+  try {
+    const data = await fetch(`${ollamaBase}/api/tags`).then(r => r.json());
+    const select = document.getElementById('swModelSelect');
+    const models = data.models || [];
+    select.innerHTML = models.map(m =>
+      `<option value="${m.name}">${m.name}</option>`
+    ).join('');
+  } catch {
+    document.getElementById('swModelSelect').innerHTML = '<option value="mistral:7b">mistral:7b</option>';
+  }
+}
 
 // ── Mount / Unmount ───────────────────────────────────────────
 export function mount(container) {
@@ -103,6 +121,7 @@ export function mount(container) {
     if (e.key === 'Enter') runSearch();
   });
   document.getElementById('swSearchBtn').addEventListener('click', runSearch);
+  loadModels();
 }
 
 export function unmount() {}
@@ -459,7 +478,7 @@ async function fetchLLMStream(query, context, onToken) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-        model:  'mistral:7b',   // change to whichever model you have pulled
+      model: document.getElementById('swModelSelect')?.value || 'mistral:7b',
       prompt: prompt,
       stream: true,
     }),

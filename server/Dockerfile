@@ -11,8 +11,10 @@ RUN apt-get update && \
 COPY --from=loseme-core:latest /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
 # Install PyTorch (swap cu121 for cpu if no GPU)
-RUN pip install --no-cache-dir torch torchvision torchaudio \
+RUN pip install --no-cache-dir torch torchvision torchaudio\
     --index-url https://download.pytorch.org/whl/cu121
+
+RUN pip install matplotlib 
 
 # Install server dependencies
 COPY pyproject.toml .
@@ -24,6 +26,7 @@ COPY pipeline/ pipeline/
 COPY storage/  storage/
 COPY preview/  preview/
 COPY wiring.py wiring.py
+COPY scripts/  scripts/
 
 ENV PYTHONPATH=/app
 

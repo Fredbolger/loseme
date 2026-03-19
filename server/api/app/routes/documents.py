@@ -167,6 +167,13 @@ def get_document_stats_per_source_endpoint():
     logger.debug(f"Document stats per source retrieved: {stats_per_source}")
     return {"stats_per_source": stats_per_source}
 
+
+@router.get("/stats/chunker")
+def get_chunker_stats():
+    from storage.metadata_db.document_parts import get_chunker_stats
+    return {"stats": get_chunker_stats()}
+
+
 @router.get("/{document_part_id}")
 def get_document_part(document_part_id: str):
     """

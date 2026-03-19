@@ -20,6 +20,9 @@ class SemanticChunker:
     Deterministic, order-preserving, resumable-safe.
     """
 
+    name = "semantic"
+    version = "1.0"
+
     def __init__(
         self,
         embedder: build_embedding_provider(),
@@ -99,9 +102,24 @@ class SemanticChunker:
         )
         chunk_texts.append(text)
 
-    def _split_paragraphs(self, text: str) -> List[str]:
-        return [
-            p.strip()
-            for p in text.split("\n\n")
-            if p.strip()
-        ]
+    def _split_paragraphs(self, text: str, hard_max: int = 2000) -> List[str]:
+        units = []
+        for paragraph in text.split("\n\n"):
+            paragraph = paragraph.strip()
+            if not paragraph:
+                continue
+            # Hard-split oversized paragraphs on single newlines first
+            if len(paragraph) > hard_max:
+                lines = [l.strip() for l in paragraph.split("\n") if l.strip()]
+                buffer = ""
+                for line in lines:
+                    if buffer and len(buffer) + len(line) + 1 > hard_max:
+                        units.append(buffer)
+                        buffer = line
+                    else:
+                        buffer = (buffer + "\n" + line).strip() if buffer else line
+                if buffer:
+                    units.append(buffer)
+            else:
+                units.append(paragraph)
+        return units
