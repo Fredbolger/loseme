@@ -56,10 +56,11 @@ async def get_source(source_id: str):
     logger.info(f"Retrieved source with ID {source_id}")
     return {"source": source}
 
+"""
 @router.post("/scan/{source_id}")
 async def scan_source(source_id: str, background_tasks: BackgroundTasks):
-    from clients.cli.sources import scan_source_logic
-    from clients.cli.ingest import queue_filesystem_logic, queue_thunderbird_logic
+    from client.cli.sources import scan_source_logic
+    from client.cli.ingest import queue_filesystem_logic, queue_thunderbird_logic
     from api.app.routes.runs import create_indexing_run, start_indexing_run
     logger.debug(f"Received request to scan source with ID {source_id}")
      
@@ -101,6 +102,7 @@ async def scan_source(source_id: str, background_tasks: BackgroundTasks):
             )
         
     return {"status": "scan_started", "source_id": source_id}
+"""
 
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse

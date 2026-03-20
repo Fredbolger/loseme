@@ -71,6 +71,7 @@ def queue_filesystem_logic(
             logger.info(f"Using existing run ID {run_id} for filesystem queuing for {path}")
 
         run_is_discovering_response = client.get(f"/runs/is_discovering/{run_id}")
+        logger.debug(f"Checked if run {run_id} is discovering. API response: {run_is_discovering_response.json()}")
         run_is_discovering_response.raise_for_status()
         run_is_discovering = run_is_discovering_response.json().get("is_discovering", False)
 
