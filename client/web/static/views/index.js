@@ -327,9 +327,15 @@ function renderSources(sources, statsMap = {}) {
 async function scanSource(sourceId, btn) {
   btn.disabled = true;
   btn.textContent = '…';
-
   try {
-    await fetch(`${getClientBase()}/sources/scan/${sourceId}`, { method: 'POST' });
+    const res = await fetch(`${getClientBase()}/sources/scan/${sourceId}`, { method: 'POST' });
+    if (res.status === 403) {
+      const data = await res.json();
+      showError(data.detail || 'Cannot scan source that belongs to another device');
+      btn.disabled = false;
+      btn.textContent = '↺ Scan';
+      return;
+    }
     btn.textContent = '✓ Queued';
     setTimeout(() => {
       btn.disabled = false;
