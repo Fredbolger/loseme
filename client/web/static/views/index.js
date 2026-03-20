@@ -329,7 +329,7 @@ async function scanSource(sourceId, btn) {
   btn.textContent = '…';
 
   try {
-    await api.post(`/sources/scan/${sourceId}`);
+    await fetch(`${getClientBase()}/sources/scan/${sourceId}`, { method: 'POST' });
     btn.textContent = '✓ Queued';
     setTimeout(() => {
       btn.disabled = false;

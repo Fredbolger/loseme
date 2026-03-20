@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from cli.config import API_URL, _build_headers
+from cli.config import API_URL, _build_headers, get_client
 
 app = FastAPI(title="LoseMe Dashboard")
 
@@ -49,7 +49,7 @@ def preview_document(document_part_id: str):
 # ── Client-side scan (triggers local ingestion, not server-side) ────────────
 @app.post("/sources/scan/{source_id}")
 def scan_source(source_id: str, background_tasks: BackgroundTasks):
-    with httpx.Client(base_url=API_URL, headers=_build_headers(), timeout=10.0) as client:
+    with get_client() as client:
         r = client.get(f"/sources/get_all_sources")
         r.raise_for_status()
 
@@ -60,6 +60,11 @@ def scan_source(source_id: str, background_tasks: BackgroundTasks):
 
     source_type = source["source_type"]
     scope = source["scope"]
+
+    # Compare the source.devide_id with the current device ID to prevent scanning a source that belongs to another device
+
+    if source["device_id"] != os.environ.get("LOSEME_DEVICE_ID"):
+        raise HTTPException(403, "Cannot scan source that belongs to another device")
 
     if source_type == "filesystem":
         from cli.ingest import queue_filesystem_logic

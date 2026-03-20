@@ -65,11 +65,11 @@ def ingest_document_part(req: IngestDocumentPartRequest):
         if old_part["extractor_version"] != req.extractor_version:
             logger.info(f"Extractor version changed from {old_part['extractor_version']} to {req.extractor_version}. Re-processing suggested.")
             skip_part = False
-        if old_part["chunker_name"] != req.chunker_name:
-            logger.info(f"Chunker name changed from {old_part['chunker_name']} to {req.chunker_name}. Re-processing suggested.")
+        if old_part["chunker_name"] != chunker.name:
+            logger.info(f"Chunker name changed from {old_part['chunker_name']} to {chunker.name}. Re-processing suggested.")
             skip_part = False
-        if old_part["chunker_version"] != req.chunker_version:
-            logger.info(f"Chunker version changed from {old_part['chunker_version']} to {req.chunker_version}. Re-processing suggested.")
+        if old_part["chunker_version"] != chunker.version:
+            logger.info(f"Chunker version changed from {old_part['chunker_version']} to {chunker.version}. Re-processing suggested.")
             skip_part = False
         if old_part.get("checksum") != req.checksum:
             logger.info(f"Checksum changed for document part ID {req.document_part_id}. Re-processing suggested.")

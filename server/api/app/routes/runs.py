@@ -22,7 +22,6 @@ def create_indexing_run(req: dict):
     if type(scope_json) == str:
         scope_json = json.loads(scope_json)
 
-    #scope = IndexingScope.deserialize(scope_json)
     scope = StoredScope(**scope_json)
     
     logger.debug(f"Deserialized scope: {scope}")
