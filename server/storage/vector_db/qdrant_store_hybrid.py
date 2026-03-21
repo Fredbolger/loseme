@@ -94,6 +94,7 @@ class QdrantVectorStoreHybrid(VectorStore):
                     vector=vector,
                     payload={
                         "chunk_id": chunk.id,
+                        "text": chunk.text,
                         "source_type": chunk.source_type,
                         "source_path": chunk.source_path,
                         "document_part_id": chunk.document_part_id,
@@ -132,68 +133,70 @@ class QdrantVectorStoreHybrid(VectorStore):
 
 
     def search(
-        self, 
+        self,
         query_embedding: EmbeddingOutput,
         top_k: int,
-        prefetch_limit = 10, 
+        prefetch_limit: int | None = None,
+        score_threshold: float | None = None,
+        dense_weight: float = 0.5,
+        sparse_weight: float = 0.3,
     ) -> List[Tuple[Chunk, float]]:
-        """
-        Search for similar chunks.
-        
-        Returns:
-            List of (chunk, score) tuples ordered by descending similarity
-        """
-        
-        self._ensure_collection()
+        if prefetch_limit is None:
+            prefetch_limit = max(top_k * 3, 100)
 
         if not query_embedding.dense:
-            raise ValueError("Dense embedding is required for hybrid vector store search.")
+            raise ValueError("Dense embedding is required.")
         if not query_embedding.sparse:
-            raise ValueError("Sparse embedding is required for hybrid vector store search.")
+            raise ValueError("Sparse embedding is required.")
         if not query_embedding.colbert_vec:
-            raise ValueError("Colbert embedding is required for hybrid vector store search.")
+            raise ValueError("ColBERT embedding is required.")
 
-        dense_vector = query_embedding.dense
         sparse_vector = self.create_sparse_vector(query_embedding.sparse)
-        colbert_vector = query_embedding.colbert_vec
-        
-        prefetch = [
-                models.Prefetch(
-                    query=sparse_vector,
-                    using="sparse",
-                    limit=prefetch_limit),
-                models.Prefetch(
-                    query=dense_vector,
-                    using="dense",
-                    limit=prefetch_limit),
-                ]
 
-        # perform re-ranking with colbert vectors
         hits = self.client.query_points(
-                collection_name=COLLECTION,
-                prefetch=prefetch,
-                query=colbert_vector,
-                using="colbert",
-                with_payload=True,
-                limit=top_k,
-            )
-    
+            collection_name=COLLECTION,
+            prefetch=[
+                models.Prefetch(
+                    prefetch=[
+                        models.Prefetch(
+                            query=sparse_vector,
+                            using="sparse",
+                            limit=prefetch_limit,
+                        ),
+                        models.Prefetch(
+                            query=query_embedding.dense,
+                            using="dense",
+                            limit=prefetch_limit,
+                        ),
+                    ],
+                    query=models.RrfQuery(rrf=models.Rrf(weights=[sparse_weight, dense_weight])),
+                    limit=prefetch_limit,
+                )
+            ],
+            # ColBERT re-ranks the weighted-RRF-fused pool
+            query=query_embedding.colbert_vec,
+            using="colbert",
+            with_payload=True,
+            limit=top_k,
+            score_threshold=score_threshold,
+        )
+
         results = []
         for hit in hits.points:
             chunk = Chunk(
                 id=hit.payload["chunk_id"],
-                source_type = hit.payload["source_type"],
-                source_path = hit.payload["source_path"],
+                source_type=hit.payload["source_type"],
+                source_path=hit.payload["source_path"],
+                text=hit.payload["text"] if "text" in hit.payload else "",
                 document_part_id=hit.payload["document_part_id"],
                 device_id=hit.payload["device_id"],
                 index=hit.payload["index"],
                 metadata=hit.payload.get("metadata", {}),
-                unit_locator=hit.payload.get("unit_locator", "")
+                unit_locator=hit.payload.get("unit_locator", ""),
             )
-            score = hit.score if hit.score is not None else 0.0
-            results.append((chunk, score))
-        
-        return results        
+            results.append((chunk, hit.score if hit.score is not None else 0.0))
+
+        return results
 
     def clear(self) -> None:
         if os.environ.get("ALLOW_VECTOR_CLEAR", "false").lower() != "1":
@@ -205,8 +208,8 @@ class QdrantVectorStoreHybrid(VectorStore):
     def dimension(self) -> int:
         return VECTOR_SIZE
 
-    def query(self, vector: List[float], top_k: int = 10) -> List[Tuple[Chunk, float]]:
-        return self.search(vector, top_k)
+    def query(self, vector: List[float], top_k: int = 10, prefetch_limit = None) -> List[Tuple[Chunk, float]]:
+        return self.search(vector, top_k, prefetch_limit)
     
     def delete_collection(self) -> None:
         if os.environ.get("ALLOW_VECTOR_CLEAR", "false").lower() != "1":
