@@ -173,8 +173,22 @@ def mark_run_interrupted(run_id: str):
     return {"run_id": run_id, "status": "interrupted"}
 
 @router.post("/start_indexing/{run_id}")
-def start_indexing_run(run_id: str, background_tasks: BackgroundTasks):
+def start_indexing_run(run_id: str, background_tasks: BackgroundTasks, force_reprocess: bool = False):
     logger.info(f"Starting indexing process for run {run_id}")
+    set_run_resume(run_id)
+    update_status(run_id, "running")
+    # Create a background task to run the indexing process
+    background_tasks.add_task(run_indexing_process, run_id, force_reprocess)
+    
+    # Immediately return a response to the client
+    return {
+        "run_id": run_id,
+        "status": "starting",
+    }
+
+@router.post("/resume/{run_id}")
+def resume_indexing_run(run_id: str, background_tasks: BackgroundTasks):
+    logger.info(f"Resuming indexing process for run {run_id}")
     set_run_resume(run_id)
     update_status(run_id, "running")
     # Create a background task to run the indexing process
@@ -183,7 +197,7 @@ def start_indexing_run(run_id: str, background_tasks: BackgroundTasks):
     # Immediately return a response to the client
     return {
         "run_id": run_id,
-        "status": "starting",
+        "status": "resuming",
     }
 
 @router.post("/discovering_stopped/{run_id}")
@@ -199,7 +213,7 @@ def is_discovering(run_id: str):
         "is_discovering": discovering,
     }
 
-def run_indexing_process(run_id: str):
+def run_indexing_process(run_id: str, force_reprocess: bool = False):
     logger.info(f"Background indexing process started for run {run_id}")
     processed_count = 0
     while True:
@@ -243,7 +257,8 @@ def run_indexing_process(run_id: str):
             updated_at=document_part["updated_at"],
             text=document_part.get("text", ""),
             scope_json=json.loads(document_part.get("scope_json", "{}")),
-        ))
+        ),
+        force_reprocess=force_reprocess)
         processed_count += 1
         
         if processed_count % 50 == 0:
