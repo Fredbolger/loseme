@@ -48,7 +48,7 @@ def preview_document(document_part_id: str):
 
 # ── Client-side scan (triggers local ingestion, not server-side) ────────────
 @app.post("/sources/scan/{source_id}")
-def scan_source(source_id: str, background_tasks: BackgroundTasks):
+def scan_source(source_id: str, background_tasks: BackgroundTasks, force_reprocess: bool = False):
     with get_client() as client:
         r = client.get(f"/sources/get_all_sources")
         r.raise_for_status()
@@ -75,6 +75,7 @@ def scan_source(source_id: str, background_tasks: BackgroundTasks):
                 recursive=scope.get("recursive", True),
                 include_patterns=scope.get("include_patterns", []),
                 exclude_patterns=scope.get("exclude_patterns", []),
+                force_reprocess=force_reprocess,
             )
 
     elif source_type == "thunderbird":
@@ -87,6 +88,7 @@ def scan_source(source_id: str, background_tasks: BackgroundTasks):
                 for p in scope.get("ignore_patterns", [])
                 if p.get("field") == "from"
             ],
+            force_reprocess=force_reprocess,
         )
 
     else:

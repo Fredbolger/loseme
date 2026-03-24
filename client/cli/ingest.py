@@ -35,6 +35,7 @@ def queue_filesystem_logic(
     include_patterns: List[str] = typer.Option([], "--include-pattern", help="List of glob patterns to include (e.g. --include-pattern *.txt --include-pattern *.md)"),
     exclude_patterns: List[str] = typer.Option([], "--exclude-pattern", help="List of glob patterns to exclude (e.g. --exclude-pattern *.log --exclude-pattern temp/*)"),
     run_id: str = None,
+    force_reprocess: bool = False,
 ):
     """Queue a local filesystem directory."""
 
@@ -75,7 +76,7 @@ def queue_filesystem_logic(
         run_is_discovering_response.raise_for_status()
         run_is_discovering = run_is_discovering_response.json().get("is_discovering", False)
 
-        indexing_response = client.post(f"/runs/start_indexing/{run_id}")
+        indexing_response = client.post(f"/runs/start_indexing/{run_id}", params={"force_reprocess": force_reprocess})
         indexing_response.raise_for_status()
         logger.info(
             f"Started indexing for run {run_id}. Beginning to queue document parts "
@@ -135,6 +136,7 @@ def queue_thunderbird_logic(
     mbox: Path = typer.Argument(..., help="Path to Thunderbird mailbox"),
     ignore_from: List[str] = typer.Option([], "--ignore-from"),
     run_id: str = None,
+    force_reprocess: bool = False
 ):
     """Queue Thunderbird mailboxes."""
 
@@ -170,7 +172,7 @@ def queue_thunderbird_logic(
         is_discovering_response.raise_for_status()
         is_discovering = is_discovering_response.json().get("is_discovering", False)
 
-        indexing_response = client.post(f"/runs/start_indexing/{run_id}")
+        indexing_response = client.post(f"/runs/start_indexing/{run_id}", params={"force_reprocess": force_reprocess})
         indexing_response.raise_for_status()
         logger.info(
             f"Started indexing for run {run_id}. Beginning to queue document parts "
