@@ -156,7 +156,7 @@ def scan_source(
 ):
     scan_source_logic(source_id=source_id)
 
-def scan_source_logic(source_id: str):
+def scan_source_logic(source_id: str, force_reprocess: bool = False):
     with get_client() as client:
         r = client.get(f"{API_URL}/sources/get_all_sources")
     r.raise_for_status()
@@ -179,6 +179,7 @@ def scan_source_logic(source_id: str):
                 recursive=source["scope"]["recursive"],
                 include_patterns=source["scope"]["include_patterns"],
                 exclude_patterns=source["scope"]["exclude_patterns"],
+                force_reprocess=force_reprocess,
             )
     elif source["source_type"] == "thunderbird":
         logger.info(
@@ -191,6 +192,7 @@ def scan_source_logic(source_id: str):
                 for p in source["scope"]["ignore_patterns"]
                 if p["field"] == "from"
             ],
+            force_reprocess=force_reprocess,
         )
     else:
         logger.warning(

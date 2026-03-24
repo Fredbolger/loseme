@@ -324,11 +324,32 @@ function renderSources(sources, statsMap = {}) {
  });
 }
 
+function askForce() {
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:9999';
+    overlay.innerHTML = `
+      <div style="background:white;padding:24px;border-radius:8px;max-width:360px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.2)">
+        <p style="margin:0 0 20px;font-size:15px">Re-index already processed documents?</p>
+        <div style="display:flex;gap:12px;justify-content:center">
+          <button id="force-yes" style="padding:8px 20px;background:#e53e3e;color:white;border:none;border-radius:6px;cursor:pointer">Yes, force re-index</button>
+          <button id="force-no" style="padding:8px 20px;background:#eee;border:none;border-radius:6px;cursor:pointer">No, skip unchanged</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.querySelector('#force-yes').onclick = () => { document.body.removeChild(overlay); resolve(true); };
+    overlay.querySelector('#force-no').onclick  = () => { document.body.removeChild(overlay); resolve(false); };
+  });
+}
+
 async function scanSource(sourceId, btn) {
+  const force = await askForce();
+
   btn.disabled = true;
   btn.textContent = '…';
   try {
-    const res = await fetch(`${getClientBase()}/sources/scan/${sourceId}`, { method: 'POST' });
+    const res = await fetch(`${getClientBase()}/sources/scan/${sourceId}?force_reprocess=${force}`, { method: 'POST' });
     if (res.status === 403) {
       const data = await res.json();
       showError(data.detail || 'Cannot scan source that belongs to another device');
@@ -336,7 +357,7 @@ async function scanSource(sourceId, btn) {
       btn.textContent = '↺ Scan';
       return;
     }
-    btn.textContent = '✓ Queued';
+    btn.textContent = force ? '✓ Queued (forced)' : '✓ Queued';
     setTimeout(() => {
       btn.disabled = false;
       btn.textContent = '↺ Scan';

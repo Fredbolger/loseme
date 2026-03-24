@@ -47,7 +47,7 @@ class IngestDocumentPartRequest(BaseModel):
     scope_json: dict
 
 @router.post("/document_part")
-def ingest_document_part(req: IngestDocumentPartRequest):
+def ingest_document_part(req: IngestDocumentPartRequest, force_reprocess: bool = False):
     logger.debug(f"Received ingest request for document part ID {req.document_part_id} in run ID {req.run_id}")
     all_runs = show_runs()
     if req.run_id not in [run.id for run in all_runs]:
@@ -76,13 +76,16 @@ def ingest_document_part(req: IngestDocumentPartRequest):
             skip_part = False
 
     if skip_part:
-        logger.info(f"Skipping ingestion for document part ID {req.document_part_id} (already processed).")
-        mark_document_part_processed(run_id=req.run_id, document_part_id=req.document_part_id)
-        increment_indexed_count(run_id=req.run_id)
-        return {
-            "accepted": True,
-            "skipped": True,
-        }
+        if force_reprocess:
+            logger.info(f"Force reprocess enabled. Re-processing document part ID {req.document_part_id} despite no changes.")
+        else:
+            logger.info(f"Skipping ingestion for document part ID {req.document_part_id} (already processed).")
+            mark_document_part_processed(run_id=req.run_id, document_part_id=req.document_part_id)
+            increment_indexed_count(run_id=req.run_id)
+            return {
+                "accepted": True,
+                "skipped": True,
+            }
 
     # Ingest or re-process the part
     try:
