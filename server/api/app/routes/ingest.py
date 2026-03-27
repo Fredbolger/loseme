@@ -75,17 +75,14 @@ def ingest_document_part(req: IngestDocumentPartRequest, force_reprocess: bool =
             logger.info(f"Checksum changed for document part ID {req.document_part_id}. Re-processing suggested.")
             skip_part = False
 
-    if skip_part:
-        if force_reprocess:
-            logger.info(f"Force reprocess enabled. Re-processing document part ID {req.document_part_id} despite no changes.")
-        else:
-            logger.info(f"Skipping ingestion for document part ID {req.document_part_id} (already processed).")
-            mark_document_part_processed(run_id=req.run_id, document_part_id=req.document_part_id)
-            increment_indexed_count(run_id=req.run_id)
-            return {
-                "accepted": True,
-                "skipped": True,
-            }
+    if skip_part and not force_reprocess:
+        logger.info(f"Skipping ingestion for document part ID {req.document_part_id} (already processed).")
+        mark_document_part_processed(run_id=req.run_id, document_part_id=req.document_part_id)
+        increment_indexed_count(run_id=req.run_id)
+        return {"accepted": True, "skipped": True}
+
+    if skip_part and force_reprocess:
+        logger.info(f"Force reprocess enabled. Re-processing document part ID {req.document_part_id} despite no changes.")
 
     # Ingest or re-process the part
     try:
@@ -98,28 +95,30 @@ def ingest_document_part(req: IngestDocumentPartRequest, force_reprocess: bool =
             else:
                 store.remove_chunks(chunk_ids=old_part["chunk_ids"])
         else:
-            upsert_document_part(
-                part={
-                    "document_part_id": req.document_part_id,
-                    "checksum": req.checksum,
-                    "source_type": req.source_type,
-                    "source_instance_id": req.source_instance_id,
-                    "device_id": req.device_id,
-                    "source_path": req.source_path,
-                    "unit_locator": req.unit_locator,
-                    "content_type": req.content_type,
-                    "extractor_name": req.extractor_name,
-                    "extractor_version": req.extractor_version,
-                    "chunker_name": chunker.name,
-                    "chunker_version": chunker.version,
-                    "metadata_json": req.metadata_json,
-                    "created_at": req.created_at,
-                    "updated_at": req.updated_at,
-                    "text": req.text,
-                    "scope_json": req.scope_json,
-                },
-                run_id=req.run_id,
-            )
+            logger.debug(f"No existing document part with ID {req.document_part_id} found. Proceeding with ingestion.")
+
+        upsert_document_part(
+            part={
+                "document_part_id": req.document_part_id,
+                "checksum": req.checksum,
+                "source_type": req.source_type,
+                "source_instance_id": req.source_instance_id,
+                "device_id": req.device_id,
+                "source_path": req.source_path,
+                "unit_locator": req.unit_locator,
+                "content_type": req.content_type,
+                "extractor_name": req.extractor_name,
+                "extractor_version": req.extractor_version,
+                "chunker_name": chunker.name,
+                "chunker_version": chunker.version,
+                "metadata_json": req.metadata_json,
+                "created_at": req.created_at,
+                "updated_at": req.updated_at,
+                "text": req.text,
+                "scope_json": req.scope_json,
+            },
+            run_id=req.run_id,
+        )
 
         part = DocumentPart(
             document_part_id=req.document_part_id,
