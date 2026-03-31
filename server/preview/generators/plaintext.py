@@ -1,7 +1,7 @@
 from pathlib import Path
-from src.sources.base.docker_path_translation import host_path_to_container
-from api.preview.registry import PreviewGenerator, preview_registry
-from api.preview.models import PreviewResult
+#from src.sources.base.docker_path_translation import host_path_to_container
+from preview.registry import PreviewGenerator, preview_registry
+from preview.models import PreviewResult
 
 _SUFFIX_TO_LANGUAGE = {
     ".md":  "markdown",

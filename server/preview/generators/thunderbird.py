@@ -1,7 +1,7 @@
 from pathlib import Path
 from fastapi import HTTPException
-from api.preview.registry import PreviewGenerator, preview_registry
-from api.preview.models import PreviewResult
+from preview.registry import PreviewGenerator, preview_registry
+from preview.models import PreviewResult
 
 
 class ThunderbirdEmailPreviewGenerator(PreviewGenerator):
