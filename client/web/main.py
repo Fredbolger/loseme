@@ -38,12 +38,29 @@ def preview_document(document_part_id: str):
         r.raise_for_status()
         doc_part = r.json().get("document_part") or r.json()
 
-    from api.preview import preview_registry
+    from preview import preview_registry
     source_type = doc_part.get("source_type", "filesystem")
     generator = preview_registry.get_generator(source_type, doc_part)
     if generator is None:
         raise HTTPException(400, f"Preview not supported for source_type='{source_type}'")
     return generator.generate(doc_part).to_dict()
+
+@app.get("/documents/serve/{document_part_id}")
+def serve_document(document_part_id: str):
+    """Serve raw file bytes — used by the PDF preview iframe."""
+    with httpx.Client(base_url=API_URL, headers=_build_headers(), timeout=10.0) as client:
+        r = client.get(f"/documents/{document_part_id}")
+        if r.status_code == 404:
+            raise HTTPException(404, "Document not found")
+        r.raise_for_status()
+        doc_part = r.json().get("document_part") or r.json()
+
+    from sources.base.docker_path_translation import host_path_to_container
+    source_path = doc_part.get("source_path", "")
+    path = Path(host_path_to_container(source_path))
+    if not path.exists():
+        raise HTTPException(404, f"File not found on this device: {source_path}")
+    return FileResponse(str(path))
 
 
 # ── Client-side scan (triggers local ingestion, not server-side) ────────────

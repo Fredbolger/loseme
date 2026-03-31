@@ -1,7 +1,7 @@
 import email as emaillib
 from pathlib import Path
 from email.header import decode_header, make_header
-from src.sources.base.docker_path_translation import host_path_to_container
+#from src.sources.base.docker_path_translation import host_path_to_container
 from preview.registry import PreviewGenerator, preview_registry
 from preview.models import PreviewResult
 
