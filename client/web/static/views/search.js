@@ -406,34 +406,19 @@ async function streamLLMAnswer(query, results, enriched) {
   spinner.style.display = 'inline-block';
   panel.innerHTML = '<div class="sw-answer-streaming" id="swAnswerText"></div>';
 
-  // Build context from top-10 results
-  const contextParts = await Promise.all(results.slice(0, 10).map(async (r, i) => {
+  // Build context directly from chunk payloads — no preview fetch needed
+  const contextParts = results.slice(0, 10).map((r, i) => {
     const ep   = lastEnriched[r.document_part_id];
     const part = ep?.part || ep || {};
     const name = basename(part.source_path || r.document_part_id);
-    try {
-      const prev = await fetch(`${getClientBase()}/documents/preview/${r.document_part_id}`)
-        .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); });
 
-      let text = '';
-      if (prev.preview_type === 'email') {
-        text = [
-          prev.subject ? `Subject: ${prev.subject}` : '',
-          prev.from_   ? `From: ${prev.from_}`       : '',
-          prev.to      ? `To: ${prev.to}`             : '',
-          prev.date    ? `Date: ${prev.date}`         : '',
-          '',
-          prev.body_text || prev.body_html?.replace(/<[^>]+>/g, '') || '',
-        ].filter(Boolean).join('\n');
-      } else {
-        text = prev.text || prev.body_text || '';
-      }
+    const chunkTexts = (r.chunks || [r])
+    .map(c => c.text || '')
+    .filter(Boolean)
+    .join('\n\n');
 
-      return `[Source ${i + 1}: ${name}]\n${text.substring(0, 2000)}`;
-    } catch {
-      return `[Source ${i + 1}: ${name}]\n(preview unavailable)`;
-    }
-  }));
+    return `[Source ${i + 1}: ${name}]\n${chunkTexts}`;
+  });
 
   const context = contextParts.join('\n\n---\n\n');
 
@@ -447,10 +432,7 @@ async function streamLLMAnswer(query, results, enriched) {
       panel.scrollTop = panel.scrollHeight;
     });
 
-    // Final render without cursor
     if (textEl) textEl.innerHTML = renderAnswerMarkdown(fullText);
-
-    // Source pills
     appendSourcePills(panel, results, enriched);
 
   } catch (e) {
