@@ -115,7 +115,7 @@ def delete_source(
 ):
     logger.debug(f"Received request to delete source with ID {source_id}")
 
-    from storage.metadata_db.monitor_sources import delete_monitored_source
+    from storage.metadata_db.sources import delete_monitored_source
     from storage.metadata_db.document_parts import delete_all_parts_for_scope
 
 

@@ -174,28 +174,6 @@ def get_chunker_stats():
     return {"stats": get_chunker_stats()}
 
 
-@router.get("/{document_part_id}")
-def get_document_part(document_part_id: str):
-    """
-    Retrieve document metadata by document ID.
-
-    Args:
-        document_part_id: The ID of the document part to retrieve.
-
-    Returns:
-        Document metadata if found.
-
-    Raises:
-        HTTPException: If the document is not found.
-    """
-    document_part = get_document_part_by_id(document_part_id)
-    
-    if not document_part:
-        logger.warning(f"Document part with ID {document_part_id} not found.")
-        raise HTTPException(status_code=404, detail=f"Document with ID {document_part_id} not found.")
-    
-    return {"document_part": document_part}
-
 @router.get("/scope/{document_part_id}")
 def get_scope(document_part_id: str):
     result = retrieve_scope_by_document_part_id(document_part_id)
@@ -226,3 +204,26 @@ def get_document_by_id_route(document_id: str):
     if doc is None:
         raise HTTPException(status_code=404, detail="Document not found")
     return doc
+
+@router.get("/{document_part_id}")
+def get_document_part(document_part_id: str):
+    """
+    Retrieve document metadata by document ID.
+
+    Args:
+        document_part_id: The ID of the document part to retrieve.
+
+    Returns:
+        Document metadata if found.
+
+    Raises:
+        HTTPException: If the document is not found.
+    """
+    document_part = get_document_part_by_id(document_part_id)
+    
+    if not document_part:
+        logger.warning(f"Document part with ID {document_part_id} not found.")
+        raise HTTPException(status_code=404, detail=f"Document with ID {document_part_id} not found.")
+    
+    return {"document_part": document_part}
+
