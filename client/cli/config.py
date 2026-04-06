@@ -10,7 +10,9 @@ def _build_headers() -> dict:
         return {"X-API-Key": _API_KEY}
     return {}
  
- 
+def get_device_id() -> str:
+    return os.environ.get("LOSEME_DEVICE_ID", "").strip()
+
 def get_client(timeout: float = 30.0) -> httpx.Client:
     """
     Return a synchronous httpx.Client pre-configured with the server URL
