@@ -1,101 +1,172 @@
 # Local Semantic Memory
 
-**Local-first semantic search over personal data**
+> Privacy-preserving semantic search over your personal files — runs entirely on your own hardware.
 
-## What is this?
+---
 
-Local Semantic Memory is a privacy-preserving system that lets you search your personal files by *meaning*, not just filenames or keywords. It runs entirely on your own devices.
+## Overview
 
-Think of it as a personal knowledge base that understands what your documents are about, making everything you've ever written/mailed/developed easily searchable by content.
+Local Semantic Memory lets you search your documents, emails, and notes by **meaning** rather than keywords or filenames. It acts as a semantic index layer on top of your existing files: the original files stay where they are and can be opened directly from search results.
 
-However, the prupsoe is not to introduce an *addiitonal* storage system, but only provide a sematic indexing database. After a search the original files can be openend for e.g. by a local editing tool or thw browser.
+The system is built for people who want full control over their data. All processing — embedding, indexing, and search — happens on your machine. Nothing is sent to external services.
 
-## Architecture
+---
 
-The system follows a modular pipeline:
+## How It Works
 
 ```
 Filesystem → Extraction → Chunking → Embedding → Vector DB → Search
 ```
 
-### Key Design Decisions
+1. **Discovery** — A `Source` (e.g. a filesystem directory) yields `Document` objects for each file.
+2. **Extraction** — A global `ExtractorRegistry` maps file types (PDF, DOCX, TXT, …) to content extractors. Unrecognised types are skipped.
+3. **Multipart splitting** — Sources that support it (e.g. email with attachments) split documents into `DocumentPart` objects, each indexed independently.
+4. **Chunking** — Each `DocumentPart` is split into smaller chunks by a `Chunker` (simple sliding-window or semantic boundary-aware).
+5. **Embedding** — Chunks are converted to vector embeddings and stored in [Qdrant](https://qdrant.tech/). Metadata and run state are persisted in SQLite.
+6. **Search** — A query is embedded and compared against stored vectors via cosine similarity. Results link back to the original files.
+7. **Re-ranking** *(optional)* — Depending on the embedding provider, a second-pass re-ranker can improve result ordering.
 
-1. **Local-first**: All processing happens on your machine. Data should not leave your control.
+---
 
+## Key Design Decisions
 
-2. **Multi-device aware**: The system tracks which device indexed which files and should allow for multiple devices containing the same documents, possibly at different paths. For such documents, no duplicate embeddings should be created. 
+### Local-first
+All data stays on your devices. No cloud API calls are made during indexing or search.
 
-3. **Source-instance identity**: The `source_instance_id` is a unique idetifier constructed from the ¸`source_type` (e.g. 'filesystem') and the `device_id` and the `source_path` (e.g. '/home/user/docs').
- 
-4. **Document-part identity**: Documents are split into document parts, this allows e.g. emails to consist of multiple parts and return a matching for the sub-parts. The `logical_document_part_id` is created from the `source_instance_id` and the `unit_locator`, identifying the part. 
+### Multi-device awareness
+The same document on two devices is tracked separately using a `source_instance_id` composed of `source_type`, `device_id`, and `source_path`. This prevents duplicate embeddings across devices without requiring a shared network filesystem.
 
-5. **Resumable processing**: Indexing runs can be interrupted and resumed without reprocessing documents.
+### Stable, deterministic IDs
+The entire deduplication strategy depends on IDs being deterministic:
 
-6. **Dockerized**: Everything runs in containers for reproducibility and easy deployment.
+| ID | Composed from |
+|----|--------------|
+| `source_instance_id` | `source_type` + `device_id` + `source_path` |
+| `logical_document_part_id` | `source_instance_id` + `unit_locator` |
+| `chunk_id` | `logical_document_part_id` + `checksum` + chunk index |
+
+A change to any input produces a new ID, which triggers re-indexing of that content and cleanup of stale vectors.
+
+### Resumable indexing
+Each indexing run moves through a well-defined state machine (`pending → running → discovering_stopped → completed / failed`). Interrupted runs can be resumed without reprocessing already-indexed documents.
+
+---
 
 ## Quick Start
 
+**Prerequisites:** Docker, Docker Compose, Python 3.11+, [Poetry](https://python-poetry.org/)
+
+The deployment is split into two independent stacks: a **server** (API + Qdrant, ideally a machine with a GPU) and a **client** (web frontend, runs on any device that can reach the server).
+
+### Server
+
 ```bash
-# Start all relevant 
-docker-compose up -d qdrant api web_client
+# Copy and fill in the required variables
+cp .env.server.example .env.server
 
-# Ingest a directory
-poetry run python -m clients.cli.main ingest /data/my-documents
-
-# Search semantically
-poetry run pyton search "machine learning concepts" --top-k 5
-
-# Search interactively (open the selected file)
-poetry run python -m clients.cli.main search "machine learning concepts" --interactive
+# Start Qdrant and the API server
+docker compose -f docker-compose.server.yml up -d
 ```
 
+### Client
 
-## How It Works
+```bash
+# Copy and fill in the server URL and host data root
+cp .env.client.example .env.client
 
-1. **File Discovery**: Files are discovered based on `Sources`. These sources return an iterator object which yields a `Document`. 
+# Start the web client
+docker compose -f docker-compose.client.yml up -d
+```
 
+### CLI
 
-2. **Content Extraction**: The content of each `Document` is extracted based on a global `ExtractorRegistry` which maps file types to extractor functions (e.g., PDF, DOCX, TXT). If no extractor is found, the file is skipped. 
+```bash
+# Index a directory
+poetry run python -m clients.cli.main ingest /path/to/your/documents
 
+# Search
+poetry run python -m clients.cli.main search "machine learning concepts" --top-k 5
 
-3. **Multipart Documents**: If a `Source` allows multipart documents, it can split a document into multiple logical parts (e.g., an email with attachments). Each part is treated as a separate unit for embedding and search. These parts are upserted to the `document_parts_qeue`
+# Interactive search (opens the selected file)
+poetry run python -m clients.cli.main search "project notes" --interactive
+```
 
-
-4. **Chunking**: During ingestion, each `DocumentPart` is retrieved from the `document_parts_queue` and processed. Each `DocumentPart` is split into smaller chunks by one of the implemented `Chunker` classes. 
-
-5. **Embedding**: Each chunk is converted into a vector embedding using the available `EmbeddingProviders'. The resulting embeddings are stored in the `Qdrant` vector database, while metadata about the document and its parts are stored in a local `SQLite` database.
-
-6. **Search**: When a search query is made, it is also converted into an embedding and compared against the stored embeddings in `Qdrant`. The most relevant document parts are retrieved based on cosine similarity. 
-
-
-7. **(Optional) Re-Ranking**: Depending on the applied `EmbeddingProvider` a re-ranking of the search results can be applied.
-
+---
 
 ## Project Structure
 
 ```
-semantic-memory/
-
-├── src/              # Main source code
-├── api/              # FastAPI server
-├── pipeline/         # Processing stages (chunking, embeddings)
-├── storage/          # Vector DB and metadata DB
-├── scripts/          # Indexing and maintenance scripts
-├── clients/          # CLI and web client
-└── tests/            # Comprehensive test suite
+.
+├── src/
+│   ├── core/           # IDs, shared utilities
+│   └── sources/        # Filesystem and other source adapters
+├── pipeline/
+│   ├── chunking/       # SimpleTextChunker, SemanticChunker
+│   └── embeddings/     # Embedding provider interface and implementations
+├── storage/
+│   ├── metadata_db/    # SQLite: runs, document parts, checksums
+│   └── vector_db/      # Qdrant client, in-memory store for testing
+├── api/                # FastAPI server
+├── clients/
+│   ├── cli/            # Command-line interface
+│   └── web/            # Web frontend
+├── tests/              # Test suite (see below)
+└── docker-compose.yml
 ```
 
-## Technology Stack
+---
+
+## Configuration
+
+Configuration is split across two env files.
+
+**`.env.server`** — consumed by `docker-compose.server.yml`:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `LOSEME_DEVICE_ID` | Unique identifier for this machine | `server` |
+| `LOSEME_CONTAINER_ROOT` | Path inside the container where user data is mounted | *(empty)* |
+| `QDRANT_URL` | Qdrant instance URL | `http://qdrant:6333` |
+
+**`.env.client`** — consumed by `docker-compose.client.yml`:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `LOSEME_HOST_ROOT` | Host path to mount as `/mnt/userdata` in the client container | *(required)* |
+
+---
+
+## Testing
+
+The test suite covers the full ingestion-to-search pipeline without requiring a live Qdrant instance. An `InMemoryVectorStore` and `DummyEmbeddingProvider` are injected for all tests.
+
+```bash
+poetry run pytest
+```
+
+Key test modules:
+
+| File | What it covers |
+|------|----------------|
+| `test_id_stability.py` | ID determinism — the foundation of deduplication |
+| `test_ingest_skip_logic.py` | Skip unchanged docs; reprocess on checksum/extractor/chunker change |
+| `test_chunker_contracts.py` | `SimpleTextChunker` and `SemanticChunker` invariants |
+| `test_search_round_trip.py` | Full vertical slice: ingest → vector store → search API |
+| `test_run_lifecycle.py` | Indexing run state machine transitions |
+
+---
+
+## Tech Stack
 
 - **Python 3.11+**
-- **FastAPI** for the API layer
-- **Qdrant** for vector storage
-- **SQLite** for metadata
-- **Docker** for deployment
+- **FastAPI** — REST API
+- **Qdrant** — Vector database
+- **SQLite** — Metadata and run state
+- **Celery** — Async task processing
+- **Docker / Docker Compose** — Deployment
 
-## Contributing
-
-This project prioritizes clean, understandable code. Each module is independent and testable.
+---
 
 ## License
-This project is licensed under the AGPLv3 License. See the [gnu website](https://www.gnu.org/licenses/agpl-3.0.en.html) for details.
+
+Licensed under the [GNU AGPLv3](https://www.gnu.org/licenses/agpl-3.0.en.html).
