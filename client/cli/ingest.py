@@ -1,13 +1,13 @@
 import typer 
 from pathlib import Path
 from typing import List
-from sources.filesystem import FilesystemIngestionSource, FilesystemIndexingScope
-from sources.thunderbird import ThunderbirdIngestionSource, ThunderbirdIndexingScope
-from ingest.queue_client import queue_document_part
+from client.sources.filesystem import FilesystemIngestionSource, FilesystemIndexingScope
+from client.sources.thunderbird import ThunderbirdIngestionSource, ThunderbirdIndexingScope
+from client.ingest.queue_client import queue_document_part
 import logging
 logger = logging.getLogger(__name__)
 
-from cli.config import API_URL, BATCH_SIZE, get_client
+from client.cli.config import API_URL, BATCH_SIZE, get_client
 
 ingest_app = typer.Typer(no_args_is_help=True)
 

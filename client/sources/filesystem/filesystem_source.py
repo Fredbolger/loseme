@@ -6,9 +6,9 @@ from datetime import datetime
 from loseme_core.filesystem_model import FilesystemIndexingScope
 from loseme_core.models import IngestionSource, Document, OpenDescriptor, DocumentPart
 from loseme_core.ids import make_logical_document_part_id, make_source_instance_id
-from cli.config import get_client
-from extractors.registry import extractor_registry, ExtractorRegistry, ingestion_source_registry
-from sources.base.docker_path_translation import host_path_to_container, container_path_to_host, is_running_in_docker
+from client.cli.config import get_client
+from client.extractors.registry import extractor_registry, ExtractorRegistry, ingestion_source_registry
+from client.sources.base.docker_path_translation import host_path_to_container, container_path_to_host, is_running_in_docker
 from fnmatch import fnmatch
 
 import logging

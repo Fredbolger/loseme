@@ -3,7 +3,7 @@ from pydantic import BaseModel, model_validator
 from typing import Literal, Optional, List
 from loseme_core.models import Document, IndexingScope
 from loseme_core.ids import make_thunderbird_source_id
-from extractors.registry import indexing_scope_registry
+from client.extractors.registry import indexing_scope_registry
 
 class ThunderbirdDocument(Document):
     mbox_path: str
