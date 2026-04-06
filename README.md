@@ -82,13 +82,13 @@ docker compose -f docker-compose.client.yml up -d
 
 ```bash
 # Index a directory
-poetry run python -m clients.cli.main ingest /path/to/your/documents
+poetry run python -m client.cli.main ingest /path/to/your/documents
 
 # Search
-poetry run python -m clients.cli.main search "machine learning concepts" --top-k 5
+poetry run python -m client.cli.main search "machine learning concepts" --top-k 5
 
 # Interactive search (opens the selected file)
-poetry run python -m clients.cli.main search "project notes" --interactive
+poetry run python -m client.cli.main search "project notes" --interactive
 ```
 
 ---
