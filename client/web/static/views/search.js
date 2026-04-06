@@ -313,7 +313,7 @@ function injectChunkHighlight(bodyEl, r, badgeEl) {
   const ep         = lastEnriched[r.document_part_id];
   const part       = ep?.part || ep || {};
   const chunkTexts = (r.chunks || [r])
-    .map(c => c.metadata?.text || c.text || '')
+    .map(c => c.chunk_text || c.metadata?.text || c.text || '')
     .filter(t => t.length >= 30);   // ignore trivially short chunks
 
   if (!chunkTexts.length) return;
@@ -413,9 +413,9 @@ async function streamLLMAnswer(query, results, enriched) {
     const name = basename(part.source_path || r.document_part_id);
 
     const chunkTexts = (r.chunks || [r])
-    .map(c => c.text || '')
-    .filter(Boolean)
-    .join('\n\n');
+      .map(c => c.chunk_text || c.text || '')
+      .filter(Boolean)
+      .join('\n\n');
 
     return `[Source ${i + 1}: ${name}]\n${chunkTexts}`;
   });
