@@ -3,11 +3,9 @@ import httpx
  
 API_URL = os.environ.get("LOSEME_API_URL", "http://localhost:8000").rstrip("/")
 BATCH_SIZE = 20
-
- 
-_API_KEY: str = os.environ.get("LOSEME_API_KEY", "").strip()
  
 def _build_headers() -> dict:
+    _API_KEY: str = os.environ.get("LOSEME_API_KEY", "").strip()
     if _API_KEY:
         return {"X-API-Key": _API_KEY}
     return {}

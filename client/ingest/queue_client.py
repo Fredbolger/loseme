@@ -1,6 +1,6 @@
 import logging
 from loseme_core.models import DocumentPart, IndexingScope
-from cli.config import get_client
+from client.cli.config import get_client
 
 logger = logging.getLogger(__name__)
 

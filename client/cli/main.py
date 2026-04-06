@@ -1,3 +1,8 @@
+from dotenv import load_dotenv
+from pathlib import Path
+
+load_dotenv(Path(__file__).parent.parent.parent / ".env.client")
+
 import os
 import asyncio
 import typer
@@ -5,9 +10,9 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Any
 
-from cli.config import API_URL, BATCH_SIZE, get_client
-from cli.ingest import ingest_app 
-from cli.sources import sources_app 
+from client.cli.config import API_URL, BATCH_SIZE, get_client
+from client.cli.ingest import ingest_app 
+from client.cli.sources import sources_app 
 #from cli.runs import run_app
 #from cli.queue import queue_app
 #from cli.database import database_app

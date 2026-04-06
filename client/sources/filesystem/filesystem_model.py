@@ -2,7 +2,7 @@ from pydantic import Field, BaseModel
 from pathlib import Path
 from typing import Literal
 from loseme_core.models import IndexingScope
-from extractors.registry import indexing_scope_registry
+from client.extractors.registry import indexing_scope_registry
 import logging
 
 logger = logging.getLogger(__name__)

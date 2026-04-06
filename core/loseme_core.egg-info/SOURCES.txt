@@ -1,0 +1,15 @@
+pyproject.toml
+loseme_core/__init__.py
+loseme_core/config.py
+loseme_core/document_models.py
+loseme_core/domain.py
+loseme_core/filesystem_model.py
+loseme_core/ids.py
+loseme_core/models.py
+loseme_core/scope_models.py
+loseme_core/thunderbird_model.py
+loseme_core.egg-info/PKG-INFO
+loseme_core.egg-info/SOURCES.txt
+loseme_core.egg-info/dependency_links.txt
+loseme_core.egg-info/requires.txt
+loseme_core.egg-info/top_level.txt
