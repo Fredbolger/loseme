@@ -6,7 +6,7 @@ from typing import List
 
 import typer
 
-from client.cli.config import API_URL, get_client
+from client.cli.config import API_URL, get_client, get_device_id
 from client.cli.ingest import queue_filesystem_logic, queue_thunderbird_logic
 from loseme_core.models import IndexingScope
 from client.sources.filesystem import FilesystemIndexingScope
@@ -74,6 +74,7 @@ def add_thunderbird_source_logic(mbox: str, ignore_from: List[str]):
             f"{API_URL}/sources/add",
             json={
                 "source_type": "thunderbird",
+                "device_id": get_device_id(),
                 "scope": scope.serialize(),
             },
         )
@@ -116,6 +117,7 @@ def add_filesystem_source_logic(path: Path, recursive: bool, include_patterns: L
             f"{API_URL}/sources/add",
             json={
                 "source_type": "filesystem",
+                "device_id": get_device_id(),
                 "scope": scope.serialize(),
             },
         )
