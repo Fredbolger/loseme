@@ -22,7 +22,6 @@ clone:
   depth: 1
 
 steps:
-
   # ── 1. Build a lightweight test image ─────────────────────────────────
   - name: build-test-image
   image: python:3.11-slim
