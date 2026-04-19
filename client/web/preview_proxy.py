@@ -26,7 +26,7 @@ import httpx
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse, Response
 
-from client.cli.config import API_URL, _build_headers
+from cli.config import API_URL, _build_headers
 
 router = APIRouter(prefix="/preview", tags=["preview"])
 

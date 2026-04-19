@@ -16,6 +16,9 @@ class DummyEmbeddingProvider(EmbeddingProvider):
         digest = hashlib.sha256(text.encode("utf-8")).digest()
         vec = [(digest[i % len(digest)] / 127.5) - 1.0 for i in range(self._dimension)]
         return EmbeddingOutput(dense=vec)
+    
+    def embed_document(self, text: str) -> EmbeddingOutput:
+        return self._embed_text(text)
 
     def dimension(self) -> int:
         return self._dimension

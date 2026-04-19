@@ -9,7 +9,7 @@ from email.utils import parsedate_to_datetime
 from fnmatch import fnmatch
 from pathlib import Path
 from typing import Callable, List, Optional
-from client.cli.config import get_client
+from cli.config import get_client
 
 from pydantic import PrivateAttr
 
@@ -18,12 +18,12 @@ from loseme_core.ids import (
     make_source_instance_id,
     make_thunderbird_source_id,
 )
-from client.sources.base.docker_path_translation import (
+from sources.base.docker_path_translation import (
     host_path_to_container,
     is_running_in_docker,
 )
 from loseme_core.models import DocumentPart, IngestionSource, OpenDescriptor
-from client.extractors.registry import extractor_registry, ingestion_source_registry
+from extractors.registry import extractor_registry, ingestion_source_registry
 
 #from .thunderbird_model import ThunderbirdDocument, ThunderbirdIndexingScope
 from loseme_core.thunderbird_model import ThunderbirdDocument, ThunderbirdIndexingScope

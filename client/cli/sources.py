@@ -6,11 +6,11 @@ from typing import List
 
 import typer
 
-from client.cli.config import API_URL, get_client, get_device_id
-from client.cli.ingest import queue_filesystem_logic, queue_thunderbird_logic
+from cli.config import API_URL, get_client, get_device_id
+from cli.ingest import queue_filesystem_logic, queue_thunderbird_logic
 from loseme_core.models import IndexingScope
-from client.sources.filesystem import FilesystemIndexingScope
-from client.sources.thunderbird import ThunderbirdIndexingScope
+from sources.filesystem import FilesystemIndexingScope
+from sources.thunderbird import ThunderbirdIndexingScope
 
 logger = logging.getLogger(__name__)
 

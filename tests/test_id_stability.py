@@ -8,7 +8,7 @@ silently double-indexes every document without any visible error.
 
 from pathlib import Path
 
-from src.core.ids import (
+from loseme_core.ids import (
     make_chunk_id,
     make_logical_document_part_id,
     make_source_instance_id,
