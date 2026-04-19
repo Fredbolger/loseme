@@ -117,6 +117,7 @@ trigger:
   branch:
     - main
     - develop
+    - working-tests
   event:
     - push
     - pull_request
