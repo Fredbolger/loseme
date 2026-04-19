@@ -1,0 +1,16 @@
+# Test-only dependencies — install alongside the main project requirements.
+# These are intentionally minimal to run on a Raspberry Pi without a GPU.
+#
+# Install: pip install -r requirements-test.txt
+
+pytest>=7.4
+pytest-cov>=4.1          # optional: coverage reports
+httpx>=0.25              # FastAPI TestClient transport
+beautifulsoup4>=4.12     # HTMLExtractor dependency
+pypdf>=3.0               # PDFExtractor dependency
+lxml>=4.9                # bs4 lxml backend
+
+# Core project deps (CPU-only, no torch, no GPU models)
+pydantic>=2.0
+fastapi>=0.100
+uvicorn[standard]>=0.23
