@@ -16,9 +16,9 @@ contracts regardless of their internal strategy:
 
 import pytest
 
-from pipeline.chunking.semantic_chunker import SemanticChunker
-from pipeline.chunking.simple_chunker import SimpleTextChunker
-from pipeline.embeddings.dummy import DummyEmbeddingProvider
+from loseme_core.pipeline.chunking.semantic_chunker import SemanticChunker
+from loseme_core.pipeline.chunking.simple_chunker import SimpleTextChunker
+from loseme_core.pipeline.embeddings.dummy import DummyEmbeddingProvider
 from tests.helpers import make_part
 
 # ---------------------------------------------------------------------------

@@ -12,8 +12,8 @@ from fastapi.testclient import TestClient
 
 from api.app.main import app
 from api.app.tasks.celery_app import celery_app
-from src.core.ids import make_logical_document_part_id
-from src.sources.base.models import DocumentPart
+from loseme_core.ids import make_logical_document_part_id
+from loseme_core.models import DocumentPart
 from src.sources.filesystem.filesystem_model import FilesystemIndexingScope
 from storage.metadata_db.indexing_runs import create_run, load_latest_run_by_scope
 
@@ -78,6 +78,7 @@ def ingest_part(part: DocumentPart, run_id: str) -> dict:
             "created_at": part.created_at.isoformat(),
             "updated_at": part.updated_at.isoformat(),
             "text": part.text,
+            "scope_json": {"type": "filesystem", "directories": ["/tmp"]},
         },
     )
     assert resp.status_code == 200, resp.text
