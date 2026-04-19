@@ -8,6 +8,10 @@ kind: pipeline
 type: docker
 name: loseme-tests
 
+volumes:
+  - name: venv
+    temp: {}
+
 # Target the Raspberry Pi runner
 platform:
   os: linux
@@ -21,23 +25,27 @@ steps:
 
   # ── 1. Build a lightweight test image ─────────────────────────────────
   - name: build-test-image
-    image: python:3.11-slim
-    commands:
-      - apt-get update -qq && apt-get install -y --no-install-recommends build-essential -qq
-      - pip install --quiet --upgrade pip
+  image: python:3.11-slim
+  volumes:
+    - name: venv
+      path: /venv
+  environment:
+    PIP_NO_CACHE_DIR: "1"
+  commands:
+    - apt-get update -qq && apt-get install -y --no-install-recommends build-essential -qq
 
-      # Install loseme-core (shared models)
-      - pip install --quiet -e ./core
+    # Create shared virtualenv
+    - python -m venv /venv
+    - . /venv/bin/activate
 
-      # Install server deps (CPU-only subset — NO torch, NO FlagEmbedding)
-      - pip install --quiet fastapi uvicorn[standard] pydantic>=2.0 httpx
-                           qdrant-client sentence-transformers pypdf bs4 lxml typer
+    - pip install --no-cache-dir --prefer-binary  install --upgrade pip
 
-      # Install client deps
-      - pip install --quiet -e ./client
-
-      # Install test runner
-      - pip install --quiet pytest pytest-cov
+    # Install ALL dependencies once
+    - pip install --no-cache-dir --prefer-binary install -e ./core
+    - pip install --no-cache-dir --prefer-binary install fastapi uvicorn[standard] pydantic>=2.0 httpx \
+                  qdrant-client sentence-transformers pypdf bs4 lxml typer
+    - pip install --no-cache-dir --prefer-binary install -e ./client
+    - pip install --no-cache-dir --prefer-binary install pytest pytest-cov pyflakes
 
   # ── 2. Lint (fast, catches obvious import errors) ──────────────────────
   - name: lint
@@ -45,8 +53,11 @@ steps:
     environment:
       PYTHONPATH: server:client:core
     depends_on: [build-test-image]
+    volumes:
+      - name: venv
+        path: /venv
     commands:
-      - pip install --quiet pyflakes
+      - . /venv/bin/activate
       - python -m pyflakes server/api server/pipeline server/storage core/loseme_core client/extractors client/sources || true
 
   # ── 3. Unit tests (pure Python, no I/O) ───────────────────────────────
@@ -60,11 +71,12 @@ steps:
       LOSEME_EMBEDDING_MODEL: "sentence-transformer:all-MiniLM-L6-v2"
       LOSEME_CHUNKER: simple
       LOSEME_VECTOR_STORAGE: in-memory
+    volumes:
+    - name: venv
+      path: /venv
     depends_on: [build-test-image]
     commands:
-      - pip install --quiet -e ./core
-      - pip install --quiet fastapi uvicorn[standard] pydantic>=2.0 httpx pypdf bs4 lxml typer pytest pytest-cov
-      - pip install --quiet -e ./client
+      - . /venv/bin/activate
       # Mock out heavy server packages so imports don't fail
       - python -m pytest tests/
               -v
@@ -79,7 +91,10 @@ steps:
   # ── 4. Integration tests (TestClient + in-memory store) ───────────────
   - name: integration-tests
     image: python:3.11-slim
-    environment:
+    volumes:
+      - name: venv
+        path: /venv
+   environment:
       PYTHONPATH: server:client:core
       LOSEME_HOST_ROOT: /host/data
       LOSEME_CONTAINER_ROOT: /mnt/data
@@ -91,20 +106,21 @@ steps:
       QDRANT_URL: http://localhost:9999
     depends_on: [unit-tests]
     commands:
-      - pip install --quiet -e ./core
-      - pip install --quiet fastapi uvicorn[standard] pydantic>=2.0 httpx pypdf bs4 lxml typer pytest pytest-cov
-      - pip install --quiet -e ./client
+      - . /venv/bin/activate
       - python -m pytest tests/test_api_integration.py tests/test_ingest_skip_logic.py
               -v --tb=short -x
 
   # ── 5. Coverage report artifact ────────────────────────────────────────
   - name: coverage-report
     image: python:3.11-slim
-    environment:
+    volumes:
+      - name: venv
+        path: /venv
+   environment:
       PYTHONPATH: server:client:core
     depends_on: [integration-tests]
     commands:
-      - pip install --quiet pytest pytest-cov -e ./core
+      - . /venv/bin/activate
       - python -m pytest tests/
               --cov=server --cov=client --cov=core
               --cov-report=xml:coverage.xml
