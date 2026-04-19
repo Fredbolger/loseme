@@ -1,8 +1,5 @@
----
 # .drone.yml — Drone CI pipeline for LoseMe
 # Runs on a Raspberry Pi (arm64 / armv7) without GPU.
-# All heavy ML deps (torch, FlagEmbedding, sentence-transformers) are
-# NOT installed — the test suite uses DummyEmbeddingProvider instead.
 
 kind: pipeline
 type: docker
@@ -12,56 +9,61 @@ volumes:
   - name: venv
     temp: {}
 
-# Target the Raspberry Pi runner
 platform:
   os: linux
-  arch: arm64          # change to arm if using 32-bit Raspberry Pi OS
+  arch: arm64
 
-# Clone settings
 clone:
   depth: 1
 
 steps:
-  # ── 1. Build a lightweight test image ─────────────────────────────────
+
+  # ── 1. Build environment ─────────────────────────────────────────────
   - name: build-test-image
-  image: python:3.11-slim
-  volumes:
-    - name: venv
-      path: /venv
-  environment:
-    PIP_NO_CACHE_DIR: "1"
-  commands:
-    - apt-get update -qq && apt-get install -y --no-install-recommends build-essential -qq
+    image: python:3.11-slim
+    volumes:
+      - name: venv
+        path: /venv
+    environment:
+      PIP_NO_CACHE_DIR: "1"
+    commands:
+      - apt-get update -qq && apt-get install -y --no-install-recommends build-essential -qq
 
-    # Create shared virtualenv
-    - python -m venv /venv
-    - . /venv/bin/activate
+      - python -m venv /venv
+      - . /venv/bin/activate
 
-    - pip install --no-cache-dir --prefer-binary  install --upgrade pip
+      - pip install --upgrade pip
 
-    # Install ALL dependencies once
-    - pip install --no-cache-dir --prefer-binary install -e ./core
-    - pip install --no-cache-dir --prefer-binary install fastapi uvicorn[standard] pydantic>=2.0 httpx \
-                  qdrant-client sentence-transformers pypdf bs4 lxml typer
-    - pip install --no-cache-dir --prefer-binary install -e ./client
-    - pip install --no-cache-dir --prefer-binary install pytest pytest-cov pyflakes
+      # Core deps
+      - pip install --no-cache-dir --prefer-binary -e ./core
+      - pip install --no-cache-dir --prefer-binary fastapi uvicorn[standard] pydantic>=2.0 httpx \
+          qdrant-client sentence-transformers pypdf bs4 lxml typer
 
-  # ── 2. Lint (fast, catches obvious import errors) ──────────────────────
+      - pip install --no-cache-dir --prefer-binary -e ./client
+      - pip install --no-cache-dir --prefer-binary pytest pytest-cov pyflakes
+
+
+  # ── 2. Lint ────────────────────────────────────────────────────────────
   - name: lint
     image: python:3.11-slim
-    environment:
-      PYTHONPATH: server:client:core
     depends_on: [build-test-image]
     volumes:
       - name: venv
         path: /venv
+    environment:
+      PYTHONPATH: server:client:core
     commands:
       - . /venv/bin/activate
       - python -m pyflakes server/api server/pipeline server/storage core/loseme_core client/extractors client/sources || true
 
-  # ── 3. Unit tests (pure Python, no I/O) ───────────────────────────────
+
+  # ── 3. Unit tests ─────────────────────────────────────────────────────
   - name: unit-tests
     image: python:3.11-slim
+    depends_on: [build-test-image]
+    volumes:
+      - name: venv
+        path: /venv
     environment:
       PYTHONPATH: server:client:core
       LOSEME_HOST_ROOT: /host/data
@@ -70,30 +72,24 @@ steps:
       LOSEME_EMBEDDING_MODEL: "sentence-transformer:all-MiniLM-L6-v2"
       LOSEME_CHUNKER: simple
       LOSEME_VECTOR_STORAGE: in-memory
-    volumes:
-    - name: venv
-      path: /venv
-    depends_on: [build-test-image]
     commands:
       - . /venv/bin/activate
-      # Mock out heavy server packages so imports don't fail
-      - python -m pytest tests/
-              -v
-              --tb=short
-              -x
-              --cov=server --cov=client --cov=core
-              --cov-report=term-missing
-              --ignore=tests/test_api_integration.py
-              --ignore=tests/test_ingest_skip_logic.py
-              -m "not integration"
+      - python -m pytest tests/ -v --tb=short -x \
+          --cov=server --cov=client --cov=core \
+          --cov-report=term-missing \
+          --ignore=tests/test_api_integration.py \
+          --ignore=tests/test_ingest_skip_logic.py \
+          -m "not integration"
 
-  # ── 4. Integration tests (TestClient + in-memory store) ───────────────
+
+  # ── 4. Integration tests ──────────────────────────────────────────────
   - name: integration-tests
     image: python:3.11-slim
+    depends_on: [unit-tests]
     volumes:
       - name: venv
         path: /venv
-   environment:
+    environment:
       PYTHONPATH: server:client:core
       LOSEME_HOST_ROOT: /host/data
       LOSEME_CONTAINER_ROOT: /mnt/data
@@ -101,32 +97,31 @@ steps:
       LOSEME_EMBEDDING_MODEL: "sentence-transformer:all-MiniLM-L6-v2"
       LOSEME_CHUNKER: simple
       LOSEME_VECTOR_STORAGE: in-memory
-      # Point to a non-existent Qdrant so any accidental real calls fail fast
       QDRANT_URL: http://localhost:9999
-    depends_on: [unit-tests]
     commands:
       - . /venv/bin/activate
-      - python -m pytest tests/test_api_integration.py tests/test_ingest_skip_logic.py
-              -v --tb=short -x
+      - python -m pytest tests/test_api_integration.py tests/test_ingest_skip_logic.py -v --tb=short -x
 
-  # ── 5. Coverage report artifact ────────────────────────────────────────
+
+  # ── 5. Coverage report ────────────────────────────────────────────────
   - name: coverage-report
     image: python:3.11-slim
+    depends_on: [integration-tests]
     volumes:
       - name: venv
         path: /venv
-   environment:
+    environment:
       PYTHONPATH: server:client:core
-    depends_on: [integration-tests]
     commands:
       - . /venv/bin/activate
-      - python -m pytest tests/
-              --cov=server --cov=client --cov=core
-              --cov-report=xml:coverage.xml
-              --cov-report=term
-              -q
+      - python -m pytest tests/ \
+          --cov=server --cov=client --cov=core \
+          --cov-report=xml:coverage.xml \
+          --cov-report=term \
+          -q
     when:
-      status: [success, failure]   # always produce a report
+      status: [success, failure]
+
 
 trigger:
   branch:
