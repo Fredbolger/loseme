@@ -16,6 +16,19 @@ platform:
 clone:
   depth: 1
 
+# ── Shared env block (YAML anchor) ─────────────────────────────────────────
+x-env: &env
+  PYTHONPATH: server:client:core
+  LOSEME_HOST_ROOT: /host/data
+  LOSEME_CONTAINER_ROOT: /mnt/data
+  LOSEME_DEVICE_ID: ci-runner
+  LOSEME_EMBEDDING_MODEL: sentence-transformer:all-MiniLM-L6-v2
+  LOSEME_CHUNKER: simple
+  LOSEME_VECTOR_STORAGE: in-memory
+  QDRANT_URL: http://localhost:9999   # nothing listening here — any real call fails fast
+ 
+
+
 steps:
 
   # ── 1. Build environment ─────────────────────────────────────────────
@@ -25,7 +38,7 @@ steps:
       - name: venv
         path: /venv
     environment:
-      PIP_NO_CACHE_DIR: "1"
+      <<: *env
     commands:
       - apt-get update -qq && apt-get install -y --no-install-recommends build-essential -qq
 
@@ -51,7 +64,7 @@ steps:
       - name: venv
         path: /venv
     environment:
-      PYTHONPATH: server:client:core
+      <<: *env
     commands:
       - . /venv/bin/activate
       - python -m pyflakes server/api server/pipeline server/storage core/loseme_core client/extractors client/sources || true
@@ -65,13 +78,7 @@ steps:
       - name: venv
         path: /venv
     environment:
-      PYTHONPATH: server:client:core
-      LOSEME_HOST_ROOT: /host/data
-      LOSEME_CONTAINER_ROOT: /mnt/data
-      LOSEME_DEVICE_ID: ci-runner
-      LOSEME_EMBEDDING_MODEL: "sentence-transformer:all-MiniLM-L6-v2"
-      LOSEME_CHUNKER: simple
-      LOSEME_VECTOR_STORAGE: in-memory
+      <<: *env
     commands:
       - . /venv/bin/activate
       - python -m pytest tests/ -v --tb=short -x \
@@ -90,14 +97,7 @@ steps:
       - name: venv
         path: /venv
     environment:
-      PYTHONPATH: server:client:core
-      LOSEME_HOST_ROOT: /host/data
-      LOSEME_CONTAINER_ROOT: /mnt/data
-      LOSEME_DEVICE_ID: ci-runner
-      LOSEME_EMBEDDING_MODEL: "sentence-transformer:all-MiniLM-L6-v2"
-      LOSEME_CHUNKER: simple
-      LOSEME_VECTOR_STORAGE: in-memory
-      QDRANT_URL: http://localhost:9999
+      <<: *env
     commands:
       - . /venv/bin/activate
       - python -m pytest tests/test_api_integration.py tests/test_ingest_skip_logic.py -v --tb=short -x
@@ -111,7 +111,7 @@ steps:
       - name: venv
         path: /venv
     environment:
-      PYTHONPATH: server:client:core
+      <<: *env
     commands:
       - . /venv/bin/activate
       - python -m pytest tests/ \
