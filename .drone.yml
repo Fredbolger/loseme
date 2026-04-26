@@ -73,21 +73,15 @@ steps:
   # ── 3. Unit tests ─────────────────────────────────────────────────────
   - name: unit-tests
     image: python:3.11-slim
-    depends_on: [build-test-image]
-    volumes:
-      - name: venv
-        path: /venv
     environment:
       <<: *env
+    depends_on: [install-deps]
     commands:
-      - . /venv/bin/activate
-      - python -m pytest tests/ -v --tb=short -x \
-          --cov=server --cov=client --cov=core \
-          --cov-report=term-missing \
-          --ignore=tests/test_api_integration.py \
-          --ignore=tests/test_ingest_skip_logic.py \
-          -m "not integration"
-
+      - pip install --quiet -e ./core -e ./client
+      - pip install --quiet fastapi "uvicorn[standard]" "pydantic>=2.0" httpx pypdf beautifulsoup4 lxml typer pytest pytest-cov
+      - chmod +x run_tests.sh
+      - ./run_tests.sh unit
+ 
 
   # ── 4. Integration tests ──────────────────────────────────────────────
   - name: integration-tests
