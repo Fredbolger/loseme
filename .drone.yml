@@ -77,10 +77,13 @@ steps:
       <<: *env
     depends_on: [build-test-image]
     commands:
-      - pip install --quiet -e ./core -e ./client
-      - pip install --quiet fastapi "uvicorn[standard]" "pydantic>=2.0" httpx pypdf beautifulsoup4 lxml typer pytest pytest-cov
+      - . /venv/bin/activate
       - chmod +x run_tests.sh
       - ./run_tests.sh unit
+      #- pip install --quiet -e ./core -e ./client
+      #- pip install --quiet fastapi "uvicorn[standard]" "pydantic>=2.0" httpx pypdf beautifulsoup4 lxml typer pytest pytest-cov
+      #- chmod +x run_tests.sh
+      #- ./run_tests.sh unit
  
 
   # ── 4. Integration tests ──────────────────────────────────────────────
