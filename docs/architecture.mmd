@@ -1,0 +1,80 @@
+%% LoseMe architecture diagrams (Mermaid)
+
+flowchart LR
+    %% Runtime data flow
+    subgraph Sources[Local Sources]
+        FS[Filesystem]
+        TB[Thunderbird Mailbox]
+    end
+
+    subgraph Client[Client Container]
+        CLI[CLI\n`client/cli`]
+        EXT[Extractors\n`client/extractors`]
+        SRC[Source Adapters\n`client/sources`]
+        WEB[Web UI + Preview\n`client/web`, `client/preview`]
+        QCLIENT[Queue/API Client\n`client/ingest/queue_client.py`]
+    end
+
+    subgraph Server[Server Container]
+        API[FastAPI Routes\n`server/api/app/routes`]
+        PIPE[Pipeline Orchestrator\n`server/wiring.py`]
+        CHUNK[Chunkers\n`server/pipeline/chunking`]
+        EMB[Embedding Providers\n`server/pipeline/embeddings`]
+        PREV[Server Preview\n`server/preview`]
+    end
+
+    subgraph Storage[Persistence]
+        SQLITE[SQLite Metadata DB\n`server/storage/metadata_db`]
+        QDRANT[Qdrant Vector DB\n`server/storage/vector_db`]
+    end
+
+    CORE[Shared Domain Package\n`core/loseme_core`]
+    TESTS[Test Suite\n`tests/`]
+
+    FS --> SRC
+    TB --> SRC
+    SRC --> EXT
+    CLI --> QCLIENT
+    WEB --> API
+    EXT --> QCLIENT
+    QCLIENT --> API
+
+    API --> PIPE
+    API --> PREV
+    PIPE --> CHUNK
+    CHUNK --> EMB
+    EMB --> QDRANT
+    PIPE --> SQLITE
+    API --> SQLITE
+    API --> QDRANT
+
+    CORE -. models / ids / config .- Client
+    CORE -. models / ids / config .- Server
+
+    TESTS -. integration + unit coverage .-> Client
+    TESTS -. integration + unit coverage .-> Server
+    TESTS -. contract tests .-> CORE
+
+---
+
+flowchart TB
+    Root["`loseme/`"]
+    Root --> Core["`core/`<br/>shared package (`loseme_core`)"]
+    Root --> Client["`client/`<br/>ingest + UI + preview + CLI"]
+    Root --> Server["`server/`<br/>API + pipeline + storage"]
+    Root --> Tests["`tests/`<br/>unit/integration tests"]
+    Root --> Docs["`docs/`<br/>architecture/phase notes"]
+    Root --> Compose["`docker-compose.*.yml`<br/>client/server deployment"]
+
+    Client --> C1["`cli/`"]
+    Client --> C2["`extractors/`"]
+    Client --> C3["`sources/`"]
+    Client --> C4["`web/static/`"]
+    Client --> C5["`preview/`"]
+
+    Server --> S1["`api/app/routes/`"]
+    Server --> S2["`pipeline/chunking/`"]
+    Server --> S3["`pipeline/embeddings/`"]
+    Server --> S4["`storage/metadata_db/`"]
+    Server --> S5["`storage/vector_db/`"]
+    Server --> S6["`preview/`"]
