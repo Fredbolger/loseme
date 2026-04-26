@@ -76,6 +76,9 @@ steps:
     environment:
       <<: *env
     depends_on: [build-test-image]
+    volumes:
+      - name: venv
+        path: /venv
     commands:
       - . /venv/bin/activate
       - chmod +x run_tests.sh
