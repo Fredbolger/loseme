@@ -75,7 +75,7 @@ steps:
     image: python:3.11-slim
     environment:
       <<: *env
-    depends_on: [install-deps]
+    depends_on: [build-test-image]
     commands:
       - pip install --quiet -e ./core -e ./client
       - pip install --quiet fastapi "uvicorn[standard]" "pydantic>=2.0" httpx pypdf beautifulsoup4 lxml typer pytest pytest-cov
