@@ -2,7 +2,7 @@ from typing import List, Tuple
 import numpy as np
 
 from loseme_core.models import Chunk, DocumentPart
-from wiring import build_embedding_provider
+from server.wiring import build_embedding_provider
 from loseme_core.ids import make_chunk_id
 
 
