@@ -55,70 +55,64 @@ class SentenceAwareChunker:
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
-
-    def chunk(self, part: DocumentPart) -> Tuple[List[Chunk], List[str]]:
-        sentences = self._split_sentences(part.text)
-        if not sentences:
-            return [], []
-
-        groups = self._group_sentences(sentences)
-        chunks: List[Chunk] = []
-        chunk_texts: List[str] = []
-
-        for index, group in enumerate(groups):
-            text = " ".join(group)
-            chunk_id = make_chunk_id(
-                document_part_id=part.document_part_id,
-                document_checksum=part.checksum,
-                index=index,
-            )
-            chunks.append(
-                Chunk(
-                    id=chunk_id,
-                    source_type=part.source_type,
-                    source_path=part.source_path,
-                    document_part_id=part.document_part_id,
-                    document_checksum=part.checksum,
-                    device_id=part.device_id,
-                    unit_locator=part.unit_locator,
-                    index=index,
-                    text=text,
-                    metadata={
-                        "char_len": len(text),
-                        "sentence_count": len(group),
-                    },
-                )
-            )
-            chunk_texts.append(text)
-
-        return chunks, chunk_texts
-
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
-
     def _split_sentences(self, text: str) -> List[str]:
-        """
-        Split text into sentences on punctuation boundaries.
-        Paragraphs (double newlines) always force a split regardless of
-        punctuation, so structure like bullet lists is preserved.
-        """
-        # Normalise line endings
         text = text.replace("\r\n", "\n").replace("\r", "\n")
 
-        # Split on paragraph breaks first, then on sentence endings within
-        # each paragraph.
         sentences: List[str] = []
         for paragraph in text.split("\n\n"):
             paragraph = paragraph.strip()
             if not paragraph:
                 continue
+            para_sentences = []
             for sent in _SENTENCE_SPLIT_RE.split(paragraph):
                 sent = sent.strip()
                 if sent:
-                    sentences.append(sent)
+                    para_sentences.append(sent)
+            if para_sentences:
+                sentences.append(para_sentences)  # keep paragraphs grouped
 
-        return sentences
+        return sentences  # now List[List[str]] — one list per paragraph
+
+    def chunk(self, part: DocumentPart) -> Tuple[List[Chunk], List[str]]:
+        paragraphs = self._split_sentences(part.text)
+        if not paragraphs:
+            return [], []
+
+        chunks: List[Chunk] = []
+        chunk_texts: List[str] = []
+        index = 0
+
+        for para_sentences in paragraphs:
+            groups = self._group_sentences(para_sentences)
+            for group in groups:
+                text = " ".join(group)
+                chunk_id = make_chunk_id(
+                    document_part_id=part.document_part_id,
+                    document_checksum=part.checksum,
+                    index=index,
+                )
+                chunks.append(
+                    Chunk(
+                        id=chunk_id,
+                        source_type=part.source_type,
+                        source_path=part.source_path,
+                        document_part_id=part.document_part_id,
+                        document_checksum=part.checksum,
+                        device_id=part.device_id,
+                        unit_locator=part.unit_locator,
+                        index=index,
+                        text=text,
+                        metadata={
+                            "char_len": len(text),
+                            "sentence_count": len(group),
+                        },
+                    )
+                )
+                chunk_texts.append(text)
+                index += 1
+
+        return chunks, chunk_texts
+
 
     def _group_sentences(self, sentences: List[str]) -> List[List[str]]:
         """
