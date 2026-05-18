@@ -1,10 +1,128 @@
+# .drone.yml — Drone CI pipeline for LoseMe
+# Runs on a Raspberry Pi (arm64 / armv7) without GPU.
+
 kind: pipeline
-name: default
+type: docker
+name: loseme-tests
+
+volumes:
+  - name: venv
+    temp: {}
+
+platform:
+  os: linux
+  arch: arm64
+
+clone:
+  depth: 1
+
+# ── Shared env block (YAML anchor) ─────────────────────────────────────────
+x-env: &env
+  PYTHONPATH: server:client:core
+  LOSEME_HOST_ROOT: /host/data
+  LOSEME_CONTAINER_ROOT: /mnt/data
+  LOSEME_DEVICE_ID: ci-runner
+  LOSEME_EMBEDDING_MODEL: sentence-transformer:all-MiniLM-L6-v2
+  LOSEME_CHUNKER: simple
+  LOSEME_VECTOR_STORAGE: in-memory
+  QDRANT_URL: http://localhost:9999   # nothing listening here — any real call fails fast
+ 
+
 
 steps:
-  - name: run-tests
-    image: python:3.11
+
+  # ── 1. Build environment ─────────────────────────────────────────────
+  - name: build-test-image
+    image: python:3.11-slim
+    volumes:
+      - name: venv
+        path: /venv
+    environment:
+      <<: *env
     commands:
-      - pip install poetry
-      - poetry install
-      - poetry run pytest --maxfail=1 --disable-warnings -q
+      - apt-get update -qq && apt-get install -y --no-install-recommends build-essential -qq
+
+      - python -m venv /venv
+      - . /venv/bin/activate
+
+      - pip install --upgrade pip
+
+      # Core deps
+      - pip install --no-cache-dir --prefer-binary -e ./core
+      - pip install --no-cache-dir --prefer-binary fastapi uvicorn[standard] pydantic>=2.0 httpx \
+          qdrant-client sentence-transformers pypdf bs4 lxml typer
+
+      - pip install --no-cache-dir --prefer-binary -e ./client
+      - pip install --no-cache-dir --prefer-binary pytest pytest-cov pyflakes
+
+
+  # ── 2. Lint ────────────────────────────────────────────────────────────
+  - name: lint
+    image: python:3.11-slim
+    depends_on: [build-test-image]
+    volumes:
+      - name: venv
+        path: /venv
+    environment:
+      <<: *env
+    commands:
+      - . /venv/bin/activate
+      - python -m pyflakes server/api server/pipeline server/storage core/loseme_core client/extractors client/sources || true
+
+
+  # ── 3. Unit tests ─────────────────────────────────────────────────────
+  - name: unit-tests
+    image: python:3.11-slim
+    environment:
+      <<: *env
+    depends_on: [build-test-image]
+    volumes:
+      - name: venv
+        path: /venv
+    commands:
+      - . /venv/bin/activate
+      - chmod +x run_tests.sh
+      - ./run_tests.sh unit
+      #- pip install --quiet -e ./core -e ./client
+      #- pip install --quiet fastapi "uvicorn[standard]" "pydantic>=2.0" httpx pypdf beautifulsoup4 lxml typer pytest pytest-cov
+      #- chmod +x run_tests.sh
+      #- ./run_tests.sh unit
+ 
+
+  # ── 4. Integration tests ──────────────────────────────────────────────
+  - name: integration-tests
+    image: python:3.11-slim
+    depends_on: [unit-tests]
+    volumes:
+      - name: venv
+        path: /venv
+    environment:
+      <<: *env
+    commands:
+      - . /venv/bin/activate
+      - python -m pytest tests/test_api_integration.py tests/test_ingest_skip_logic.py -v --tb=short -x
+
+
+  # ── 5. Coverage report ────────────────────────────────────────────────
+  - name: coverage-report
+    image: python:3.11-slim
+    depends_on: [integration-tests]
+    volumes:
+      - name: venv
+        path: /venv
+    environment:
+      <<: *env
+    when:
+      status: [success, failure]
+    commands:
+      - /venv/bin/python -m pytest tests/ --cov --cov-report=xml:coverage.xml --cov-report=term -q || true
+
+
+trigger:
+  branch:
+    - main
+    - develop
+    - working-tests
+  event:
+    - push
+    - pull_request
