@@ -44,8 +44,22 @@ class PDFExtractor(DocumentExtractor):
 
     def extract_from_bytes(self, file_bytes: bytes) -> DocumentExtractionResult:
         from io import BytesIO
-        
-        reader = PdfReader(BytesIO(file_bytes))
+      
+
+        try:
+            reader = PdfReader(BytesIO(file_bytes))
+        except Exception:
+            return DocumentExtractionResult(
+                texts=[""],
+                content_types=["application/pdf"],
+                metadata=[{
+                    "error": "Failed to read PDF from bytes",
+                }],
+                unit_locators=["memory:pdf"],
+                extractor_names=[self.name],
+                extractor_versions=[self.version],
+            )
+
         # test if the file is encrypted
         try:
             # try to iterate through pages to see if decryption is needed
