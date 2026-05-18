@@ -1,7 +1,7 @@
 from typing import List, Tuple
 import math
 
-from src.sources.base.models import Chunk
+from loseme_core import Chunk
 from storage.vector_db.vector_store import VectorStore
 
 
@@ -19,6 +19,7 @@ class InMemoryVectorStore(VectorStore):
         """
         Adds a chunk and its vector to the store.
         """
+        vector = vector.dense if hasattr(vector, "dense") else vector
         if len(vector) != self._dimension:
             raise ValueError(
                 f"Vector dimension mismatch: expected {self._dimension}, "
@@ -40,15 +41,16 @@ class InMemoryVectorStore(VectorStore):
         Returns:
             List of (chunk, score) tuples ordered by descending similarity
         """
-        if len(query_vector) != self._dimension:
+        vector = query_vector.dense if hasattr(query_vector, "dense") else query_vector
+        if len(vector) != self._dimension:
             raise ValueError(
                 f"Query vector dimension mismatch: expected {self._dimension}, "
-                f"got {len(query_vector)}"
+                f"got {len(vector)}"
             )
 
         scored = []
-        for chunk, vector in self._data:
-            score = self._cosine_similarity(query_vector, vector)
+        for chunk, stored_vector in self._data:
+            score = self._cosine_similarity(vector, stored_vector)
             scored.append((chunk, score))
 
         # Sort by score descending
