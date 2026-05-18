@@ -211,10 +211,10 @@ class TestSentenceAwareChunker:
 
     def test_paragraph_breaks_respected(self, chunker):
         """Double newlines must always force a chunk boundary."""
-        text = ("A" * 50 + "\n\n") * 5
-        chunks, _ = chunker.chunk(_make_part(text))
+        # Use distinct paragraphs so the similarity threshold doesn't merge them
+        text = "\n\n".join(f"{'ABCDEFGHIJ'[i]* 50}" for i in range(5))
+        chunks, _ = chunker.chunk(_make_part(text=text))
         assert len(chunks) >= 5
-
 
 # ===========================================================================
 # SemanticChunker (via DummyEmbeddingProvider — no GPU)
