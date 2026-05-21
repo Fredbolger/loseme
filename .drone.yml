@@ -153,6 +153,7 @@ steps:
 trigger:
   branch:
     - main
+    - master
     - develop
     - working-tests
   event:
