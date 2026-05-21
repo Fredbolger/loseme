@@ -1,6 +1,3 @@
-# .drone.yml — Drone CI pipeline for LoseMe
-# Runs on a Raspberry Pi (arm64 / armv7) without GPU.
-
 kind: pipeline
 type: docker
 name: loseme-tests
@@ -8,6 +5,11 @@ name: loseme-tests
 volumes:
   - name: venv
     temp: {}
+
+  # Needed for Docker builds
+  - name: dockersock
+    host:
+      path: /var/run/docker.sock
 
 platform:
   os: linux
@@ -25,13 +27,10 @@ x-env: &env
   LOSEME_EMBEDDING_MODEL: sentence-transformer:all-MiniLM-L6-v2
   LOSEME_CHUNKER: simple
   LOSEME_VECTOR_STORAGE: in-memory
-  QDRANT_URL: http://localhost:9999   # nothing listening here — any real call fails fast
- 
-
+  QDRANT_URL: http://localhost:9999
 
 steps:
 
-  # ── 1. Build environment ─────────────────────────────────────────────
   - name: build-test-image
     image: python:3.11-slim
     volumes:
@@ -41,22 +40,14 @@ steps:
       <<: *env
     commands:
       - apt-get update -qq && apt-get install -y --no-install-recommends build-essential -qq
-
       - python -m venv /venv
       - . /venv/bin/activate
-
       - pip install --upgrade pip
-
-      # Core deps
       - pip install --no-cache-dir --prefer-binary -e ./core
-      - pip install --no-cache-dir --prefer-binary fastapi uvicorn[standard] pydantic>=2.0 httpx \
-          qdrant-client sentence-transformers pypdf bs4 lxml typer
-
+      - pip install --no-cache-dir --prefer-binary fastapi uvicorn[standard] pydantic>=2.0 httpx qdrant-client sentence-transformers pypdf bs4 lxml typer
       - pip install --no-cache-dir --prefer-binary -e ./client
       - pip install --no-cache-dir --prefer-binary pytest pytest-cov pyflakes
 
-
-  # ── 2. Lint ────────────────────────────────────────────────────────────
   - name: lint
     image: python:3.11-slim
     depends_on: [build-test-image]
@@ -69,8 +60,6 @@ steps:
       - . /venv/bin/activate
       - python -m pyflakes server/api server/pipeline server/storage core/loseme_core client/extractors client/sources || true
 
-
-  # ── 3. Unit tests ─────────────────────────────────────────────────────
   - name: unit-tests
     image: python:3.11-slim
     environment:
@@ -83,13 +72,7 @@ steps:
       - . /venv/bin/activate
       - chmod +x run_tests.sh
       - ./run_tests.sh unit
-      #- pip install --quiet -e ./core -e ./client
-      #- pip install --quiet fastapi "uvicorn[standard]" "pydantic>=2.0" httpx pypdf beautifulsoup4 lxml typer pytest pytest-cov
-      #- chmod +x run_tests.sh
-      #- ./run_tests.sh unit
- 
 
-  # ── 4. Integration tests ──────────────────────────────────────────────
   - name: integration-tests
     image: python:3.11-slim
     depends_on: [unit-tests]
@@ -102,8 +85,6 @@ steps:
       - . /venv/bin/activate
       - python -m pytest tests/test_api_integration.py tests/test_ingest_skip_logic.py -v --tb=short -x
 
-
-  # ── 5. Coverage report ────────────────────────────────────────────────
   - name: coverage-report
     image: python:3.11-slim
     depends_on: [integration-tests]
@@ -117,6 +98,57 @@ steps:
     commands:
       - /venv/bin/python -m pytest tests/ --cov --cov-report=xml:coverage.xml --cov-report=term -q || true
 
+  - name: publish-server-image
+    image: docker:24
+    depends_on: [integration-tests]
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+    environment:
+      GITEA_USERNAME:
+        from_secret: gitea_username
+      GITEA_TOKEN:
+        from_secret: gitea_token
+    commands:
+      - export REGISTRY=gitea.example.com
+      - export IMAGE=$REGISTRY/ben/loseme-server
+      - export TAG=${DRONE_COMMIT_SHA:0:8}
+      - echo "$GITEA_TOKEN" | docker login $REGISTRY -u "$GITEA_USERNAME" --password-stdin
+      - docker build -f Dockerfile.server -t $IMAGE:$TAG .
+      - docker tag $IMAGE:$TAG $IMAGE:${DRONE_BRANCH}
+      - docker push $IMAGE:$TAG
+      - docker push $IMAGE:${DRONE_BRANCH}
+      - |
+        if [ "$DRONE_BRANCH" = "main" ]; then
+          docker tag $IMAGE:$TAG $IMAGE:latest
+          docker push $IMAGE:latest
+        fi
+
+  - name: publish-client-image
+    image: docker:24
+    depends_on: [integration-tests]
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+    environment:
+      GITEA_USERNAME:
+        from_secret: gitea_username
+      GITEA_TOKEN:
+        from_secret: gitea_token
+    commands:
+      - export REGISTRY=gitea.benheuser.de
+      - export IMAGE=$REGISTRY/ben/loseme-client
+      - export TAG=${DRONE_COMMIT_SHA:0:8}
+      - echo "$GITEA_TOKEN" | docker login $REGISTRY -u "$GITEA_USERNAME" --password-stdin
+      - docker build -f Dockerfile.client -t $IMAGE:$TAG .
+      - docker tag $IMAGE:$TAG $IMAGE:${DRONE_BRANCH}
+      - docker push $IMAGE:$TAG
+      - docker push $IMAGE:${DRONE_BRANCH}
+      - |
+        if [ "$DRONE_BRANCH" = "main" ]; then
+          docker tag $IMAGE:$TAG $IMAGE:latest
+          docker push $IMAGE:latest
+        fi
 
 trigger:
   branch:
