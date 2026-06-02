@@ -3,17 +3,10 @@ type: docker
 name: loseme-tests
 
 volumes:
-  - name: venv
-    temp: {}
-
   # Needed for Docker builds
   - name: dockersock
     host:
       path: /var/run/docker.sock
-
-  - name: pip-cache
-    host:
-      path: /tmp/drone-pip-cache
 
 platform:
   os: linux
@@ -35,82 +28,48 @@ x-env: &env
 
 steps:
 
-  - name: build-test-image
+  - name: install-local-packages
     image: gitea.benheuser.de/ben/loseme-ci:latest
-    volumes:
-      - name: venv
-        path: /venv      
-      - name: pip-cache
-        path: /root/.cache/pip
     environment:
       <<: *env
     commands:
-      - apt-get update -qq && apt-get install -y --no-install-recommends build-essential -qq
-      - python -m venv /venv
-      - . /venv/bin/activate
-      - pip install --upgrade pip
       - pip install --prefer-binary -e ./core
-      - pip install --prefer-binary fastapi uvicorn[standard] pydantic>=2.0 httpx qdrant-client sentence-transformers pypdf bs4 lxml typer
       - pip install --prefer-binary -e ./client
-      - pip install --prefer-binary pytest pytest-cov pyflakes
 
   - name: lint
     image: gitea.benheuser.de/ben/loseme-ci:latest
-    depends_on: [build-test-image]
-    volumes:
-      - name: venv
-        path: /venv
-      - name: pip-cache
-        path: /root/.cache/pip
+    depends_on: [install-local-packages]
     environment:
       <<: *env
     commands:
-      - . /venv/bin/activate
       - python -m pyflakes server/api server/pipeline server/storage core/loseme_core client/extractors client/sources || true
 
   - name: unit-tests
-    image: python:3.11-slim
+    image: gitea.benheuser.de/ben/loseme-ci:latest
+    depends_on: [install-local-packages]
     environment:
       <<: *env
-    depends_on: [build-test-image]
-    volumes:
-      - name: venv
-        path: /venv
-      - name: pip-cache
-        path: /root/.cache/pip
     commands:
-      - . /venv/bin/activate
       - chmod +x run_tests.sh
       - ./run_tests.sh unit
 
   - name: integration-tests
-    image: python:3.11-slim
+    image: gitea.benheuser.de/ben/loseme-ci:latest
     depends_on: [unit-tests]
-    volumes:
-      - name: venv
-        path: /venv
-      - name: pip-cache
-        path: /root/.cache/pip
     environment:
       <<: *env
     commands:
-      - . /venv/bin/activate
       - python -m pytest tests/test_api_integration.py tests/test_ingest_skip_logic.py -v --tb=short -x
 
   - name: coverage-report
-    image: python:3.11-slim
+    image: gitea.benheuser.de/ben/loseme-ci:latest
     depends_on: [integration-tests]
-    volumes:
-      - name: venv
-        path: /venv
-      - name: pip-cache
-        path: /root/.cache/pip
     environment:
       <<: *env
     when:
       status: [success, failure]
     commands:
-      - /venv/bin/python -m pytest tests/ --cov --cov-report=xml:coverage.xml --cov-report=term -q || true
+      - python -m pytest tests/ --cov --cov-report=xml:coverage.xml --cov-report=term -q || true
 
   - name: publish-server-image
     image: docker:24
@@ -118,8 +77,6 @@ steps:
     volumes:
       - name: dockersock
         path: /var/run/docker.sock
-      - name: pip-cache
-        path: /root/.cache/pip
     environment:
       GITEA_USERNAME:
         from_secret: gitea_username
@@ -130,7 +87,7 @@ steps:
       - export IMAGE=$REGISTRY/ben/loseme-server
       - export TAG=${DRONE_COMMIT_SHA:0:8}
       - echo "$GITEA_TOKEN" | docker login $REGISTRY -u "$GITEA_USERNAME" --password-stdin
-      - docker build -f client/Dockerfile -t $IMAGE:$TAG .
+      - docker build -f server/Dockerfile -t $IMAGE:$TAG .
       - docker tag $IMAGE:$TAG $IMAGE:${DRONE_BRANCH}
       - docker push $IMAGE:$TAG
       - docker push $IMAGE:${DRONE_BRANCH}
@@ -146,8 +103,6 @@ steps:
     volumes:
       - name: dockersock
         path: /var/run/docker.sock
-      - name: pip-cache
-        path: /root/.cache/pip
     environment:
       GITEA_USERNAME:
         from_secret: gitea_username
