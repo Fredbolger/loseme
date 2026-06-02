@@ -11,10 +11,6 @@ volumes:
     host:
       path: /var/run/docker.sock
 
-  - name: pip-cache
-    host:
-      path: /tmp/drone-pip-cache
-
 platform:
   os: linux
   arch: arm64
@@ -36,12 +32,10 @@ x-env: &env
 steps:
 
   - name: build-test-image
-    image: gitea.benheuser.de/ben/loseme-ci:latest
+    image: python:3.11-slim
     volumes:
       - name: venv
-        path: /venv      
-      - name: pip-cache
-        path: /root/.cache/pip
+        path: /venv
     environment:
       <<: *env
     commands:
@@ -49,19 +43,17 @@ steps:
       - python -m venv /venv
       - . /venv/bin/activate
       - pip install --upgrade pip
-      - pip install --prefer-binary -e ./core
-      - pip install --prefer-binary fastapi uvicorn[standard] pydantic>=2.0 httpx qdrant-client sentence-transformers pypdf bs4 lxml typer
-      - pip install --prefer-binary -e ./client
-      - pip install --prefer-binary pytest pytest-cov pyflakes
+      - pip install --no-cache-dir --prefer-binary -e ./core
+      - pip install --no-cache-dir --prefer-binary fastapi uvicorn[standard] pydantic>=2.0 httpx qdrant-client sentence-transformers pypdf bs4 lxml typer
+      - pip install --no-cache-dir --prefer-binary -e ./client
+      - pip install --no-cache-dir --prefer-binary pytest pytest-cov pyflakes
 
   - name: lint
-    image: gitea.benheuser.de/ben/loseme-ci:latest
+    image: python:3.11-slim
     depends_on: [build-test-image]
     volumes:
       - name: venv
         path: /venv
-      - name: pip-cache
-        path: /root/.cache/pip
     environment:
       <<: *env
     commands:
@@ -76,8 +68,6 @@ steps:
     volumes:
       - name: venv
         path: /venv
-      - name: pip-cache
-        path: /root/.cache/pip
     commands:
       - . /venv/bin/activate
       - chmod +x run_tests.sh
@@ -89,8 +79,6 @@ steps:
     volumes:
       - name: venv
         path: /venv
-      - name: pip-cache
-        path: /root/.cache/pip
     environment:
       <<: *env
     commands:
@@ -103,8 +91,6 @@ steps:
     volumes:
       - name: venv
         path: /venv
-      - name: pip-cache
-        path: /root/.cache/pip
     environment:
       <<: *env
     when:
@@ -118,8 +104,6 @@ steps:
     volumes:
       - name: dockersock
         path: /var/run/docker.sock
-      - name: pip-cache
-        path: /root/.cache/pip
     environment:
       GITEA_USERNAME:
         from_secret: gitea_username
@@ -146,8 +130,6 @@ steps:
     volumes:
       - name: dockersock
         path: /var/run/docker.sock
-      - name: pip-cache
-        path: /root/.cache/pip
     environment:
       GITEA_USERNAME:
         from_secret: gitea_username
