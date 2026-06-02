@@ -126,11 +126,11 @@ steps:
       GITEA_TOKEN:
         from_secret: gitea_token
     commands:
-      - export REGISTRY=gitea.benheuser.de
+      - export REGISTRY=gitea.example.com
       - export IMAGE=$REGISTRY/ben/loseme-server
       - export TAG=${DRONE_COMMIT_SHA:0:8}
       - echo "$GITEA_TOKEN" | docker login $REGISTRY -u "$GITEA_USERNAME" --password-stdin
-      - docker build -f client/Dockerfile -t $IMAGE:$TAG .
+      - docker build -f Dockerfile.server -t $IMAGE:$TAG .
       - docker tag $IMAGE:$TAG $IMAGE:${DRONE_BRANCH}
       - docker push $IMAGE:$TAG
       - docker push $IMAGE:${DRONE_BRANCH}
@@ -158,7 +158,7 @@ steps:
       - export IMAGE=$REGISTRY/ben/loseme-client
       - export TAG=${DRONE_COMMIT_SHA:0:8}
       - echo "$GITEA_TOKEN" | docker login $REGISTRY -u "$GITEA_USERNAME" --password-stdin
-      - docker build -f client/Dockerfile -t $IMAGE:$TAG .
+      - docker build -f Dockerfile.client -t $IMAGE:$TAG .
       - docker tag $IMAGE:$TAG $IMAGE:${DRONE_BRANCH}
       - docker push $IMAGE:$TAG
       - docker push $IMAGE:${DRONE_BRANCH}
