@@ -8,7 +8,8 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install loseme-core first
-COPY --from=loseme-core:latest /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+#COPY --from=loseme-core:latest /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=gitea.benheuser.de/ben/loseme-core:latest /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
 # Install PyTorch (swap cu121 for cpu if no GPU)
 RUN pip install --no-cache-dir torch torchvision torchaudio\
