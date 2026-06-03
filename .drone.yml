@@ -71,9 +71,28 @@ steps:
     commands:
       - python -m pytest tests/ --cov --cov-report=xml:coverage.xml --cov-report=term -q || true
 
+  - name: publish-core-image
+    image: docker:24
+    depends_on: [publish-core-image]
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+    environment:
+      GITEA_USERNAME:
+        from_secret: gitea_username
+      GITEA_TOKEN:
+        from_secret: gitea_token
+    commands:
+      - export REGISTRY=gitea.benheuser.de
+      - export IMAGE=$REGISTRY/ben/loseme-core
+      - echo "$GITEA_TOKEN" | docker login $REGISTRY -u "$GITEA_USERNAME" --password-stdin
+      - docker build -f core/Dockerfile -t $IMAGE:latest .
+      - docker push $IMAGE:latest      
+
+
   - name: publish-server-image
     image: docker:24
-    depends_on: [integration-tests]
+    depends_on: [publish-core-image]
     volumes:
       - name: dockersock
         path: /var/run/docker.sock
