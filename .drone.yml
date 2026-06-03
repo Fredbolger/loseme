@@ -87,8 +87,7 @@ steps:
       - export IMAGE=$REGISTRY/ben/loseme-core
       - echo "$GITEA_TOKEN" | docker login $REGISTRY -u "$GITEA_USERNAME" --password-stdin
       - docker build -f core/Dockerfile -t $IMAGE:latest .
-      - docker push $IMAGE:latest      
-
+      - docker push $IMAGE:latest
 
   - name: publish-server-image
     image: docker:24
