@@ -4,7 +4,7 @@ WORKDIR /app
 
 # System dependencies needed for building some ML packages
 RUN apt-get update && \
-    apt-get install -y build-essential && \
+    apt-get install -y build-essential zlib1g-dev && \
     rm -rf /var/lib/apt/lists/*
 
 # Install loseme-core first
