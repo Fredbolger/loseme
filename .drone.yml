@@ -101,7 +101,8 @@ steps:
       GITEA_TOKEN:
         from_secret: gitea_token
     commands:
-      - export REGISTRY=gitea.benheuser.de
+      #- export REGISTRY=gitea.benheuser.de
+      - export REGISTRY=localhost:3000
       - export IMAGE=$REGISTRY/ben/loseme-server
       - export TAG=${DRONE_COMMIT_SHA:0:8}
       - echo "$GITEA_TOKEN" | docker login $REGISTRY -u "$GITEA_USERNAME" --password-stdin
