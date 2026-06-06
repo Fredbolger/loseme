@@ -6,24 +6,22 @@ RUN apt-get update && \
     apt-get install -y build-essential zlib1g-dev && \
     rm -rf /var/lib/apt/lists/*
 
-COPY core/ /core/
-RUN pip install --no-cache-dir /core
+COPY --from=gitea.benheuser.de/ben/loseme-core:latest /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
-# Same as Pi — CUDA GPU on dev machine too
 RUN pip install --no-cache-dir torch torchvision torchaudio \
     --index-url https://download.pytorch.org/whl/cu121
 
 RUN pip install matplotlib
 
-COPY server/pyproject.toml .
+COPY pyproject.toml .
 RUN pip install --no-cache-dir .
 
-COPY server/api/      api/
-COPY server/pipeline/ pipeline/
-COPY server/storage/  storage/
-COPY server/preview/  preview/
-COPY server/wiring.py wiring.py
-COPY server/scripts/  scripts/
+COPY api/      api/
+COPY pipeline/ pipeline/
+COPY storage/  storage/
+COPY preview/  preview/
+COPY wiring.py wiring.py
+COPY scripts/  scripts/
 
 ENV PYTHONPATH=/app
 EXPOSE 8000
