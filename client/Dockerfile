@@ -6,23 +6,20 @@ RUN apt-get update && \
     apt-get install -y build-essential && \
     rm -rf /var/lib/apt/lists/*
 
-# Install loseme-core
-COPY --from=gitea.benheuser.de/ben/loseme-core:latest /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY core/ /core/
+RUN pip install --no-cache-dir /core
 
+COPY client/pyproject.toml .
+RUN pip install --no-cache-dir --no-build-isolation .
 
-# Install client dependencies
-COPY pyproject.toml .
-RUN pip install --no-cache-dir .
-
-# Copy client source
-COPY extractors/ extractors/
-COPY sources/    sources/
-COPY ingest/     ingest/
-COPY cli/        cli/
-COPY web/        web/
-COPY preview/ preview/
+COPY client/extractors/ extractors/
+COPY client/sources/    sources/
+COPY client/ingest/     ingest/
+COPY client/cli/        cli/
+COPY client/web/        web/
+COPY client/preview/    preview/
+COPY client/pyproject.toml .
 
 ENV PYTHONPATH=/app
-
 EXPOSE 3000
 CMD ["uvicorn", "web.main:app", "--host", "0.0.0.0", "--port", "3000"]

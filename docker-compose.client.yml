@@ -7,8 +7,8 @@ services:
 
   client:
     build:
-      context: ./client
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: client/Dockerfile
     image: loseme-client:latest
     ports:
       - "3000:3000"

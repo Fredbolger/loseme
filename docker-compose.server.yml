@@ -8,8 +8,8 @@ services:
   server:
     runtime: nvidia
     build:
-      context: ./server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: server/Dockerfile
     image: loseme-server:latest
     ports:
       - "8000:8000"
