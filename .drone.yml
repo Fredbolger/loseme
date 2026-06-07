@@ -107,7 +107,6 @@ steps:
       - export TAG=${DRONE_COMMIT_SHA:0:8}
       - echo "$GITEA_TOKEN" | docker login $REGISTRY -u "$GITEA_USERNAME" --password-stdin
       - docker build -f server/Dockerfile.pi -t $IMAGE:$TAG ./server
-volumes:
       - docker tag $IMAGE:$TAG $IMAGE:${DRONE_BRANCH}
       - docker tag $IMAGE:$TAG $IMAGE:arm64
       - docker push $IMAGE:$TAG
