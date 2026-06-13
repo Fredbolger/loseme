@@ -10,6 +10,7 @@ from api.app.routes import (
 from api.app.core.auth import APIKeyMiddleware
 from contextlib import asynccontextmanager
 from storage.metadata_db.db import init_db
+from storage.metadata_db.search_sessions import init_search_history_schema
 
 
 @asynccontextmanager
@@ -17,6 +18,7 @@ async def lifespan(app: FastAPI):
     # Startup actions
     logger.info("Starting up the API...")
     init_db()
+    init_search_history_schema()
     yield
     # Shutdown actions
     logger.info("Shutting down the API...")

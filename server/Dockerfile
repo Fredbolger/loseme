@@ -9,14 +9,15 @@ RUN apt-get update && \
 COPY core/ /core/
 RUN pip install --no-cache-dir /core
 
-# Same as Pi — CUDA GPU on dev machine too
 RUN pip install --no-cache-dir torch torchvision torchaudio \
     --index-url https://download.pytorch.org/whl/cu121
 
-RUN pip install matplotlib
+RUN pip install --no-cache-dir matplotlib
+
+COPY server/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY server/pyproject.toml .
-RUN pip install --no-cache-dir .
 
 COPY server/api/      api/
 COPY server/pipeline/ pipeline/
@@ -25,6 +26,10 @@ COPY server/preview/  preview/
 COPY server/wiring.py wiring.py
 COPY server/scripts/  scripts/
 
+RUN pip install --no-cache-dir --no-deps .
+
 ENV PYTHONPATH=/app
+
 EXPOSE 8000
+
 CMD ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
