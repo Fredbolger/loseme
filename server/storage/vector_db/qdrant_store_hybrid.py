@@ -238,6 +238,7 @@ class QdrantVectorStoreHybrid(VectorStore):
             id=payload["chunk_id"],
             source_type=payload["source_type"],
             source_path=payload["source_path"],
+            text=payload["text"] if "text" in payload else "",
             document_part_id=payload["document_part_id"],
             device_id=payload["device_id"],
             index=payload["index"],
