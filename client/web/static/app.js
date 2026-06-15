@@ -1,5 +1,5 @@
 import { mount as mountIndex, unmount as unmountIndex }   from './views/index.js';
-import { mount as mountSearch, unmount as unmountSearch } from './views/search.js';
+import { mount as mountSearch, unmount as unmountSearch } from './views/search/search.js';
 import { mount as mountRuns, unmount as unmountRuns }   from './views/runs.js';
 import { mount as mountStorage, unmount as unmountStorage } from './views/storage.js';
 
