@@ -399,7 +399,13 @@ async function loadAndDisplayConversations() {
 }
 
 async function loadModels() {
-  availableModels = await api.loadModels();
+  try {
+    availableModels = await api.loadModels();
+  } catch (e) {
+    console.error('Failed to load models:', e);
+    availableModels = [];
+  }
+  
   const modeSelect = document.getElementById('searchModeSelect');
   const isHybrid = modeSelect ? modeSelect.value === 'hybrid' : true;
   
@@ -407,13 +413,14 @@ async function loadModels() {
     selectedModel = availableModels[0];
     ui.updateModelBadge(`🧠 ${selectedModel}`);
     ui.updateModelSelector(availableModels, selectedModel);
-    if (isHybrid) {
-      ui.showModelSelector(true);
-    }
   } else {
     ui.updateModelBadge('Ollama not running');
     ui.updateModelSelector([], null);
-    ui.showModelSelector(false);
+  }
+  
+  // Show model selector in hybrid mode regardless of model availability
+  if (isHybrid) {
+    ui.showModelSelector(true);
   }
 }
 
@@ -486,7 +493,8 @@ export function mount(container) {
     
     // Show/hide model selector based on search mode
     modeSelect.addEventListener('change', () => {
-      ui.showModelSelector(modeSelect.value === 'hybrid' && availableModels.length > 0);
+      // Show selector in hybrid mode regardless of model availability
+      ui.showModelSelector(modeSelect.value === 'hybrid');
     });
   }
   

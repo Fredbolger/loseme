@@ -1,5 +1,5 @@
 // search-api.js - All API calls
-import { api, getBase } from '../../app.js';
+import { api, getBase, authHeaders } from '../../app.js';
 
 // Cache for LLM models
 export let llmModelsCache = [];
@@ -116,7 +116,7 @@ async function streamLLMFromServer(query, context, onToken, modelName, signal, s
   const fetchOptions = {
     method: 'POST',
     headers: { 
-      'Content-Type': 'application/json',
+      ...authHeaders(),
       'Accept': 'text/event-stream'
     },
     body: JSON.stringify(requestBody),

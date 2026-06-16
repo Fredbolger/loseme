@@ -45,6 +45,8 @@ function authHeaders() {
   if (_apiKey) h['X-API-Key'] = _apiKey;
   return h;
 }
+
+export { authHeaders };
  
 // ── API client ──────────────────────────────────────────────
 // All calls go to the remote server (API_BASE) with the auth header.
