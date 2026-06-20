@@ -1,5 +1,6 @@
 // ── Source View ──────────────────────────────────────────────
 import { api, getClientBase, showError, clearError } from '../app.js';
+import { openPreview } from '../previews/index.js';
 
 let currentSourceId = null;
 let selectedDocId = null;
@@ -220,29 +221,12 @@ async function renderPreview(container, doc) {
   `;
   
   try {
-    // Try to get preview from client (not server)
-    const previewData = await fetch(`${getClientBase()}/preview/${doc.document_part_id}`)
-      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+    // Use the same openPreview function as the search view for consistent rendering
     const previewBody = document.getElementById('previewBody');
-    
-    // Render preview based on content type
-    if (previewData.html_content) {
-      previewBody.innerHTML = previewData.html_content;
-    } else if (previewData.text_content) {
-      previewBody.innerHTML = `<pre>${escapeHtml(previewData.text_content)}</pre>`;
-    } else {
-      previewBody.innerHTML = `
-        <div class="preview-info">
-          <p><strong>Path:</strong> ${doc.source_path}</p>
-          <p><strong>Type:</strong> ${doc.content_type}</p>
-          <p><strong>Checksum:</strong> ${doc.checksum}</p>
-          <p><strong>Created:</strong> ${doc.created_at}</p>
-          <p><strong>Updated:</strong> ${doc.updated_at}</p>
-        </div>
-      `;
-    }
+    await openPreview(previewBody, doc.document_part_id, doc.source_type || 'filesystem', doc.source_path || '');
   } catch (err) {
-    // Fallback to metadata view
+    // Fallback to metadata view if preview fails
+    console.error('Preview failed, falling back to metadata:', err);
     const previewBody = document.getElementById('previewBody');
     previewBody.innerHTML = `
       <div class="preview-info">
