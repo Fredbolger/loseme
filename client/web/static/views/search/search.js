@@ -111,14 +111,11 @@ async function performVectorSearch(query, topK) {
   
   const messageId = ui.addMessageToUI('assistant', messageText);
   
-  // Attach source chips with click handler
-  ui.attachSourcesToMessage(messageId, sourcesToStore, (source) => {
-    // When a source chip is clicked, open the detail panel
-    openDetailFromChip(source.document_part_id, sourcesToStore);
+  // Attach sources widget with click handler
+  ui.attachSourcesToMessage(messageId, sourcesToStore, (sources) => {
+    // When the sources widget is clicked, it will call onSourceClick with the sources array
+    onSourceClick(sources);
   });
-
-  ui.displaySources(sourcesToStore, onSourceClick);
-  ui.toggleSourcesPanel(true);
   
   if (currentSessionId) {
     await api.saveAnswer(
@@ -238,9 +235,9 @@ async function streamLLMAnswer(query, mergedResults, topK) {
           chunk_count: doc.chunkCount
         }));
       
-        // Attach sources with click handler for detail panel
-        ui.attachSourcesToMessage(messageId, sourcesToStore, (source) => {
-          openDetailFromChip(source.document_part_id, sourcesToStore);
+        // Attach sources widget with click handler
+        ui.attachSourcesToMessage(messageId, sourcesToStore, (sources) => {
+          onSourceClick(sources);
         });
       }
 
@@ -296,23 +293,44 @@ async function streamLLMAnswer(query, mergedResults, topK) {
 // ============================================
 // EVENT HANDLERS
 // ============================================
-function onSourceClick(dataset) {
-  // Use the new detail panel instead of modal
-  const { docId, sourcePath, sourceType } = dataset;
-  
-  // If we have the full sources list, pass it for navigation
-  if (lastResults && lastResults.length > 0) {
-    const sources = lastResults.map(doc => ({
-      document_part_id: doc.document_part_id,
-      source_path: doc.source_path,
-      source_type: doc.source_type,
-      score: doc.maxScore,
-      chunk_count: doc.chunkCount
-    }));
-    openDetail(docId, sources, sourceType || 'filesystem', sourcePath || '');
+function onSourceClick(sourcesOrDataset) {
+  // Check if we received an array of sources (from widget) or a single source (from panel)
+  if (Array.isArray(sourcesOrDataset)) {
+    // This came from the sources widget - open sources panel
+    const sources = sourcesOrDataset;
+    ui.displaySources(sources, (source) => {
+      // When a source is clicked in the panel, open detail panel
+      if (lastResults && lastResults.length > 0) {
+        const detailedSources = lastResults.map(doc => ({
+          document_part_id: doc.document_part_id,
+          source_path: doc.source_path,
+          source_type: doc.source_type,
+          score: doc.maxScore,
+          chunk_count: doc.chunkCount
+        }));
+        openDetail(source.document_part_id, detailedSources, source.source_type || 'filesystem', source.source_path || '');
+      } else {
+        // Fallback for single document
+        openDetail(source.document_part_id, sources, source.source_type || 'filesystem', source.source_path || '');
+      }
+    });
+    ui.toggleSourcesPanel(true);
   } else {
-    // Fallback: single document
-    openDetail(docId, [], sourceType || 'filesystem', sourcePath || '');
+    // This came from the sources panel - open detail panel directly
+    const source = sourcesOrDataset;
+    if (lastResults && lastResults.length > 0) {
+      const sources = lastResults.map(doc => ({
+        document_part_id: doc.document_part_id,
+        source_path: doc.source_path,
+        source_type: doc.source_type,
+        score: doc.maxScore,
+        chunk_count: doc.chunkCount
+      }));
+      openDetail(source.docId, sources, source.sourceType || 'filesystem', source.sourcePath || '');
+    } else {
+      // Fallback: single document
+      openDetail(source.docId, [source], source.sourceType || 'filesystem', source.sourcePath || '');
+    }
   }
 }
 
@@ -410,9 +428,8 @@ async function loadConversation(sessionId) {
       if (msg.role === 'user' || msg.role === 'assistant') {
         const messageId = ui.addMessageToUI(msg.role, msg.content);
         if (msg.role === 'assistant' && msg.sources && msg.sources.length > 0) {
-          ui.attachSourcesToMessage(messageId, msg.sources, () => {
-            ui.displaySources(msg.sources, onSourceClick);
-            ui.toggleSourcesPanel(true);
+          ui.attachSourcesToMessage(messageId, msg.sources, (sources) => {
+            onSourceClick(sources);
           });
         }
       }

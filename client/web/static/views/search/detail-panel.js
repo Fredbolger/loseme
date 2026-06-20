@@ -114,6 +114,13 @@ export function openDetail(docId, sources, sourceType, sourcePath) {
   isOpen = true;
   overlay.classList.add('open');
   panel.classList.add('open');
+  
+  // Shift main content left
+  const mainContent = document.querySelector('.search-main');
+  if (mainContent) {
+    mainContent.classList.add('detail-panel-open');
+  }
+  
   document.body.style.overflow = 'hidden';
 
   // Load document
@@ -133,11 +140,23 @@ export function closeDetail() {
     panel.classList.remove('open');
   }
   
+  // Shift main content back to original position
+  const mainContent = document.querySelector('.search-main');
+  if (mainContent) {
+    mainContent.classList.remove('detail-panel-open');
+  }
+  
   document.body.style.overflow = '';
 }
 
 // ── Clean up panel (called on unmount) ──
 export function cleanupDetail() {
+  // Reset main content position if needed
+  const mainContent = document.querySelector('.search-main');
+  if (mainContent) {
+    mainContent.classList.remove('detail-panel-open');
+  }
+  
   if (overlay && overlay.parentNode) {
     overlay.parentNode.removeChild(overlay);
   }

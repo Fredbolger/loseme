@@ -755,64 +755,67 @@ export function attachSourcesToMessage(messageId, sources, onSourceClick) {
   const messageDiv = document.getElementById(messageId);
   if (!messageDiv || !sources || sources.length === 0) return;
 
-  const chipsContainer = document.createElement('div');
-  chipsContainer.className = 'source-chips';
+  const sourcesWidget = document.createElement('div');
+  sourcesWidget.className = 'sources-widget';
 
-  sources.slice(0, 8).forEach((source, index) => {
-    const chip = document.createElement('button');
-    chip.className = 'source-chip';
-    
-    const name = (source.source_path || source.document_part_id || 'Unknown').split(/[/\\]/).pop() || 'Unknown';
-    const score = source.score !== undefined ? ` ${(source.score * 100).toFixed(0)}%` : '';
-    
-    chip.innerHTML = `
+  const count = sources.length;
+  const plural = count !== 1 ? 's' : '';
+  const maxScore = Math.max(...sources.map(s => s.score || 0));
+  const scorePercentage = (maxScore * 100).toFixed(0);
+
+  sourcesWidget.innerHTML = `
+    <button class="sources-widget-btn">
       <span class="icon">📄</span>
-      <span>${escapeHtml(name)}</span>
-      ${score ? `<span class="score">${score}</span>` : ''}
-    `;
-    
-    chip.addEventListener('click', (e) => {
-      e.stopPropagation();
-      onSourceClick(source);
-    });
-    
-    chipsContainer.appendChild(chip);
+      <span class="count">${count} source${plural}</span>
+      <span class="score-badge">${scorePercentage}%</span>
+      <span class="chevron">→</span>
+    </button>
+  `;
+
+  // Store sources data on the widget for later use
+  sourcesWidget.dataset.sources = JSON.stringify(sources);
+
+  // Add click handler to open sources panel
+  sourcesWidget.querySelector('.sources-widget-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const storedSources = JSON.parse(sourcesWidget.dataset.sources);
+    onSourceClick(storedSources);
   });
 
-  // If there are more sources, show a count
-  if (sources.length > 8) {
-    const more = document.createElement('span');
-    more.className = 'source-chip';
-    more.textContent = `+${sources.length - 8} more`;
-    more.style.cursor = 'default';
-    more.style.opacity = '0.6';
-    chipsContainer.appendChild(more);
-  }
-
-  messageDiv.appendChild(chipsContainer);
+  messageDiv.appendChild(sourcesWidget);
 }
 
 export function displaySources(sources, onSourceClick) {
   const sourcesList = document.getElementById('sourcesList');
   if (!sources || !sources.length) {
-    sourcesList.innerHTML = '<div style="padding: 20px; text-align: center; color: #adb5bd;">No sources available</div>';
+    sourcesList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-tertiary);">No sources available</div>';
     return;
   }
   
-  sourcesList.innerHTML = sources.map((s, i) => {
-    const name = basename(s.source_path || s.document_part_id || 'Unknown');
-    const chunkInfo = s.chunk_count ? ` (${s.chunk_count} chunk${s.chunk_count > 1 ? 's' : ''})` : '';
+  // Sort sources by score (highest first)
+  const sortedSources = [...sources].sort((a, b) => (b.score || 0) - (a.score || 0));
+
+  sourcesList.innerHTML = sortedSources.map((source, index) => {
+    const name = basename(source.source_path || source.document_part_id || 'Unknown');
+    const score = source.score ? (source.score * 100).toFixed(0) : '—';
+    const chunkCount = source.chunk_count || 1;
+
     return `
-      <div class="source-item" data-doc-id="${s.document_part_id}" data-source-path="${escapeHtml(s.source_path || '')}" data-source-type="${escapeHtml(s.source_type || 'filesystem')}">
-        <div class="source-title">${escapeHtml(name)}${chunkInfo}</div>
-        <div class="source-score">Score: ${(s.score || s.maxScore || 0).toFixed(3)}</div>
-        <div class="source-chunks">📄 ${s.chunk_count || 1} relevant section${(s.chunk_count || 1) > 1 ? 's' : ''}</div>
+      <div class="source-item" data-index="${index}">
+        <div class="source-title">${escapeHtml(name)}</div>
+        <div class="source-score">Score: ${score}%</div>
+        <div class="source-chunks">📄 ${chunkCount} relevant section${chunkCount > 1 ? 's' : ''}</div>
       </div>
     `;
   }).join('');
   
+  // Add click handlers to each source item
   sourcesList.querySelectorAll('.source-item').forEach(item => {
-    item.addEventListener('click', () => onSourceClick(item.dataset));
+    item.addEventListener('click', () => {
+      const index = parseInt(item.dataset.index);
+      const source = sortedSources[index];
+      onSourceClick(source);
+    });
   });
 }
 
@@ -877,7 +880,19 @@ export function setActiveConversation(sessionId) {
 
 export function toggleSourcesPanel(show) {
   const panel = document.getElementById('sourcesPanel');
-  panel.style.display = show ? 'flex' : 'none';
+  const mainContent = document.querySelector('.search-main');
+  
+  if (show) {
+    panel.classList.add('open');
+    if (mainContent) {
+      mainContent.classList.add('sources-panel-open');
+    }
+  } else {
+    panel.classList.remove('open');
+    if (mainContent) {
+      mainContent.classList.remove('sources-panel-open');
+    }
+  }
 }
 
 export function showDocumentModal(title, onLoadContent) {
