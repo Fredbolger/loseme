@@ -7,6 +7,7 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from cli.config import API_URL, _build_headers, get_client
+from web.preview_proxy import router as preview_router
 
 app = FastAPI(title="LoseMe Dashboard")
 
@@ -16,6 +17,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount preview proxy router
+app.include_router(preview_router)
 
 # ── Config endpoint (consumed by app.js on boot) ─────────────
 @app.get("/config")

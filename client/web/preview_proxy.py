@@ -27,6 +27,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse, Response
 
 from cli.config import API_URL, _build_headers
+from sources.base.docker_path_translation import host_path_to_container
 
 router = APIRouter(prefix="/preview", tags=["preview"])
 
@@ -66,6 +67,18 @@ def client_preview(document_part_id: str):
         if len(parts) != 2:
             raise HTTPException(400, f"Cannot parse thunderbird source_path: {source_path}")
         mbox_path, message_id = parts
+
+        # Translate mbox path from host to container
+        try:
+            container_mbox_path = host_path_to_container(mbox_path)
+            mbox_path = str(container_mbox_path)
+        except ValueError as e:
+            raise HTTPException(
+                400,
+                f"Cannot translate mbox host path to container path: {mbox_path}. "
+                f"Error: {str(e)}. "
+                "Make sure LOSEME_HOST_ROOT and LOSEME_CONTAINER_ROOT are properly configured.",
+            )
 
         if not Path(mbox_path).exists():
             raise HTTPException(
@@ -110,11 +123,22 @@ def client_preview(document_part_id: str):
         }
 
     # ── Filesystem ────────────────────────────────────────────
-    path = Path(source_path)
+    # Translate host path to container path
+    try:
+        container_path = host_path_to_container(source_path)
+        path = Path(container_path)
+    except ValueError as e:
+        raise HTTPException(
+            400,
+            f"Cannot translate host path to container path: {source_path}. "
+            f"Error: {str(e)}. "
+            "Make sure LOSEME_HOST_ROOT and LOSEME_CONTAINER_ROOT are properly configured.",
+        )
+    
     if not path.exists():
         raise HTTPException(
             404,
-            f"File not found on this device: {source_path}. "
+            f"File not found on this device: {source_path} (container: {path}). "
             "Make sure the web client is running on the device that owns this file.",
         )
 
@@ -179,7 +203,20 @@ def client_preview(document_part_id: str):
 def client_serve(document_part_id: str):
     """Serve the raw file bytes — used by the PDF preview iframe."""
     meta = _get_part_meta(document_part_id)
-    path = Path(meta.get("source_path", ""))
+    source_path = meta.get("source_path", "")
+    
+    # Translate host path to container path
+    try:
+        container_path = host_path_to_container(source_path)
+        path = Path(container_path)
+    except ValueError as e:
+        raise HTTPException(
+            400,
+            f"Cannot translate host path to container path: {source_path}. "
+            f"Error: {str(e)}. "
+            "Make sure LOSEME_HOST_ROOT and LOSEME_CONTAINER_ROOT are properly configured.",
+        )
+    
     if not path.exists():
-        raise HTTPException(404, f"File not found on this device: {path}")
+        raise HTTPException(404, f"File not found on this device: {source_path} (container: {path})")
     return FileResponse(str(path))

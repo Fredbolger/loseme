@@ -1,10 +1,5 @@
 """
-Search session persistence.
-
-Stores search sessions (query + retrieved chunks) and their associated
-chat messages. Also provides the semantic cache lookup: given a new query
-embedding, find any existing session whose query embedding is above the
-configured cosine-similarity threshold.
+Search session persistence with source storage.
 """
 
 from __future__ import annotations
@@ -16,27 +11,20 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Optional
 
-from storage.metadata_db.db import get_connection  # reuse existing connection helper
-
-# ---------------------------------------------------------------------------
-# Similarity threshold for cache hits (override via env / config if needed)
-# ---------------------------------------------------------------------------
+from storage.metadata_db.db import get_connection
 
 DEFAULT_CACHE_THRESHOLD = 0.92
 
-
-# ---------------------------------------------------------------------------
-# Schema
-# ---------------------------------------------------------------------------
-
+# Schema with title and sources columns
 CREATE_SESSIONS_TABLE = """
 CREATE TABLE IF NOT EXISTS search_sessions (
     id              TEXT PRIMARY KEY,
     query           TEXT NOT NULL,
-    query_embedding BLOB NOT NULL,   -- JSON-encoded list[float]
-    result_ids      TEXT NOT NULL,   -- JSON-encoded list[str] (document_part_ids)
+    query_embedding BLOB NOT NULL,
+    result_ids      TEXT NOT NULL,
     created_at      TEXT NOT NULL,
-    updated_at      TEXT NOT NULL
+    updated_at      TEXT NOT NULL,
+    title           TEXT
 );
 """
 
@@ -46,7 +34,8 @@ CREATE TABLE IF NOT EXISTS session_messages (
     session_id           TEXT NOT NULL REFERENCES search_sessions(id) ON DELETE CASCADE,
     role                 TEXT NOT NULL CHECK(role IN ('user', 'assistant')),
     content              TEXT NOT NULL,
-    search_results_used  TEXT,        -- JSON-encoded list[str] (chunk_ids), nullable
+    search_results_used  TEXT,
+    sources              TEXT,
     created_at           TEXT NOT NULL
 );
 """
@@ -56,19 +45,35 @@ CREATE INDEX IF NOT EXISTS idx_session_messages_session_id
     ON session_messages(session_id);
 """
 
+# Migrations for existing databases
+ADD_TITLE_COLUMN = "ALTER TABLE search_sessions ADD COLUMN title TEXT;"
+ADD_SOURCES_COLUMN = "ALTER TABLE session_messages ADD COLUMN sources TEXT;"
+
 
 def init_search_history_schema() -> None:
     """Create tables if they don't exist. Safe to call on every startup."""
     with get_connection() as conn:
+        # Create tables if they don't exist
         conn.execute(CREATE_SESSIONS_TABLE)
         conn.execute(CREATE_MESSAGES_TABLE)
         conn.execute(CREATE_SESSION_IDX)
+        
+        # Add title column to search_sessions if it doesn't exist
+        try:
+            conn.execute(ADD_TITLE_COLUMN)
+        except sqlite3.OperationalError:
+            # Column already exists
+            pass
+        
+        # Add sources column to session_messages if it doesn't exist
+        try:
+            conn.execute(ADD_SOURCES_COLUMN)
+        except sqlite3.OperationalError:
+            # Column already exists
+            pass
+            
         conn.commit()
 
-
-# ---------------------------------------------------------------------------
-# Data classes
-# ---------------------------------------------------------------------------
 
 @dataclass
 class SearchSession:
@@ -78,22 +83,21 @@ class SearchSession:
     result_ids: list[str]
     created_at: datetime
     updated_at: datetime
+    title: Optional[str] = None
     messages: list[SessionMessage] = field(default_factory=list)
+    message_count: int = 0  # ✅ Add this field for efficient counting
 
 
 @dataclass
 class SessionMessage:
     id: str
     session_id: str
-    role: str  # 'user' | 'assistant'
+    role: str
     content: str
-    search_results_used: list[str]  # chunk_ids, may be empty
+    search_results_used: list[str]
+    sources: list[dict]
     created_at: datetime
 
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -111,6 +115,14 @@ def _cosine(a: list[float], b: list[float]) -> float:
 
 
 def _row_to_session(row: sqlite3.Row) -> SearchSession:
+    # Safely get title column
+    title = None
+    try:
+        if "title" in row.keys():
+            title = row["title"]
+    except (IndexError, KeyError):
+        pass
+    
     return SearchSession(
         id=row["id"],
         query=row["query"],
@@ -118,23 +130,68 @@ def _row_to_session(row: sqlite3.Row) -> SearchSession:
         result_ids=json.loads(row["result_ids"]),
         created_at=datetime.fromisoformat(row["created_at"]),
         updated_at=datetime.fromisoformat(row["updated_at"]),
+        title=title,
     )
 
 
 def _row_to_message(row: sqlite3.Row) -> SessionMessage:
+    # Safely get sources column
+    sources = []
+    try:
+        if "sources" in row.keys() and row["sources"]:
+            sources = json.loads(row["sources"])
+    except (json.JSONDecodeError, TypeError, IndexError):
+        sources = []
+    
+    # Safely get search_results_used
+    search_results = []
+    try:
+        if "search_results_used" in row.keys() and row["search_results_used"]:
+            search_results = json.loads(row["search_results_used"])
+    except (json.JSONDecodeError, TypeError, IndexError):
+        search_results = []
+    
     return SessionMessage(
         id=row["id"],
         session_id=row["session_id"],
         role=row["role"],
         content=row["content"],
-        search_results_used=json.loads(row["search_results_used"] or "[]"),
+        search_results_used=search_results,
+        sources=sources,
         created_at=datetime.fromisoformat(row["created_at"]),
     )
 
 
-# ---------------------------------------------------------------------------
-# Session CRUD
-# ---------------------------------------------------------------------------
+# ✅ NEW: Helper function to get message count efficiently
+def get_message_count(session_id: str) -> int:
+    """Get message count for a session without loading all messages."""
+    with get_connection() as conn:
+        result = conn.execute(
+            "SELECT COUNT(*) FROM session_messages WHERE session_id = ?",
+            (session_id,),
+        ).fetchone()
+        return result[0] if result else 0
+
+
+# ✅ NEW: Get counts for multiple sessions in one query
+def get_message_counts(session_ids: list[str]) -> dict[str, int]:
+    """Get message counts for multiple sessions in one query."""
+    if not session_ids:
+        return {}
+    
+    placeholders = ','.join(['?' for _ in session_ids])
+    with get_connection() as conn:
+        rows = conn.execute(
+            f"""
+            SELECT session_id, COUNT(*) as count 
+            FROM session_messages 
+            WHERE session_id IN ({placeholders})
+            GROUP BY session_id
+            """,
+            session_ids,
+        ).fetchall()
+        return {row[0]: row[1] for row in rows}
+
 
 def create_session(
     session_id: str,
@@ -146,8 +203,8 @@ def create_session(
     with get_connection() as conn:
         conn.execute(
             """
-            INSERT INTO search_sessions (id, query, query_embedding, result_ids, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO search_sessions (id, query, query_embedding, result_ids, created_at, updated_at, title)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 session_id,
@@ -156,6 +213,7 @@ def create_session(
                 json.dumps(result_ids),
                 now,
                 now,
+                None,
             ),
         )
         conn.commit()
@@ -166,11 +224,21 @@ def create_session(
         result_ids=result_ids,
         created_at=datetime.fromisoformat(now),
         updated_at=datetime.fromisoformat(now),
+        title=None,
+        message_count=0,  # New session has no messages yet
     )
 
 
+def update_session_title(session_id: str, title: str) -> None:
+    with get_connection() as conn:
+        conn.execute(
+            "UPDATE search_sessions SET title = ? WHERE id = ?",
+            (title, session_id),
+        )
+        conn.commit()
+
+
 def update_session_results(session_id: str, result_ids: list[str]) -> None:
-    """Called by the background refresh task after a cache hit."""
     with get_connection() as conn:
         conn.execute(
             "UPDATE search_sessions SET result_ids = ?, updated_at = ? WHERE id = ?",
@@ -189,6 +257,7 @@ def get_session(session_id: str) -> Optional[SearchSession]:
         return None
     session = _row_to_session(row)
     session.messages = list_messages(session_id)
+    session.message_count = len(session.messages)  # ✅ Set message count
     return session
 
 
@@ -199,7 +268,20 @@ def list_sessions(limit: int = 50, offset: int = 0) -> list[SearchSession]:
             "SELECT * FROM search_sessions ORDER BY updated_at DESC LIMIT ? OFFSET ?",
             (limit, offset),
         ).fetchall()
-    return [_row_to_session(r) for r in rows]
+    
+    sessions = [_row_to_session(r) for r in rows]
+    
+    # ✅ Get message counts efficiently
+    session_ids = [s.id for s in sessions]
+    message_counts = get_message_counts(session_ids)
+    
+    # ✅ Set message count for each session
+    for session in sessions:
+        session.message_count = message_counts.get(session.id, 0)
+        # Don't load all messages for listing (performance)
+        session.messages = []
+    
+    return sessions
 
 
 def delete_session(session_id: str) -> bool:
@@ -211,23 +293,10 @@ def delete_session(session_id: str) -> bool:
     return cur.rowcount > 0
 
 
-# ---------------------------------------------------------------------------
-# Semantic cache lookup
-# ---------------------------------------------------------------------------
-
 def find_similar_session(
     query_embedding: list[float],
     threshold: float = DEFAULT_CACHE_THRESHOLD,
 ) -> Optional[tuple[SearchSession, float]]:
-    """
-    Scan all stored session embeddings and return the most similar session
-    above `threshold`, or None if no cache hit.
-
-    Returns (session, similarity_score) so callers can log / display confidence.
-
-    Note: Linear scan is fine for hundreds of sessions. If history grows into
-    the thousands, migrate session embeddings into a dedicated Qdrant collection.
-    """
     with get_connection() as conn:
         conn.row_factory = sqlite3.Row
         rows = conn.execute(
@@ -246,14 +315,11 @@ def find_similar_session(
 
     if best_session is not None and best_score >= threshold:
         best_session.messages = list_messages(best_session.id)
+        best_session.message_count = len(best_session.messages)  # ✅ Set message count
         return best_session, best_score
 
     return None
 
-
-# ---------------------------------------------------------------------------
-# Message CRUD
-# ---------------------------------------------------------------------------
 
 def add_message(
     message_id: str,
@@ -261,14 +327,15 @@ def add_message(
     role: str,
     content: str,
     search_results_used: list[str] | None = None,
+    sources: list[dict] | None = None,
 ) -> SessionMessage:
     now = _now_iso()
     with get_connection() as conn:
         conn.execute(
             """
             INSERT INTO session_messages
-                (id, session_id, role, content, search_results_used, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+                (id, session_id, role, content, search_results_used, sources, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 message_id,
@@ -276,21 +343,23 @@ def add_message(
                 role,
                 content,
                 json.dumps(search_results_used or []),
+                json.dumps(sources or []),
                 now,
             ),
         )
-        # Bump session.updated_at so it surfaces at the top of history
         conn.execute(
             "UPDATE search_sessions SET updated_at = ? WHERE id = ?",
             (now, session_id),
         )
         conn.commit()
+    
     return SessionMessage(
         id=message_id,
         session_id=session_id,
         role=role,
         content=content,
         search_results_used=search_results_used or [],
+        sources=sources or [],
         created_at=datetime.fromisoformat(now),
     )
 

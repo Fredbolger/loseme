@@ -1,5 +1,6 @@
 from pathlib import Path
-#from src.sources.base.docker_path_translation import host_path_to_container
+import os
+from loseme_core.docker_path_translation import host_path_to_container
 from preview.registry import PreviewGenerator, preview_registry
 from preview.models import PreviewResult
 
@@ -29,7 +30,12 @@ class PlaintextPreviewGenerator(PreviewGenerator):
 
     def generate(self, doc_part: dict) -> PreviewResult:
         host_path = doc_part["source_path"]
-        path = Path(host_path_to_container(host_path))
+        try:
+            host_root = os.environ.get("LOSEME_HOST_ROOT")
+            container_root = os.environ.get("LOSEME_CONTAINER_ROOT")
+        except KeyError:
+            raise ValueError("LOSEME_HOST_ROOT and LOSEME_CONTAINER_ROOT environment variables must be set")
+        path = Path(host_path_to_container(host_path, host_root, container_root))
         suffix = path.suffix.lower()
         text = path.read_text(encoding="utf-8", errors="replace")
         return PreviewResult(

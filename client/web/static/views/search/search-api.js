@@ -24,7 +24,7 @@ export async function loadModels() {
 }
 
 async function loadModelsDirect() {
-  const ollamaBase = getBase().replace(':8000', ':11434');
+  const ollamaBase = getBase().replace(':8000', ':11434').replace(':8080', ':11434');
   try {
     const data = await fetch(`${ollamaBase}/api/tags`).then(r => r.json());
     const models = data.models || [];
@@ -91,45 +91,52 @@ export async function batchGetDocuments(partIds) {
   }
 }
 
-export async function streamLLMResponse(query, context, onToken, modelName = 'mistral:7b', signal = null, sessionId = null, resultIds = []) {
+
+export async function streamLLMResponse(query, context, onToken, modelName = 'mistral:7b', signal = null, sessionId = null, resultIds = [], topK = 10) {
   // If using server-side LLM (default), call the API endpoint
   if (useServerSideLLM) {
-    await streamLLMFromServer(query, context, onToken, modelName, signal, sessionId, resultIds);
+    await streamLLMFromServer(query, context, onToken, modelName, signal, sessionId, resultIds, topK);
   } else {
     // Legacy: direct Ollama call
     await streamLLMFromOllama(query, context, onToken, modelName, signal);
   }
 }
 
-// Server-side LLM streaming via SSE (Server-Sent Events)
-async function streamLLMFromServer(query, context, onToken, modelName, signal, sessionId, resultIds) {
-  // Build request payload
+async function streamLLMFromServer(query, context, onToken, modelName, signal, sessionId, resultIds, topK = 10) {
   const requestBody = {
     query,
-    context,
-    model: modelName,
-    result_ids: resultIds,
+    context: context || "",
+    topK: topK || 10,  // ✅ Use the passed topK
+    model: modelName || "mistral:7b",
+    result_ids: resultIds || [],
     session_id: sessionId,
     stream: true
   };
+
+  // Use the api client's headers by making a small request to get the key
+  // or just use the api client's approach
+  const apiKey = localStorage.getItem('apiKey') || '';
   
   const fetchOptions = {
     method: 'POST',
-    headers: { 
-      ...authHeaders(),
+    headers: {
+      'Content-Type': 'application/json',
       'Accept': 'text/event-stream'
     },
     body: JSON.stringify(requestBody),
   };
   
-  // Add signal if provided for abort support
+  if (apiKey) {
+    fetchOptions.headers['X-API-Key'] = apiKey;
+  }
+  
   if (signal) {
     fetchOptions.signal = signal;
   }
   
   const apiBase = getBase();
   const response = await fetch(`${apiBase}/llm/generate`, fetchOptions);
-  
+
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(`LLM server error: ${response.status} - ${errorText}`);

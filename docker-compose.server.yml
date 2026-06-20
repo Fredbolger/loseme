@@ -17,6 +17,7 @@ services:
       - QDRANT_URL=http://qdrant:6333
       - LOSEME_DEVICE_ID=${LOSEME_DEVICE_ID:-server}
       - LOSEME_CONTAINER_ROOT=${LOSEME_CONTAINER_ROOT:-}
+      - LOSEME_HOST_ROOT=${LOSEME_HOST_ROOT:-}
       - HF_HOME=/root/.cache/huggingface
       - TRANSFORMERS_CACHE=/root/.cache/huggingface
       - NVIDIA_VISIBLE_DEVICES=all

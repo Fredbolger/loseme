@@ -297,3 +297,21 @@ def delete_all_parts_for_scope(source_type: str, scope_json: str) -> None:
         (source_type, scope_json),
     )
 
+def get_document_parts_by_source_id(source_id: str) -> List[dict]:
+    """Get all document parts for a given source ID."""
+    # First get the scope for this source
+    from storage.metadata_db.sources import get_monitored_source_by_id
+    source = get_monitored_source_by_id(source_id)
+    if not source:
+        return []
+    
+    scope_json = json.dumps(source["scope"].serialize())
+    rows = fetch_all(
+        """
+        SELECT * FROM document_parts 
+        WHERE scope_json = ?
+        ORDER BY source_path
+        """,
+        (scope_json,)
+    )
+    return [dict(row) for row in rows]

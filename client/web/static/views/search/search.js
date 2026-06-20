@@ -81,6 +81,7 @@ function buildLLMContext(query, mergedResults, history) {
 // ============================================
 // SEARCH ACTIONS
 // ============================================
+
 async function performVectorSearch(query, topK) {
   const response = await api.performSearch(query, topK, currentSessionId);
   const results = response.results || [];
@@ -103,6 +104,7 @@ async function performVectorSearch(query, topK) {
   
   const messageId = ui.addMessageToUI('assistant', messageText);
   
+  // ✅ Use topK instead of hardcoded topK
   const sourcesToStore = merged.slice(0, topK).map(doc => ({
     document_part_id: doc.document_part_id,
     source_path: doc.source_path,
@@ -119,7 +121,6 @@ async function performVectorSearch(query, topK) {
   ui.displaySources(sourcesToStore, onSourceClick);
   ui.toggleSourcesPanel(true);
   
-  // ✅ FIX: Always store the assistant message
   if (currentSessionId) {
     await api.saveAnswer(
       currentSessionId, 
@@ -128,25 +129,27 @@ async function performVectorSearch(query, topK) {
       sourcesToStore
     );
     
-    // ✅ Update currentMessages
     currentMessages.push(
       { role: 'user', content: query },
       { role: 'assistant', content: messageText, sources: sourcesToStore }
     );
     
-    // ✅ Refresh conversations list
     await loadAndDisplayConversations();
-    
-    // ✅ Highlight current conversation
     ui.setActiveConversation(currentSessionId);
   }
 }
 
 async function performHybridSearch(query, topK) {
+  // First, perform the search to get the session ID
   const response = await api.performSearch(query, topK, currentSessionId);
   const results = response.results || [];
   currentSessionId = response.session_id;
   
+  // Immediately show the new conversation in the sidebar
+  ui.addOrUpdateConversation(currentSessionId, query, 'pending', 0);
+  ui.setActiveConversation(currentSessionId);
+  
+  // Process results
   const merged = mergeByPart(results);
   lastResults = merged;
   
@@ -155,8 +158,14 @@ async function performHybridSearch(query, topK) {
     lastEnriched = await api.batchGetDocuments(partIds);
   }
   
-  await streamLLMAnswer(query, merged, topK);  // Pass topK
+  // ✅ Pass topK to streamLLMAnswer
+  await streamLLMAnswer(query, merged, topK);
+  
+  // Final update after LLM completes
+  await loadAndDisplayConversations();
+  ui.setActiveConversation(currentSessionId);
 }
+
 
 async function streamLLMAnswer(query, mergedResults, topK) {
   const context = buildLLMContext(query, mergedResults, currentMessages);
@@ -181,8 +190,8 @@ async function streamLLMAnswer(query, mergedResults, topK) {
     const model = ui.getSelectedModel() || selectedModel || 'mistral:7b';
     const currentController = activeStreamController; // Capture current controller
     
-    // Get result_ids for server-side context building
-    const resultIds = mergedResults.slice(0, 10).map(doc => doc.document_part_id);
+    // Get result_ids for server-side context building - use topK here too
+    const resultIds = mergedResults.slice(0, topK).map(doc => doc.document_part_id);
     
     await api.streamLLMResponse(
       query, 
@@ -191,8 +200,8 @@ async function streamLLMAnswer(query, mergedResults, topK) {
         pendingAnswer += token;
         // Update UI if we're mounted and this is still the active stream
         if (currentController === activeStreamController && isMounted && messageId) {
-          const messagesArea = document.getElementById('messagesArea');
-          if (messagesArea && messagesArea.querySelector(`#${messageId}`)) {
+          const messageElement = document.getElementById(messageId);
+          if (messageElement) {
             ui.updateMessageContent(messageId, pendingAnswer);
           }
         }
@@ -200,40 +209,64 @@ async function streamLLMAnswer(query, mergedResults, topK) {
       model, 
       activeStreamController.signal,
       currentSessionId,  // Pass session ID
-      resultIds  // Pass result IDs for server-side context
+      resultIds,  // Pass result IDs for server-side context
+      topK  // Pass topK
     );
     
-    // Stream completed successfully - save to session if we have one
-    if (currentSessionId && pendingAnswer.trim() && currentController === activeStreamController) {
-      const sourcesToStore = mergedResults.slice(0, 5).map(doc => ({
-        document_part_id: doc.document_part_id,
-        source_path: doc.source_path,
-        source_type: doc.source_type,
-        score: doc.maxScore,
-        chunk_count: doc.chunkCount
-      }));
+    // Stream completed successfully
+    if (currentController === activeStreamController) {
+      // Finalize the message content
+      if (isMounted && messageId) {
+        ui.finalizeMessage(messageId, pendingAnswer);
+      }
       
-      await api.saveAnswer(
-        currentSessionId,
-        pendingAnswer,
-        mergedResults.slice(0, 5).map(doc => doc.document_part_id),
-        sourcesToStore
-      );
+      // ✅ Use topK instead of hardcoded 5 for sources
+      if (mergedResults && mergedResults.length > 0 && messageId) {
+        const sourcesToStore = mergedResults.slice(0, topK).map(doc => ({
+          document_part_id: doc.document_part_id,
+          source_path: doc.source_path,
+          source_type: doc.source_type,
+          score: doc.maxScore,
+          chunk_count: doc.chunkCount
+        }));
+        
+        // Attach sources to the message
+        ui.attachSourcesToMessage(messageId, sourcesToStore, () => {
+          ui.displaySources(sourcesToStore, onSourceClick);
+          ui.toggleSourcesPanel(true);
+        });
+      }
       
-      // Add to current messages
-      currentMessages.push(
-        { role: 'user', content: query },
-        { role: 'assistant', content: pendingAnswer, sources: sourcesToStore }
-      );
+      // ✅ Use topK instead of hardcoded 5 for saving
+      if (currentSessionId && pendingAnswer.trim()) {
+        const sourcesToStore = mergedResults.slice(0, topK).map(doc => ({
+          document_part_id: doc.document_part_id,
+          source_path: doc.source_path,
+          source_type: doc.source_type,
+          score: doc.maxScore,
+          chunk_count: doc.chunkCount
+        }));
+        
+        await api.saveAnswer(
+          currentSessionId,
+          pendingAnswer,
+          mergedResults.slice(0, topK).map(doc => doc.document_part_id),
+          sourcesToStore
+        );
+        
+        // Add to current messages
+        currentMessages.push(
+          { role: 'user', content: query },
+          { role: 'assistant', content: pendingAnswer, sources: sourcesToStore }
+        );
+        
+        // Update the conversation in the sidebar with the final content
+        ui.addOrUpdateConversation(currentSessionId, query, 'completed', currentMessages.length);
+      }
     }
     
     // Clear the active controller and pending state
     activeStreamController = null;
-    
-    // Finalize message if we're still mounted
-    if (isMounted && messageId) {
-      ui.finalizeMessage(messageId, pendingAnswer);
-    }
     
     // Clear pending state
     pendingAnswer = null;
@@ -252,6 +285,7 @@ async function streamLLMAnswer(query, mergedResults, topK) {
   activeStreamController = null;
 }
 
+
 // ============================================
 // EVENT HANDLERS
 // ============================================
@@ -264,16 +298,26 @@ async function onSourceClick(dataset) {
     }
   );
 }
+
 async function sendMessage() {
   const input = document.getElementById('chatInput');
+  const sendBtn = document.getElementById('sendBtn');
+  
+  if (!input || !sendBtn) return;
+  
   const message = input.value.trim();
   if (!message || isAwaitingResponse) return;
   
-  const searchMode = document.getElementById('searchModeSelect').value;
-  const topK = parseInt(document.getElementById('topKInput').value) || 10;
+  const searchModeSelect = document.getElementById('searchModeSelect');
+  const topKInput = document.getElementById('topKInput');
+  
+  if (!searchModeSelect || !topKInput) return;
+  
+  const searchMode = searchModeSelect.value;
+  const topK = parseInt(topKInput.value) || 10;
   
   input.value = '';
-  document.getElementById('sendBtn').disabled = true;
+  sendBtn.disabled = true;
   
   ui.clearMessagesArea();
   const userMessageId = ui.addMessageToUI('user', message);
@@ -296,11 +340,10 @@ async function sendMessage() {
     showError(e.message);
   } finally {
     isAwaitingResponse = false;
-    document.getElementById('sendBtn').disabled = false;
-    input.focus();
+    if (sendBtn) sendBtn.disabled = false;
+    if (input) input.focus();
   }
 }
-
 
 function newChat() {
   // Cancel any active stream
@@ -505,7 +548,10 @@ export function mount(container) {
       sendMessage();
     });
   });
-  
+ 
+  window.loadConversationFn = loadConversation;
+  window.deleteConversationFn = deleteConversation
+
   loadModels();
   loadAndDisplayConversations();
 }

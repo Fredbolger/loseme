@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any, AsyncGenerator
+from typing import Any, AsyncGenerator, Optional, List
 
 import httpx
 from fastapi import APIRouter, HTTPException, Request
@@ -35,12 +35,12 @@ router = APIRouter(prefix="/llm", tags=["llm"])
 
 # LLM Server URL - can point to a separate machine (e.g., GPU server)
 # Supports both LOSEME_LLM_URL (new) and OLLAMA_URL (backward compatible)
-LLM_API_URL = os.getenv("LOSEME_LLM_URL") or os.getenv("OLLAMA_URL", "http://localhost:11434")
+LLM_API_URL = os.getenv("LOSEME_LLM_URL") or os.getenv("OLLAMA_URL", "http://host.docker.internal:11434")
 LLM_CHAT_URL = f"{LLM_API_URL}/api/chat"  # Ollama chat endpoint
 LLM_GENERATE_URL = f"{LLM_API_URL}/api/generate"  # Ollama generate endpoint (streaming)
 
 # Default model - can be overridden per-request
-LLM_MODEL = os.getenv("LOSEME_LLM_MODEL", "llama3")
+LLM_MODEL = os.getenv("LOSEME_LLM_MODEL", "mistral:7b")
 LLM_TIMEOUT = float(os.getenv("LOSEME_LLM_TIMEOUT", "120"))
 
 SYSTEM_PROMPT = """You are a helpful assistant for a local semantic search system.
@@ -55,8 +55,9 @@ clearly rather than guessing. Be concise and specific."""
 
 class LLMGenerateRequest(BaseModel):
     """Request for server-side LLM generation with context"""
-    session_id: str = Field(..., description="Search session ID to associate the answer with")
+    session_id: Optional[str] = Field(default=None, description="Search session ID to associate the answer with (optional)")
     query: str = Field(..., description="User query")
+    topK: int = Field(default=5, description="Number of top search results to use as context")
     result_ids: list[str] = Field(default_factory=list, description="Document part IDs from search results")
     context: Optional[str] = Field(default=None, description="Pre-built context string (optional)")
     model: str = Field(default=LLM_MODEL, description="Model to use")
@@ -76,29 +77,41 @@ class LLMHealthResponse(BaseModel):
 
 async def test_llm_connection() -> LLMHealthResponse:
     """Test connection to the configured LLM server and fetch available models."""
-    try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            # Try to get tags/models from Ollama
-            response = await client.get(f"{LLM_API_URL}/api/tags")
-            if response.status_code == 200:
-                data = response.json()
-                models = [m["name"] for m in data.get("models", [])]
-                return LLMHealthResponse(
-                    status="ok",
-                    models=models,
-                    url=LLM_API_URL
-                )
-            return LLMHealthResponse(
-                status="error",
-                models=[],
-                url=LLM_API_URL
-            )
-    except Exception as e:
-        return LLMHealthResponse(
-            status=f"error: {str(e)}",
-            models=[],
-            url=LLM_API_URL
-        )
+    # List of URLs to try (configured URL first, then common defaults)
+    urls_to_try = [LLM_API_URL]
+    
+    # Add common default URLs if not already in the list
+    default_urls = [
+        "http://localhost:11434",
+        "http://host.docker.internal:11434",
+        "http://127.0.0.1:11434",
+    ]
+    for url in default_urls:
+        if url not in urls_to_try:
+            urls_to_try.append(url)
+    
+    for url in urls_to_try:
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                response = await client.get(f"{url}/api/tags")
+                if response.status_code == 200:
+                    data = response.json()
+                    models = [m["name"] for m in data.get("models", [])]
+                    return LLMHealthResponse(
+                        status="ok",
+                        models=models,
+                        url=url
+                    )
+        except Exception:
+            # Try next URL
+            continue
+    
+    # If all URLs failed
+    return LLMHealthResponse(
+        status=f"error: Could not connect to any LLM server",
+        models=[],
+        url=LLM_API_URL
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -112,6 +125,56 @@ async def llm_health() -> LLMHealthResponse:
     This allows the client to verify LLM connectivity separately from the API server.
     """
     return await test_llm_connection()
+
+
+@router.get("/debug")
+async def llm_debug() -> dict:
+    """
+    Debug endpoint to check LLM connectivity with verbose output.
+    Useful for troubleshooting connection issues.
+    """
+    urls_tried = []
+    errors = []
+    generate_test_results = []
+    
+    urls_to_try = [LLM_API_URL]
+    default_urls = [
+        "http://localhost:11434",
+        "http://host.docker.internal:11434",
+        "http://127.0.0.1:11434",
+    ]
+    for url in default_urls:
+        if url not in urls_to_try:
+            urls_to_try.append(url)
+    
+    # First try to get models from /api/tags
+    for url in urls_to_try:
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                response = await client.get(f"{url}/api/tags")
+                if response.status_code == 200:
+                    data = response.json()
+                    models = [m["name"] for m in data.get("models", [])]
+                    return {
+                        "status": "ok",
+                        "working_url": url,
+                        "models": models,
+                        "urls_tried": urls_tried,
+                        "errors": errors
+                    }
+                else:
+                    urls_tried.append(url)
+                    errors.append(f"{url}/api/tags: HTTP {response.status_code}")
+        except Exception as e:
+            urls_tried.append(url)
+            errors.append(f"{url}/api/tags: {str(e)}")
+    
+    return {
+        "status": "error",
+        "urls_tried": urls_tried,
+        "errors": errors,
+        "configured_url": LLM_API_URL
+    }
 
 
 @router.get("/models")
@@ -235,26 +298,42 @@ async def _stream_ollama_response(
     
     async with httpx.AsyncClient(timeout=LLM_TIMEOUT) as client:
         try:
-            async with client.stream("POST", LLM_GENERATE_URL, json=payload) as response:
+            if stream:
+                # Streaming mode - use client.stream()
+                async with client.stream("POST", LLM_GENERATE_URL, json=payload) as response:
+                    response.raise_for_status()
+                    async for line in response.aiter_lines():
+                        if line:
+                            try:
+                                data = json.loads(line)
+                                if "response" in data:
+                                    yield data["response"]
+                            except json.JSONDecodeError:
+                                # Skip malformed lines
+                                continue
+            else:
+                # Non-streaming mode - use regular post
+                response = await client.post(LLM_GENERATE_URL, json=payload)
                 response.raise_for_status()
-                async for line in response.aiter_lines():
-                    if line:
-                        try:
-                            data = json.loads(line)
-                            if "response" in data:
-                                yield data["response"]
-                        except json.JSONDecodeError:
-                            # Skip malformed lines
-                            continue
+                data = response.json()
+                # Yield the full response as a single chunk
+                if "response" in data:
+                    yield data["response"]
         except httpx.HTTPStatusError as e:
+            try:
+                error_text = e.response.text
+            except:
+                error_text = "No error text available"
             raise HTTPException(
                 status_code=502,
-                detail=f"LLM server error: {e.response.status_code} - {e.response.text}"
+                detail=f"LLM server error: {e.response.status_code} - {error_text}"
             )
         except Exception as e:
+            import traceback
+            tb = traceback.format_exc()
             raise HTTPException(
                 status_code=500,
-                detail=f"LLM generation failed: {str(e)}"
+                detail=f"LLM generation failed: {str(e)}\n{tb}"
             )
 
 
@@ -342,35 +421,48 @@ async def generate_llm(
         prompt = build_prompt_from_context(request.query, request.context)
     elif request.result_ids:
         # Fetch chunk texts from vector store
-        store = get_vector_store()
-        chunk_texts = []
-        for chunk_id in request.result_ids[:10]:  # Limit to top 10 results
-            try:
-                chunk = store.retrieve_chunk_by_id(chunk_id)
-                if chunk and chunk.text:
-                    chunk_texts.append(chunk.text)
-            except Exception:
-                continue
-        
-        context = "\n\n---\n\n".join(
-            f"[Document {i+1}]\n{text}" 
-            for i, text in enumerate(chunk_texts)
-        )
-        prompt = build_prompt_from_context(request.query, context)
+        try:
+            store = get_vector_store()
+            chunk_texts = []
+            for chunk_id in request.result_ids[:request.topK]:
+                try:
+                    chunk = store.retrieve_chunk_by_id(chunk_id)
+                    if chunk and chunk.text:
+                        chunk_texts.append(chunk.text)
+                except Exception:
+                    continue
+            
+            if chunk_texts:
+                context = "\n\n---\n\n".join(
+                    f"[Document {i+1}]\n{text}" 
+                    for i, text in enumerate(chunk_texts)
+                )
+                prompt = build_prompt_from_context(request.query, context)
+            else:
+                # No chunks found, use query directly
+                prompt = f"{SYSTEM_PROMPT}\n\nQuestion: {request.query}\n\nAnswer:"
+        except Exception as e:
+            # If vector store fails, use query directly
+            prompt = f"{SYSTEM_PROMPT}\n\nQuestion: {request.query}\n\nAnswer:"
     else:
         # No context provided, use query directly
         prompt = f"{SYSTEM_PROMPT}\n\nQuestion: {request.query}\n\nAnswer:"
     
+    # Use streaming mode from request
+    use_stream = getattr(request, 'stream', True)
+    
     # Create streaming generator
     async def generate():
         try:
-            async for chunk in _stream_ollama_response(model, prompt, stream=True):
+            async for chunk in _stream_ollama_response(model, prompt, stream=use_stream):
                 # Format as SSE (Server-Sent Events)
                 yield f"data: {json.dumps({'token': chunk})}\n\n"
             # Send completion marker
             yield "data: [DONE]\n\n"
         except Exception as e:
-            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+            import traceback
+            tb = traceback.format_exc()
+            yield f"data: {json.dumps({'error': str(e), 'traceback': tb})}\n\n"
     
     return StreamingResponse(
         generate(),
@@ -378,6 +470,10 @@ async def generate_llm(
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Expose-Headers": "*",
         }
     )
 
@@ -442,3 +538,5 @@ async def generate_llm_no_stream(request: LLMGenerateRequest) -> dict:
             status_code=500,
             detail=f"LLM generation failed: {str(e)}"
         )
+
+LLMGenerateRequest.model_rebuild()

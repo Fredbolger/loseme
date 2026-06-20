@@ -2,7 +2,7 @@ import { mount as mountIndex, unmount as unmountIndex }   from './views/index.js
 import { mount as mountSearch, unmount as unmountSearch } from './views/search/search.js';
 import { mount as mountRuns, unmount as unmountRuns }   from './views/runs.js';
 import { mount as mountStorage, unmount as unmountStorage } from './views/storage.js';
-
+import { mount as mountSource, unmount as unmountSource } from './views/source.js';
 
 // ── Shared state ────────────────────────────────────────────
 export let API_BASE = 'http://localhost:8000';
@@ -70,6 +70,17 @@ export const api = {
       headers: authHeaders(),
     }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
   },
+  getDocumentsBySource(sourceId) {
+    return this.get(`/documents/by_source/${sourceId}`);
+  },
+  
+  getDocumentChunks(docId) {
+    return this.get(`/documents/${docId}/chunks`);
+  },
+  
+  getDocumentAttachments(docId) {
+    return this.get(`/documents/${docId}/attachments`);
+  },
 };
 
 // ── Theme ────────────────────────────────────────────────────
@@ -96,6 +107,7 @@ const VIEWS = {
   search: { mount: mountSearch, unmount: unmountSearch },
   runs:   { mount: mountRuns,   unmount: unmountRuns   },
   storage: { mount: mountStorage, unmount: unmountStorage },
+  source: { mount: mountSource, unmount: unmountSource },
 };
 
 let currentTab = null;

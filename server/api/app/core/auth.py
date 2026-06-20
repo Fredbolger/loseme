@@ -14,8 +14,18 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 _API_KEY = os.environ.get("LOSEME_API_KEY", "").strip()
 
-# Paths that are always allowed without a key (health check, docs)
-_EXEMPT = {"/health", "/docs", "/openapi.json", "/redoc", "/"}
+# Paths that are always allowed without a key (health check, docs, LLM endpoints)
+# Note: Include both with and without trailing slash for safety
+_EXEMPT = {
+    "/health", "/docs", "/openapi.json", "/redoc", "/",
+    "/llm", "/llm/",
+    "/llm/health", "/llm/health/",
+    "/llm/debug", "/llm/debug/",
+    "/llm/models", "/llm/models/",
+    "/llm/generate", "/llm/generate/",
+    "/llm/generate-nostream", "/llm/generate-nostream/",
+    "/llm/config", "/llm/config/"
+}
 
 
 class APIKeyMiddleware(BaseHTTPMiddleware):

@@ -13,7 +13,7 @@ export async function render(body, partId, _path) {
   //const base = document.getElementById('apiBase')?.value.replace(/\/$/, '') || '';
 
   try {
-    const data = await fetch(`${base}/documents/preview/${partId}`)
+    const data = await fetch(`${base}/preview/${partId}`)
       .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
 
     const dateStr = data.date ? new Date(data.date).toLocaleString() : data.date;

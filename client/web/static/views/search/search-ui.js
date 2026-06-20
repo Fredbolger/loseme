@@ -909,3 +909,92 @@ export function clearMessagesArea() {
     messagesArea.innerHTML = '';
   }
 }
+
+export function addOrUpdateConversation(sessionId, query, status = 'pending', messageCount = 0) {
+  const list = document.getElementById('conversationsList');
+  
+  // Check if conversation already exists
+  const existingItem = list.querySelector(`[data-session="${escapeHtml(sessionId)}"]`);
+  
+  if (existingItem) {
+    // Update existing conversation
+    const titleEl = existingItem.querySelector('.conversation-title');
+    const metaEl = existingItem.querySelector('.conversation-meta');
+    
+    if (titleEl) {
+      titleEl.textContent = query.length > 40 ? query.substring(0, 40) + '...' : query;
+    }
+    
+    if (metaEl) {
+      const statusIndicator = status === 'pending' ? '⏳ Generating...' : '';
+      const msgCount = messageCount > 0 ? `${messageCount} messages` : '0 messages';
+      metaEl.innerHTML = `
+        <span>${msgCount}</span>
+        <span>${statusIndicator || fmtDate(new Date().toISOString())}</span>
+        <button class="conversation-delete" data-session="${escapeHtml(sessionId)}">🗑</button>
+      `;
+    }
+    
+    // Re-bind delete button
+    const deleteBtn = existingItem.querySelector('.conversation-delete');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // You'll need to pass the delete function here
+        // For now, we'll use the global deleteConversation
+        if (window.deleteConversationFn) {
+          window.deleteConversationFn(sessionId);
+        }
+      });
+    }
+    
+    return;
+  }
+  
+  // Create new conversation item
+  const item = document.createElement('div');
+  item.className = 'conversation-item active';
+  item.dataset.session = sessionId;
+  
+  const statusText = status === 'pending' ? '⏳ Generating...' : fmtDate(new Date().toISOString());
+  const msgCount = messageCount > 0 ? `${messageCount} messages` : '0 messages';
+  
+  item.innerHTML = `
+    <div class="conversation-title">${escapeHtml(query.length > 40 ? query.substring(0, 40) + '...' : query)}</div>
+    <div class="conversation-meta">
+      <span>${msgCount}</span>
+      <span>${statusText}</span>
+      <button class="conversation-delete" data-session="${escapeHtml(sessionId)}">🗑</button>
+    </div>
+  `;
+  
+  // Insert at the top of the list
+  list.prepend(item);
+  
+  // Remove placeholder if it exists
+  const placeholder = list.querySelector('.conversations-placeholder');
+  if (placeholder) {
+    placeholder.remove();
+  }
+  
+  // Bind click to load conversation
+  item.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('conversation-delete')) {
+      // You'll need to pass the load function here
+      if (window.loadConversationFn) {
+        window.loadConversationFn(sessionId);
+      }
+    }
+  });
+  
+  // Bind delete button
+  const deleteBtn = item.querySelector('.conversation-delete');
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (window.deleteConversationFn) {
+        window.deleteConversationFn(sessionId);
+      }
+    });
+  }
+}

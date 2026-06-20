@@ -24,7 +24,7 @@ export async function render(body, partId, path) {
   const suffix = path.split('.').pop().toLowerCase();
 
   try {
-    const data = await fetch(`${base}/documents/preview/${partId}`)
+    const data = await fetch(`${base}/preview/${partId}`)
       .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
 
     if (MARKDOWN_SUFFIXES.has(suffix)) {

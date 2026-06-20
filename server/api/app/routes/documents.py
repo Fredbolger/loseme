@@ -205,6 +205,14 @@ def get_document_by_id_route(document_id: str):
         raise HTTPException(status_code=404, detail="Document not found")
     return doc
 
+@router.get("/by_source/{source_id}")
+def get_documents_by_source(source_id: str):
+    """Get all document parts for a given source ID."""
+    from storage.metadata_db.document_parts import get_document_parts_by_source_id
+    documents = get_document_parts_by_source_id(source_id)
+    return {"documents": documents}
+
+
 @router.get("/{document_part_id}")
 def get_document_part(document_part_id: str):
     """
@@ -227,3 +235,38 @@ def get_document_part(document_part_id: str):
     
     return {"document_part": document_part}
 
+@router.get("/{document_part_id}/chunks")
+def get_document_chunks(document_part_id: str):
+    """Get all chunks for a document part."""
+    doc_part = get_document_part_by_id(document_part_id)
+    if not doc_part:
+        raise HTTPException(404, "Document not found")
+    
+    chunk_ids = doc_part.get("chunk_ids")
+    if not chunk_ids:
+        return {"chunks": []}
+    
+    chunk_ids = json.loads(chunk_ids) if isinstance(chunk_ids, str) else chunk_ids
+    
+    from storage.vector_db.runtime import get_vector_store
+    store = get_vector_store()
+    chunks = []
+    for chunk_id in chunk_ids:
+        chunk = store.retrieve_chunk_by_id(chunk_id)
+        if chunk:
+            chunks.append(chunk)
+    
+    return {"chunks": chunks}
+
+@router.get("/{document_part_id}/attachments")
+def get_document_attachments(document_part_id: str):
+    """Get attachments for a document."""
+    doc_part = get_document_part_by_id(document_part_id)
+    if not doc_part:
+        raise HTTPException(404, "Document not found")
+    
+    # This depends on your attachment storage model
+    # For now, return metadata about attachments from the document part
+    metadata = doc_part.get("metadata_json", {})
+    attachments = metadata.get("attachments", [])
+    return {"attachments": attachments}
