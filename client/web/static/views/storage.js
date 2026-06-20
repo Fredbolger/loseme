@@ -54,17 +54,28 @@ async function load() {
 
 function renderStatCards(totalParts, totalChunks, chunkerCount) {
   document.getElementById('storageStatCards').innerHTML = `
-    <div class="stat-card">
-      <div class="stat-label">Document Parts</div>
-      <div class="stat-value accent">${totalParts.toLocaleString()}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Total Chunks</div>
-      <div class="stat-value green">${typeof totalChunks === 'number' ? totalChunks.toLocaleString() : totalChunks}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Chunker Versions</div>
-      <div class="stat-value">${chunkerCount}</div>
+    <div class="stats-grid">
+      <div class="stat-tile">
+        <div class="stat-tile-content">
+          <div class="stat-label">Document Parts</div>
+          <div class="stat-value accent">${totalParts.toLocaleString()}</div>
+          <div class="stat-icon">📄</div>
+        </div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-tile-content">
+          <div class="stat-label">Total Chunks</div>
+          <div class="stat-value green">${typeof totalChunks === 'number' ? totalChunks.toLocaleString() : totalChunks}</div>
+          <div class="stat-icon">🧩</div>
+        </div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-tile-content">
+          <div class="stat-label">Chunker Versions</div>
+          <div class="stat-value">${chunkerCount}</div>
+          <div class="stat-icon">🔧</div>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -120,18 +131,40 @@ function renderTable(stats) {
     `;
   }).join('');
 
+  const chunkerTiles = filtered.map(r => {
+    const pct = totalParts > 0
+      ? ((r.document_part_count / totalParts) * 100).toFixed(1)
+      : 0;
+    const name = r.chunker_name ?? '<null>';
+    const version = r.chunker_version ?? '<null>';
+    return `
+      <div class="chunker-tile">
+        <div class="chunker-tile-content">
+          <div class="chunker-tile-header">
+            <span class="source-type-tag">${name}</span>
+            <span class="badge">${version}</span>
+          </div>
+          <div class="chunker-tile-body">
+            <div class="chunker-stat">
+              <div class="stat-label">Document Parts</div>
+              <div class="stat-value">${r.document_part_count.toLocaleString()}</div>
+            </div>
+            <div class="chunker-progress">
+              <div class="progress-track">
+                <div class="progress-fill" style="width:${pct}%"></div>
+              </div>
+              <div class="progress-percent">${pct}%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
   document.getElementById('chunkerTable').innerHTML = `
-    <table style="width:100%;border-collapse:collapse;font-size:13px;">
-      <thead>
-        <tr style="font-size:10px;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);">
-          <th style="text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);">Chunker</th>
-          <th style="text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);">Version</th>
-          <th style="text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);">Document Parts</th>
-          <th style="text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);min-width:160px;">Share</th>
-        </tr>
-      </thead>
-      <tbody>${rows || '<tr><td colspan="4" style="padding:20px;color:var(--muted);text-align:center;">No data</td></tr>'}</tbody>
-    </table>
+    <div class="chunker-tiles-grid">
+      ${chunkerTiles || '<div class="empty-state">No chunker data available</div>'}
+    </div>
   `;
 }
 

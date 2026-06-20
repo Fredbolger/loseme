@@ -6,9 +6,12 @@
 /* ── Search Layout ── */
 .search-layout {
   display: flex;
-  height: calc(100vh - 52px);
+  height: 100%;
+  width: 100%;
   background: var(--bg-primary);
   overflow: hidden;
+  margin: 0;
+  padding: 0;
 }
 
 /* ────────────────────────────────────────────
@@ -25,6 +28,9 @@
   overflow: hidden;
   position: relative;
   z-index: 10;
+  /* Extend to top and left edges */
+  margin: 0;
+  padding: 0;
 }
 
 .search-sidebar.collapsed {
@@ -205,6 +211,8 @@
   padding: var(--space-sm) var(--space-lg);
   border-top: 1px solid var(--border-default);
   flex-shrink: 0;
+  /* Ensure footer stays at bottom of sidebar */
+  margin-top: auto;
 }
 
 .sidebar-action-btn {
@@ -238,6 +246,7 @@
   flex-direction: column;
   background: var(--bg-primary);
   min-width: 0;
+  overflow: hidden; /* Prevent double scrollbars */
 }
 
 /* ── Chat Header ── */
@@ -278,6 +287,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-xl);
+  /* Ensure messages area doesn't overlap with fixed input */
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
 /* ── Welcome Screen ── */
@@ -479,11 +491,26 @@
 }
 
 /* ────────────────────────────────────────────
-   INPUT AREA (Floating like ChatGPT)
+   INPUT AREA (Fixed at bottom)
    ──────────────────────────────────────────── */
+.input-area {
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-default);
+  z-index: 10;
+  width: 100%;
+}
+
 .input-container {
   padding: var(--space-md) var(--space-xl) var(--space-xl);
-  flex-shrink: 0;
+  position: relative;
+}
+
+.input-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
   position: relative;
 }
 
@@ -832,8 +859,11 @@
     min-width: unset;
   }
 
-  .input-container {
-    padding: var(--space-sm) var(--space-md) var(--space-md);
+  .input-area {
+    flex-shrink: 0;
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-default);
+    z-index: 10;
   }
 
   .chat-header {

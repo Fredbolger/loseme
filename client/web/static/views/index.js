@@ -2,32 +2,49 @@ import { api, fmtDate, showError, clearError, getClientBase } from '../app.js';
 
 // ── HTML template ────────────────────────────────────────────
 const TEMPLATE = `
-  <div class="stats-row">
-    <div class="stat-card">
-      <div class="stat-label">Document Parts</div>
-      <div class="stat-value accent" id="statDocs">—</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Total Chunks</div>
-      <div class="stat-value green" id="statChunks">—</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Source Instances</div>
-      <div class="stat-value" id="statSources">—</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Devices</div>
-      <div class="stat-value" id="statDevices">—</div>
+  <!-- Stats Dashboard with Professional Tile Layout -->
+  <div class="dashboard-stats">
+    <div class="stats-grid">
+      <div class="stat-tile">
+        <div class="stat-tile-content">
+          <div class="stat-label">Document Parts</div>
+          <div class="stat-value accent" id="statDocs">—</div>
+          <div class="stat-icon">📄</div>
+        </div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-tile-content">
+          <div class="stat-label">Total Chunks</div>
+          <div class="stat-value green" id="statChunks">—</div>
+          <div class="stat-icon">🧩</div>
+        </div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-tile-content">
+          <div class="stat-label">Source Instances</div>
+          <div class="stat-value" id="statSources">—</div>
+          <div class="stat-icon">📁</div>
+        </div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-tile-content">
+          <div class="stat-label">Devices</div>
+          <div class="stat-value" id="statDevices">—</div>
+          <div class="stat-icon">📱</div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="section">
+  <!-- Sources Section with Professional Tile Layout -->
+  <div class="dashboard-section">
     <div class="section-header">
       <h2>Sources</h2>
       <span class="badge" id="sourcesBadge">—</span>
     </div>
-    <div class="sources-grid" id="sourcesGrid">
-      <div class="loading"><div class="spinner"></div> Loading…</div>
+    <div class="sources-tile-grid" id="sourcesGrid">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Loading sources...</div>
     </div>
   </div>
 `;
@@ -195,49 +212,32 @@ function renderNode(node, depth) {
     const s = node.source;
 
     return `
-      <div class="source-card" style="margin-left:${depth * 20}px">
-        <div class="source-card-inner">
-          <span style="width:12px;flex-shrink:0"></span>
-          <div class="source-card-body">
+      <div class="source-tile" style="margin-left:${depth * 20}px">
+        <div class="source-tile-content">
+          <div class="source-tile-header">
+            <span class="source-type-tag ${s._type}">${s._type}</span>
+            <span class="source-doc-count">${s._docCount} doc${s._docCount !== 1 ? 's' : ''}</span>
+          </div>
 
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
-              <span class="source-type-tag ${s._type}">${s._type}</span>
-            </div>
-
-            <div class="source-path" style="margin-bottom:8px; display:flex; align-items:flex-start;">
-              <span style="flex:1; word-break:break-word;">
-                ${s._loc || '—'}
-              </span>
-              <span class="badge" style="margin-left:12px; flex-shrink:0;">
-                ${s._docCount} doc${s._docCount !== 1 ? 's' : ''}
-              </span>
-            </div>
-
-            <div class="source-instance-id" style="font-size:12px;color:var(--text-muted);display:flex;gap:16px;">
-              <span>${getSourceId(s)}</span>
-              <span>📱 ${getSourceDeviceId(s)}</span>
-            </div>
-
+          <div class="source-tile-body">
+            <div class="source-path">${s._loc || '—'}</div>
             <div class="source-meta">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span>
-                  <span class="dot ${s.enabled !== false ? 'green' : 'muted'}"></span>
-                  ${s.enabled !== false ? 'Active' : 'Disabled'}
-                </span>
-                ${s.last_ingested_at
-                  ? '<span>↺ ' + fmtDate(s.last_ingested_at) + '</span>'
-                  : ''}
-              </div>
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div style="display:flex; gap:6px;">
-                  <button class="btn btn-sm scan-source-btn" data-id="${s.id}">↺ Scan</button>
-                </div>
-                <div>
-                  <button class="btn btn-sm btn-delete" data-id="${s.id}">🗑 Delete</button>
-                </div>
-              </div>
+              <span class="source-id">${getSourceId(s)}</span>
+              <span class="source-device">📱 ${getSourceDeviceId(s)}</span>
             </div>
-            
+          </div>
+
+          <div class="source-tile-footer">
+            <div class="source-status">
+              <span class="dot ${s.enabled !== false ? 'green' : 'muted'}"></span>
+              ${s.enabled !== false ? 'Active' : 'Disabled'}
+            </div>
+            ${s.last_ingested_at ? '<div class="source-updated">↺ ' + fmtDate(s.last_ingested_at) + '</div>' : ''}
+          </div>
+
+          <div class="source-tile-actions">
+            <button class="btn btn-sm scan-source-btn" data-id="${s.id}">↺ Scan</button>
+            <button class="btn btn-sm btn-delete" data-id="${s.id}">🗑 Delete</button>
           </div>
         </div>
       </div>
@@ -251,28 +251,26 @@ function renderNode(node, depth) {
 
   return `
     <div class="source-tree-item">
-      <div class="source-card has-children"
+      <div class="source-tile has-children"
            style="margin-left:${depth * 20}px"
            onclick="document.getElementById('children-${id}').classList.toggle('open');
                     document.getElementById('chevron-${id}').classList.toggle('open')">
 
-        <div class="source-card-inner">
+        <div class="source-tile-content">
           <span class="source-chevron" id="chevron-${id}">▶</span>
-          <div class="source-card-body">
+          <div class="source-tile-header">
+            <span class="source-group-badge">
+              ${leafCount} source${leafCount !== 1 ? 's' : ''}
+            </span>
+          </div>
 
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-              <span class="badge">
-                ${leafCount} source${leafCount !== 1 ? 's' : ''}
-              </span>
-            </div>
-
-            <div class="source-path" style="display:flex;align-items:center;">
+          <div class="source-tile-body">
+            <div class="source-group-path">
               <span>${node.label}/</span>
-              <span class="badge" style="margin-left:auto;">
+              <span class="source-group-doc-count">
                 ${docCount} doc${docCount !== 1 ? 's' : ''}
               </span>
             </div>
-
           </div>
         </div>
       </div>

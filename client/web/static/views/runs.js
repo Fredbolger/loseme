@@ -221,11 +221,11 @@ function runCard(run) {
   const pct     = disc > 0 ? Math.min(100, (idx / disc) * 100) : 0;
 
   return `
-  <div class="run-card">
-    <div class="run-card-top">
-      <div class="run-card-left">
-        <div class="run-id">${run.run_id}</div>
-        <div class="run-meta-row">
+  <div class="run-tile" data-status="${run.status}">
+    <div class="run-tile-content">
+      <div class="run-tile-header">
+        <div class="run-id" title="${run.run_id}">${run.run_id}</div>
+        <div class="run-meta">
           <span class="source-type-tag ${run.source_type}">${run.source_type}</span>
           <span class="run-status-pill" style="--sc:${color}">
             <span class="run-status-dot${run.status === 'running' ? ' pulse' : ''}"></span>
@@ -233,40 +233,38 @@ function runCard(run) {
           </span>
         </div>
       </div>
-      <div class="run-card-right">
-        <div class="run-time">Started ${fmtDate(run.started_at)}</div>
-        ${run.updated_at ? `<div class="run-time">Updated ${fmtDate(run.updated_at)}</div>` : ''}
-      </div>
-    </div>
 
-    <div class="run-counts">
-      <div class="run-count-item">
-        <div class="stat-label">Discovered</div>
-        <div class="run-count-val accent">${disc > 0 ? disc : '—'}</div>
-      </div>
-      <div class="run-count-item">
-        <div class="stat-label">Indexed</div>
-        <div class="run-count-val green">${idx > 0 ? idx : '—'}</div>
-      </div>
-      ${disc > 0 ? `
-      <div class="run-count-item" style="flex:1;min-width:140px;">
-        <div class="stat-label">Progress &nbsp;<span style="color:var(--text);font-family:'Syne',sans-serif">${pct.toFixed(0)}%</span></div>
-        <div class="run-progress-track">
-          <div class="run-progress-fill" style="width:${pct}%"></div>
+      <div class="run-tile-body">
+        <div class="run-counts">
+          <div class="run-count-item">
+            <div class="stat-label">Discovered</div>
+            <div class="run-count-val accent">${disc > 0 ? disc : '—'}</div>
+          </div>
+          <div class="run-count-item">
+            <div class="stat-label">Indexed</div>
+            <div class="run-count-val green">${idx > 0 ? idx : '—'}</div>
+          </div>
+          ${disc > 0 ? `
+          <div class="run-count-item progress-item">
+            <div class="stat-label">Progress <span class="progress-percent">${pct.toFixed(0)}%</span></div>
+            <div class="run-progress-track">
+              <div class="run-progress-fill" style="width:${pct}%"></div>
+            </div>
+          </div>` : ''}
         </div>
-      </div>` : ''}
-    </div>
 
-    <div class="run-card-actions">
-      <div>
+        <div class="run-timestamps">
+          <div class="run-time">Started ${fmtDate(run.started_at)}</div>
+          ${run.updated_at ? `<div class="run-time">Updated ${fmtDate(run.updated_at)}</div>` : ''}
+        </div>
+      </div>
+
+      <div class="run-tile-actions">
         ${canStop ? `<button class="btn btn-sm btn-danger stop-run-btn" data-id="${run.run_id}">⏹ Stop</button>` : ''}
         ${canResume ? `<button class="btn btn-sm btn-resume resume-run-btn" data-id="${run.run_id}">▶ Resume</button>` : ''}
-      </div>
-      <div>
         ${canDelete ? `<button class="btn btn-sm btn-delete" data-id="${run.run_id}">🗑 Delete</button>` : ''}
       </div>
     </div>
-
   </div>`;
 }
 

@@ -40,6 +40,21 @@
   --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  
+  /* ── Variable aliases for backward compatibility ── */
+  --accent: var(--accent-primary);
+  --accent2: var(--accent-secondary);
+  --bg: var(--bg-primary);
+  --surface: var(--bg-surface);
+  --surface2: var(--bg-secondary);
+  --border: var(--border-default);
+  --border2: var(--border-strong);
+  --border-radius-xs: var(--radius-sm);
+  --border-radius-sm: var(--radius-sm);
+  --border-radius-md: var(--radius-md);
+  --border-radius-lg: var(--radius-lg);
+  --border-radius-xl: var(--radius-xl);
+  --border-radius-full: var(--radius-full);
 }
 
 /* ── Dark Theme (Slightly softened, like ChatGPT) ── */
@@ -68,7 +83,15 @@
   --accent-primary: #7c6af7;
   --accent-secondary: #a78bfa;
   --accent-tertiary: #5b4fe9;
+  --accent-quaternary: #f97066;
   --accent-gradient: linear-gradient(135deg, #7c6af7 0%, #a78bfa 100%);
+  
+  /* Filesystem-specific colors for better visual separation */
+  --filesystem-bg: rgba(124, 106, 247, 0.15);
+  --filesystem-bg-hover: rgba(124, 106, 247, 0.2);
+  --filesystem-bg-active: rgba(124, 106, 247, 0.25);
+  --filesystem-border: rgba(124, 106, 247, 0.3);
+  --filesystem-icon-bg: rgba(124, 106, 247, 0.2);
 
   /* Status */
   --success: #34d399;
@@ -112,7 +135,15 @@
   --accent-primary: #5b4fe9;
   --accent-secondary: #7c6af7;
   --accent-tertiary: #4a3fd1;
+  --accent-quaternary: #f97066;
   --accent-gradient: linear-gradient(135deg, #5b4fe9 0%, #7c6af7 100%);
+  
+  /* Filesystem-specific colors for better visual separation (light theme) */
+  --filesystem-bg: rgba(91, 79, 233, 0.1);
+  --filesystem-bg-hover: rgba(91, 79, 233, 0.15);
+  --filesystem-bg-active: rgba(91, 79, 233, 0.2);
+  --filesystem-border: rgba(91, 79, 233, 0.2);
+  --filesystem-icon-bg: rgba(91, 79, 233, 0.15);
 
   /* Status */
   --success: #10b981;

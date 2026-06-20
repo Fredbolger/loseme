@@ -87,7 +87,7 @@ function renderSourceList(sources) {
   }
   
   list.innerHTML = sources.map(source => `
-    <div class="source-item" data-source-id="${source.id}">
+    <div class="source-item ${source.source_type}" data-source-id="${source.id}">
       <div class="source-icon">${getSourceIcon(source.source_type)}</div>
       <div class="source-info">
         <div class="source-name">${source.locator || source.id.slice(0,8)}</div>

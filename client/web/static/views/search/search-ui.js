@@ -35,7 +35,7 @@ export const TEMPLATE = `
 
   <!-- Main Content Area -->
   <div class="search-main">
-    <div class="search-header">
+    <div class="chat-header">
       <div class="header-content">
         <h1>Knowledge Assistant</h1>
         <div class="header-actions">
@@ -61,13 +61,14 @@ export const TEMPLATE = `
     <!-- Input Area -->
     <div class="input-area">
       <div class="input-container">
-        <textarea 
-          id="chatInput" 
-          placeholder="Ask a question about your documents..."
-          rows="1"
-          class="chat-input"
-        ></textarea>
-        <div class="input-actions">
+        <div class="input-wrapper">
+          <textarea 
+            id="chatInput" 
+            placeholder="Ask a question about your documents..."
+            rows="1"
+            class="chat-input"
+          ></textarea>
+          <div class="input-actions">
           <div class="input-options">
             <select id="searchModeSelect" class="mode-select">
               <option value="hybrid">🤖 Hybrid (LLM + Search)</option>
@@ -84,6 +85,7 @@ export const TEMPLATE = `
           <button class="send-btn" id="sendBtn" disabled>
             <span>➤</span>
           </button>
+        </div>
         </div>
       </div>
       <div class="input-hint">Press Enter to send, Shift+Enter for new line</div>
@@ -109,7 +111,6 @@ export const TEMPLATE = `
       <div class="doc-modal-body" id="docModalBody"></div>
     </div>
   </div>
-</div>
 </div>
 
 <style>

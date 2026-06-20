@@ -27,7 +27,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: var(--muted);
+  color: var(--text-tertiary);
   white-space: nowrap;
 }
 
@@ -44,7 +44,7 @@
 .runs-search-wrap:focus-within { border-color: var(--accent); }
 
 .runs-search-icon {
-  color: var(--muted);
+  color: var(--text-tertiary);
   font-size: 15px;
   line-height: 1;
 }
@@ -53,18 +53,18 @@
   background: transparent;
   border: none;
   outline: none;
-  color: var(--text);
+  color: var(--text-primary);
   font-family: 'Space Mono', monospace;
   font-size: 12px;
   width: 170px;
 }
-.runs-search::placeholder { color: var(--muted); }
+.runs-search::placeholder { color: var(--text-tertiary); }
 
 .filter-select {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 6px;
-  color: var(--text);
+  color: var(--text-primary);
   font-family: 'Space Mono', monospace;
   font-size: 12px;
   padding: 6px 10px;
@@ -92,9 +92,9 @@
   padding: 4px 11px;
   font-size: 11px;
   font-family: 'Space Mono', monospace;
-  color: var(--muted);
+  color: var(--text-tertiary);
 }
-.run-chip strong { color: var(--text); margin-left: 1px; }
+.run-chip strong { color: var(--text-primary); margin-left: 1px; }
 
 .run-chip-dot {
   display: inline-block;
@@ -118,12 +118,267 @@
 
 /* ── List ── */
 .runs-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
 }
 
-/* ── Run card ── */
+@media (min-width: 768px) {
+  .runs-list {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .runs-list {
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  }
+}
+
+/* ── Run card (modern tile layout) ── */
+.run-tile {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius-xl);
+  padding: var(--space-md);
+  transition: var(--transition-fast);
+  animation: fadeUp 0.4s ease both;
+  box-shadow: var(--shadow-sm);
+}
+
+.run-tile:hover {
+  border-color: var(--border2);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-1px);
+}
+
+/* Run tile background colors by status */
+.run-tile {
+  --run-tile-bg: var(--surface2);
+  --run-tile-border: var(--border);
+}
+
+/* Apply different colors based on run status using data attributes */
+.run-tile[data-status="running"] {
+  --run-tile-bg: rgba(124, 106, 247, 0.08);
+  --run-tile-border: rgba(124, 106, 247, 0.15);
+}
+
+.run-tile[data-status="completed"] {
+  --run-tile-bg: rgba(62, 207, 142, 0.08);
+  --run-tile-border: rgba(62, 207, 142, 0.15);
+}
+
+.run-tile[data-status="failed"] {
+  --run-tile-bg: rgba(249, 112, 102, 0.08);
+  --run-tile-border: rgba(249, 112, 102, 0.15);
+}
+
+.run-tile[data-status="interrupted"] {
+  --run-tile-bg: rgba(255, 159, 67, 0.08);
+  --run-tile-border: rgba(255, 159, 67, 0.15);
+}
+
+.run-tile[data-status="starting"] {
+  --run-tile-bg: rgba(124, 106, 247, 0.06);
+  --run-tile-border: rgba(124, 106, 247, 0.12);
+}
+
+.run-tile[data-status="stop_requested"] {
+  --run-tile-bg: rgba(255, 159, 67, 0.1);
+  --run-tile-border: rgba(255, 159, 67, 0.2);
+}
+
+/* Apply run tile backgrounds */
+.run-tile {
+  background: var(--run-tile-bg);
+  border-color: var(--run-tile-border);
+}
+
+/* Enhanced hover effects with subtle glow for each status */
+.run-tile[data-status="running"]:hover {
+  box-shadow: var(--shadow-lg), 0 0 12px rgba(124, 106, 247, 0.15);
+}
+
+.run-tile[data-status="completed"]:hover {
+  box-shadow: var(--shadow-lg), 0 0 12px rgba(62, 207, 142, 0.15);
+}
+
+.run-tile[data-status="failed"]:hover {
+  box-shadow: var(--shadow-lg), 0 0 12px rgba(249, 112, 102, 0.15);
+}
+
+.run-tile[data-status="interrupted"]:hover {
+  box-shadow: var(--shadow-lg), 0 0 12px rgba(255, 159, 67, 0.15);
+}
+
+.run-tile[data-status="starting"]:hover {
+  box-shadow: var(--shadow-lg), 0 0 12px rgba(124, 106, 247, 0.12);
+}
+
+.run-tile[data-status="stop_requested"]:hover {
+  box-shadow: var(--shadow-lg), 0 0 12px rgba(255, 159, 67, 0.2);
+}
+
+/* Light theme glow effects */
+[data-theme="light"] .run-tile[data-status="running"]:hover {
+  box-shadow: var(--shadow-lg), 0 0 12px rgba(91, 79, 233, 0.12);
+}
+
+[data-theme="light"] .run-tile[data-status="completed"]:hover {
+  box-shadow: var(--shadow-lg), 0 0 12px rgba(8, 145, 178, 0.12);
+}
+
+[data-theme="light"] .run-tile[data-status="failed"]:hover {
+  box-shadow: var(--shadow-lg), 0 0 12px rgba(220, 38, 38, 0.12);
+}
+
+/* Light theme adjustments */
+[data-theme="light"] .run-tile[data-status="running"] {
+  --run-tile-bg: rgba(91, 79, 233, 0.06);
+  --run-tile-border: rgba(91, 79, 233, 0.12);
+}
+
+[data-theme="light"] .run-tile[data-status="completed"] {
+  --run-tile-bg: rgba(8, 145, 178, 0.06);
+  --run-tile-border: rgba(8, 145, 178, 0.12);
+}
+
+[data-theme="light"] .run-tile[data-status="failed"] {
+  --run-tile-bg: rgba(220, 38, 38, 0.06);
+  --run-tile-border: rgba(220, 38, 38, 0.12);
+}
+
+.run-tile-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.run-tile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  min-height: 32px;
+}
+
+.run-id {
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-all;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.run-meta {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.run-status-pill {
+  font-size: 11px;
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius-full);
+  color: var(--sc);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.run-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sc);
+}
+
+.run-status-dot.pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.run-tile-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.run-counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--space-md);
+}
+
+.run-count-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.progress-item {
+  grid-column: span 2;
+}
+
+.run-count-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.run-count-val.accent { color: var(--accent); }
+.run-count-val.green  { color: var(--accent2); }
+
+.progress-percent {
+  color: var(--text-primary);
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+}
+
+.run-progress-track {
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: var(--border-radius-full);
+  overflow: hidden;
+  margin-top: var(--space-xs);
+}
+
+.run-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: var(--border-radius-full);
+  transition: width 0.3s ease;
+}
+
+.run-timestamps {
+  display: flex;
+  gap: var(--space-lg);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  flex-wrap: wrap;
+}
+
+.run-tile-actions {
+  display: flex;
+  gap: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-sm);
+}
+
+/* Keep old run-card for backward compatibility */
 .run-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -156,7 +411,7 @@
 .run-id {
   font-size: 11px;
   font-family: 'Space Mono', monospace;
-  color: var(--muted);
+  color: var(--text-tertiary);
   letter-spacing: 0.02em;
 }
 
@@ -196,7 +451,7 @@
 .run-time {
   font-size: 11px;
   font-family: 'Space Mono', monospace;
-  color: var(--muted);
+  color: var(--text-tertiary);
   line-height: 1.6;
 }
 
@@ -215,7 +470,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: var(--muted);
+  color: var(--text-tertiary);
 }
 
 .run-count-val {
