@@ -11,33 +11,57 @@ function getEl(id) { return document.getElementById(id); }
 
 function renderSourceView(app) {
   app.innerHTML = `
-    <div class="source-view">
-      <div class="source-sidebar">
-        <div class="source-header">
-          <h2>Sources</h2>
-          <button id="refreshSourcesBtn" class="icon-btn">⟳</button>
+    <div class="sources-layout">
+      <!-- Professional Sidebar -->
+      <div class="sources-sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-title">
+            <h2>📁 Sources</h2>
+            <button id="collapseSourcesSidebarBtn" class="sidebar-collapse-btn" title="Collapse sidebar">
+              ←
+            </button>
+          </div>
+          <button id="refreshSourcesBtn" class="sidebar-action-btn" title="Refresh sources">
+            ⟳ Refresh
+          </button>
         </div>
         <div id="sourceList" class="source-list">
-          <div class="loading">Loading sources...</div>
+          <div class="loading-spinner"></div>
+          <div class="loading-text">Loading sources...</div>
         </div>
       </div>
       
-      <div class="source-documents">
-        <div class="doc-header">
-          <h3 id="sourceTitle">Select a source</h3>
-          <div class="doc-actions">
-            <button id="previewTab" class="tab-btn active">Preview</button>
-            <button id="chunksTab" class="tab-btn">Chunks</button>
-            <button id="attachmentsTab" class="tab-btn">Attachments</button>
+      <!-- Main Content Area -->
+      <div class="sources-main">
+        <div class="main-header">
+          <div class="header-content">
+            <h2 id="sourceTitle">Select a source</h2>
+            <div class="header-actions">
+              <div class="view-tabs">
+                <button id="previewTab" class="tab-btn active">Preview</button>
+                <button id="chunksTab" class="tab-btn">Chunks</button>
+                <button id="attachmentsTab" class="tab-btn">Attachments</button>
+              </div>
+            </div>
           </div>
         </div>
         
-        <div class="doc-content">
-          <div id="documentList" class="document-list">
-            <div class="empty-state">Select a source to view documents</div>
-          </div>
-          <div id="documentView" class="document-view">
-            <div class="empty-state">Select a document to view</div>
+        <div class="main-content">
+          <div class="content-panels">
+            <div id="documentList" class="document-list-panel">
+              <div class="empty-state">
+                <div class="empty-state-icon">📄</div>
+                <div class="empty-state-title">Select a source</div>
+                <div class="empty-state-subtitle">Choose a source from the left sidebar to view its documents</div>
+              </div>
+            </div>
+            <div id="documentView" class="document-view-panel">
+              <div class="empty-state">
+                <div class="empty-state-icon">👁️</div>
+                <div class="empty-state-title">Select a document</div>
+                <div class="empty-state-subtitle">Choose a document from the list to view its contents</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -362,6 +386,34 @@ export function mount(app) {
   
   // Refresh button handler
   document.getElementById('refreshSourcesBtn')?.addEventListener('click', loadSources);
+  
+  // Collapsible sidebar functionality
+  const sidebar = document.querySelector('.sources-sidebar');
+  if (sidebar) {
+    // Add collapse button if not present
+    const existingCollapseBtn = document.getElementById('collapseSourcesSidebarBtn');
+    if (!existingCollapseBtn) {
+      const collapseBtn = document.createElement('button');
+      collapseBtn.id = 'collapseSourcesSidebarBtn';
+      collapseBtn.className = 'sidebar-collapse-btn';
+      collapseBtn.textContent = '←';
+      collapseBtn.title = 'Collapse sidebar';
+      
+      const sidebarHeader = sidebar.querySelector('.sidebar-header');
+      if (sidebarHeader) {
+        sidebarHeader.appendChild(collapseBtn);
+        
+        collapseBtn.addEventListener('click', () => {
+          sidebar.classList.toggle('collapsed');
+          const mainContent = document.querySelector('.sources-main');
+          if (mainContent) {
+            mainContent.classList.toggle('expanded');
+          }
+          collapseBtn.textContent = sidebar.classList.contains('collapsed') ? '→' : '←';
+        });
+      }
+    }
+  }
 }
 
 export function unmount() {

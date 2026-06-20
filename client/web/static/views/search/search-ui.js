@@ -3,14 +3,15 @@ import { fmtDate } from '../../app.js';
 
 // HTML Template
 export const TEMPLATE = `
-<div class="chat-container">
-
-  <!-- Sidebar: Conversations -->
-  <aside class="chat-sidebar">
+<div class="search-layout">
+  <!-- Collapsible Sidebar -->
+  <div class="search-sidebar" id="searchSidebar">
     <div class="sidebar-header">
-      <div class="logo">
-        <span class="logo-icon">🔍</span>
-        <span class="logo-text">Knowledge Search</span>
+      <div class="sidebar-title">
+        <h3>🔍 Knowledge Search</h3>
+        <button class="sidebar-collapse-btn" id="collapseSidebarBtn" title="Collapse sidebar">
+          ←
+        </button>
       </div>
       <button class="new-chat-btn" id="newChatBtn">
         <span>+</span> New chat
@@ -20,24 +21,26 @@ export const TEMPLATE = `
     <div class="conversations-list" id="conversationsList">
       <div class="conversations-placeholder">
         <div class="placeholder-icon">💬</div>
-        <div>No conversations yet</div>
-        <small>Start a new search to begin</small>
+        <div class="placeholder-title">No conversations yet</div>
+        <div class="placeholder-subtitle">Start a new search to begin</div>
       </div>
     </div>
     
     <div class="sidebar-footer">
-      <button class="sidebar-btn" id="clearHistoryBtn">
-        <span>🗑</span> Clear all history
+      <button class="sidebar-action-btn" id="clearHistoryBtn" title="Clear all history">
+        <span>🗑</span> Clear history
       </button>
     </div>
-  </aside>
+  </div>
 
   <!-- Main Content Area -->
-  <main class="chat-main">
-    <div class="main-header">
-      <div class="header-title">
+  <div class="search-main">
+    <div class="search-header">
+      <div class="header-content">
         <h1>Knowledge Assistant</h1>
-        <span class="model-badge" id="modelBadge">Loading model...</span>
+        <div class="header-actions">
+          <span class="model-badge" id="modelBadge">Loading model...</span>
+        </div>
       </div>
     </div>
 
@@ -46,7 +49,7 @@ export const TEMPLATE = `
       <div class="welcome-screen">
         <div class="welcome-icon">🧠</div>
         <h2>How can I help you today?</h2>
-        <p>Ask me anything about your documents — I'll search and provide answers with sources.</p>
+        <p class="welcome-subtitle">Ask me anything about your documents — I'll search and provide answers with sources.</p>
         <div class="suggestion-chips">
           <button class="chip">What documents do I have?</button>
           <button class="chip">Summarize my recent files</button>
@@ -85,7 +88,7 @@ export const TEMPLATE = `
       </div>
       <div class="input-hint">Press Enter to send, Shift+Enter for new line</div>
     </div>
-  </main>
+  </div>
 
   <!-- Sources Panel -->
   <div class="sources-panel" id="sourcesPanel" style="display: none;">
@@ -106,6 +109,7 @@ export const TEMPLATE = `
       <div class="doc-modal-body" id="docModalBody"></div>
     </div>
   </div>
+</div>
 </div>
 
 <style>
@@ -746,15 +750,45 @@ export function removeTypingIndicator(indicatorId) {
   if (indicator) indicator.remove();
 }
 
-export function attachSourcesToMessage(messageId, sources, onViewSources) {
+export function attachSourcesToMessage(messageId, sources, onSourceClick) {
   const messageDiv = document.getElementById(messageId);
-  if (messageDiv && sources && sources.length > 0) {
-    const toggle = document.createElement('button');
-    toggle.className = 'sources-toggle';
-    toggle.innerHTML = `📄 View ${sources.length} source${sources.length > 1 ? 's' : ''}`;
-    toggle.onclick = onViewSources;
-    messageDiv.appendChild(toggle);
+  if (!messageDiv || !sources || sources.length === 0) return;
+
+  const chipsContainer = document.createElement('div');
+  chipsContainer.className = 'source-chips';
+
+  sources.slice(0, 8).forEach((source, index) => {
+    const chip = document.createElement('button');
+    chip.className = 'source-chip';
+    
+    const name = (source.source_path || source.document_part_id || 'Unknown').split(/[/\\]/).pop() || 'Unknown';
+    const score = source.score !== undefined ? ` ${(source.score * 100).toFixed(0)}%` : '';
+    
+    chip.innerHTML = `
+      <span class="icon">📄</span>
+      <span>${escapeHtml(name)}</span>
+      ${score ? `<span class="score">${score}</span>` : ''}
+    `;
+    
+    chip.addEventListener('click', (e) => {
+      e.stopPropagation();
+      onSourceClick(source);
+    });
+    
+    chipsContainer.appendChild(chip);
+  });
+
+  // If there are more sources, show a count
+  if (sources.length > 8) {
+    const more = document.createElement('span');
+    more.className = 'source-chip';
+    more.textContent = `+${sources.length - 8} more`;
+    more.style.cursor = 'default';
+    more.style.opacity = '0.6';
+    chipsContainer.appendChild(more);
   }
+
+  messageDiv.appendChild(chipsContainer);
 }
 
 export function displaySources(sources, onSourceClick) {

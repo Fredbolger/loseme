@@ -3,6 +3,8 @@ import { showError } from '../../app.js';
 import { openPreview } from '../../previews/index.js';
 import * as ui from './search-ui.js';
 import * as api from './search-api.js';
+import { openDetail, openDetailFromChip, closeDetail } from './detail-panel.js';
+
 
 // ============================================
 // STATE
@@ -85,8 +87,6 @@ function buildLLMContext(query, mergedResults, history) {
 async function performVectorSearch(query, topK) {
   const response = await api.performSearch(query, topK, currentSessionId);
   const results = response.results || [];
-  const cacheHit = response.cache_hit || false;
-  const cacheScore = response.cache_score || null;
   currentSessionId = response.session_id;
   
   const merged = mergeByPart(results);
@@ -97,14 +97,7 @@ async function performVectorSearch(query, topK) {
     lastEnriched = await api.batchGetDocuments(partIds);
   }
   
-  let messageText = `✅ Search completed. Found ${merged.length} relevant document${merged.length !== 1 ? 's' : ''}.`;
-  if (cacheHit && cacheScore) {
-    messageText += `\n\n⚡ **Cache hit!** (${(cacheScore * 100).toFixed(1)}% similarity to a previous search)`;
-  }
-  
-  const messageId = ui.addMessageToUI('assistant', messageText);
-  
-  // ✅ Use topK instead of hardcoded topK
+  // Build sources for display
   const sourcesToStore = merged.slice(0, topK).map(doc => ({
     document_part_id: doc.document_part_id,
     source_path: doc.source_path,
@@ -113,11 +106,17 @@ async function performVectorSearch(query, topK) {
     chunk_count: doc.chunkCount
   }));
   
-  ui.attachSourcesToMessage(messageId, sourcesToStore, () => {
-    ui.displaySources(sourcesToStore, onSourceClick);
-    ui.toggleSourcesPanel(true);
-  });
+  // Show results with source chips
+  let messageText = `✅ Search completed. Found ${merged.length} relevant document${merged.length !== 1 ? 's' : ''}.`;
   
+  const messageId = ui.addMessageToUI('assistant', messageText);
+  
+  // Attach source chips with click handler
+  ui.attachSourcesToMessage(messageId, sourcesToStore, (source) => {
+    // When a source chip is clicked, open the detail panel
+    openDetailFromChip(source.document_part_id, sourcesToStore);
+  });
+
   ui.displaySources(sourcesToStore, onSourceClick);
   ui.toggleSourcesPanel(true);
   
@@ -140,16 +139,14 @@ async function performVectorSearch(query, topK) {
 }
 
 async function performHybridSearch(query, topK) {
-  // First, perform the search to get the session ID
   const response = await api.performSearch(query, topK, currentSessionId);
   const results = response.results || [];
   currentSessionId = response.session_id;
   
-  // Immediately show the new conversation in the sidebar
+  // Show conversation in sidebar
   ui.addOrUpdateConversation(currentSessionId, query, 'pending', 0);
   ui.setActiveConversation(currentSessionId);
   
-  // Process results
   const merged = mergeByPart(results);
   lastResults = merged;
   
@@ -158,9 +155,20 @@ async function performHybridSearch(query, topK) {
     lastEnriched = await api.batchGetDocuments(partIds);
   }
   
-  // ✅ Pass topK to streamLLMAnswer
-  await streamLLMAnswer(query, merged, topK);
+  // Build sources for display
+  const sourcesToStore = merged.slice(0, topK).map(doc => ({
+    document_part_id: doc.document_part_id,
+    source_path: doc.source_path,
+    source_type: doc.source_type,
+    score: doc.maxScore,
+    chunk_count: doc.chunkCount
+  }));
   
+  // Save sources for later
+  lastSources = sourcesToStore;
+  
+  await streamLLMAnswer(query, merged, topK);
+
   // Final update after LLM completes
   await loadAndDisplayConversations();
   ui.setActiveConversation(currentSessionId);
@@ -229,14 +237,13 @@ async function streamLLMAnswer(query, mergedResults, topK) {
           score: doc.maxScore,
           chunk_count: doc.chunkCount
         }));
-        
-        // Attach sources to the message
-        ui.attachSourcesToMessage(messageId, sourcesToStore, () => {
-          ui.displaySources(sourcesToStore, onSourceClick);
-          ui.toggleSourcesPanel(true);
+      
+        // Attach sources with click handler for detail panel
+        ui.attachSourcesToMessage(messageId, sourcesToStore, (source) => {
+          openDetailFromChip(source.document_part_id, sourcesToStore);
         });
       }
-      
+
       // ✅ Use topK instead of hardcoded 5 for saving
       if (currentSessionId && pendingAnswer.trim()) {
         const sourcesToStore = mergedResults.slice(0, topK).map(doc => ({
@@ -289,14 +296,24 @@ async function streamLLMAnswer(query, mergedResults, topK) {
 // ============================================
 // EVENT HANDLERS
 // ============================================
-async function onSourceClick(dataset) {
+function onSourceClick(dataset) {
+  // Use the new detail panel instead of modal
   const { docId, sourcePath, sourceType } = dataset;
-  ui.showDocumentModal(
-    (sourcePath || docId || '').split(/[/\\]/).pop() || 'Document',
-    async (body) => {
-      await openPreview(body, docId, sourceType || 'filesystem', sourcePath || '');
-    }
-  );
+  
+  // If we have the full sources list, pass it for navigation
+  if (lastResults && lastResults.length > 0) {
+    const sources = lastResults.map(doc => ({
+      document_part_id: doc.document_part_id,
+      source_path: doc.source_path,
+      source_type: doc.source_type,
+      score: doc.maxScore,
+      chunk_count: doc.chunkCount
+    }));
+    openDetail(docId, sources, sourceType || 'filesystem', sourcePath || '');
+  } else {
+    // Fallback: single document
+    openDetail(docId, [], sourceType || 'filesystem', sourcePath || '');
+  }
 }
 
 async function sendMessage() {
@@ -506,6 +523,33 @@ export function mount(container) {
   document.getElementById('clearHistoryBtn').addEventListener('click', clearAllHistory);
   document.getElementById('closeSourcesBtn').addEventListener('click', () => ui.toggleSourcesPanel(false));
   document.getElementById('closeModalBtn').addEventListener('click', ui.closeDocumentModal);
+  
+  // Collapsible sidebar functionality
+  const sidebar = document.getElementById('searchSidebar');
+  const collapseBtn = document.getElementById('collapseSidebarBtn');
+  const mainContent = document.querySelector('.search-main');
+  
+  if (collapseBtn && sidebar && mainContent) {
+    collapseBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      mainContent.classList.toggle('expanded');
+      collapseBtn.textContent = sidebar.classList.contains('collapsed') ? '→' : '←';
+    });
+  }
+  
+  // Chip suggestions
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.getElementById('chatInput').value = chip.textContent;
+      sendMessage();
+    });
+  });
+  
+  window.loadConversationFn = loadConversation;
+  window.deleteConversationFn = deleteConversation
+  
+  loadModels();
+  loadAndDisplayConversations();
   
   // Escape key for modal
   window.onkeydown = function(e) {
