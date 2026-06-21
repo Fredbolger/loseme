@@ -11,6 +11,7 @@ import { openDetail, openDetailFromChip, closeDetail } from './detail-panel.js';
 // ============================================
 let lastResults = [];
 let lastEnriched = {};
+let lastSources = [];
 let currentSessionId = null;
 let currentMessages = [];
 let isAwaitingResponse = false;
@@ -226,6 +227,7 @@ async function streamLLMAnswer(query, mergedResults, topK) {
       }
       
       // ✅ Use topK instead of hardcoded 5 for sources
+      console.log('Stream completed, mergedResults:', mergedResults); // Debug log
       if (mergedResults && mergedResults.length > 0 && messageId) {
         const sourcesToStore = mergedResults.slice(0, topK).map(doc => ({
           document_part_id: doc.document_part_id,
@@ -239,6 +241,8 @@ async function streamLLMAnswer(query, mergedResults, topK) {
         ui.attachSourcesToMessage(messageId, sourcesToStore, (sources) => {
           onSourceClick(sources);
         });
+      } else {
+        console.log('No sources to display - mergedResults empty or no messageId'); // Debug log
       }
 
       // ✅ Use topK instead of hardcoded 5 for saving
@@ -294,6 +298,8 @@ async function streamLLMAnswer(query, mergedResults, topK) {
 // EVENT HANDLERS
 // ============================================
 function onSourceClick(sourcesOrDataset) {
+  console.log('onSourceClick called with:', sourcesOrDataset); // Debug log
+  
   // Check if we received an array of sources (from widget) or a single source (from panel)
   if (Array.isArray(sourcesOrDataset)) {
     // This came from the sources widget - open sources panel
@@ -540,6 +546,12 @@ export function mount(container) {
   document.getElementById('clearHistoryBtn').addEventListener('click', clearAllHistory);
   document.getElementById('closeSourcesBtn').addEventListener('click', () => ui.toggleSourcesPanel(false));
   document.getElementById('closeModalBtn').addEventListener('click', ui.closeDocumentModal);
+  
+  // Hide sources button in header
+  const hideSourcesBtn = document.getElementById('hideSourcesBtn');
+  if (hideSourcesBtn) {
+    hideSourcesBtn.addEventListener('click', () => ui.toggleSourcesPanel(false));
+  }
   
   // Collapsible sidebar functionality
   const sidebar = document.getElementById('searchSidebar');

@@ -40,6 +40,9 @@ export const TEMPLATE = `
         <h1>Knowledge Assistant</h1>
         <div class="header-actions">
           <span class="model-badge" id="modelBadge">Loading model...</span>
+          <button class="hide-sources-btn" id="hideSourcesBtn" style="display: none;" title="Hide sources">
+            ← Hide Sources
+          </button>
         </div>
       </div>
     </div>
@@ -93,7 +96,7 @@ export const TEMPLATE = `
   </div>
 
   <!-- Sources Panel -->
-  <div class="sources-panel" id="sourcesPanel" style="display: none;">
+  <div class="sources-panel" id="sourcesPanel" style="right: -320px;">
     <div class="sources-header">
       <h3>📄 Sources</h3>
       <button class="close-sources" id="closeSourcesBtn">×</button>
@@ -304,6 +307,27 @@ export const TEMPLATE = `
     background: #f0f0f0;
     border-radius: 12px;
     margin-left: 12px;
+  }
+
+  .hide-sources-btn {
+    margin-left: 12px;
+    padding: 4px 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .hide-sources-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
   }
 
   .messages-area {
@@ -752,8 +776,11 @@ export function removeTypingIndicator(indicatorId) {
 }
 
 export function attachSourcesToMessage(messageId, sources, onSourceClick) {
+  console.log('attachSourcesToMessage called with messageId:', messageId, 'sources:', sources); // Debug log
   const messageDiv = document.getElementById(messageId);
   if (!messageDiv || !sources || sources.length === 0) return;
+  
+  console.log('Message div found:', messageDiv); // Debug log
 
   const sourcesWidget = document.createElement('div');
   sourcesWidget.className = 'sources-widget';
@@ -779,15 +806,21 @@ export function attachSourcesToMessage(messageId, sources, onSourceClick) {
   sourcesWidget.querySelector('.sources-widget-btn').addEventListener('click', (e) => {
     e.stopPropagation();
     const storedSources = JSON.parse(sourcesWidget.dataset.sources);
+    console.log('Sources widget clicked, stored sources:', storedSources); // Debug log
     onSourceClick(storedSources);
   });
 
+  console.log('Sources widget created and appended'); // Debug log
   messageDiv.appendChild(sourcesWidget);
 }
 
 export function displaySources(sources, onSourceClick) {
   const sourcesList = document.getElementById('sourcesList');
+  
+  console.log('displaySources called with:', sources); // Debug log
+  
   if (!sources || !sources.length) {
+    console.log('No sources available'); // Debug log
     sourcesList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-tertiary);">No sources available</div>';
     return;
   }
@@ -881,16 +914,38 @@ export function setActiveConversation(sessionId) {
 export function toggleSourcesPanel(show) {
   const panel = document.getElementById('sourcesPanel');
   const mainContent = document.querySelector('.search-main');
+  const hideSourcesBtn = document.getElementById('hideSourcesBtn');
   
-  if (show) {
-    panel.classList.add('open');
-    if (mainContent) {
-      mainContent.classList.add('sources-panel-open');
+  console.log('toggleSourcesPanel called with:', show, 'Panel element:', panel); // Debug log
+  
+  if (panel) {
+    if (show) {
+      panel.classList.add('open');
+      panel.style.right = '0';
+      console.log('Panel opened, classList:', panel.classList); // Debug log
+      console.log('Panel style after opening:', panel.style); // Debug log
+    } else {
+      panel.classList.remove('open');
+      panel.style.right = '-320px';
+      console.log('Panel closed, classList:', panel.classList); // Debug log
+      console.log('Panel style after closing:', panel.style); // Debug log
     }
-  } else {
-    panel.classList.remove('open');
-    if (mainContent) {
+  }
+  
+  if (mainContent) {
+    if (show) {
+      mainContent.classList.add('sources-panel-open');
+    } else {
       mainContent.classList.remove('sources-panel-open');
+    }
+  }
+  
+  // Show/hide the hide sources button in the header
+  if (hideSourcesBtn) {
+    if (show) {
+      hideSourcesBtn.style.display = 'inline-flex';
+    } else {
+      hideSourcesBtn.style.display = 'none';
     }
   }
 }
