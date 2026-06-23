@@ -213,7 +213,7 @@ def is_discovering(run_id: str):
         "is_discovering": discovering,
     }
 
-def run_indexing_process(run_id: str, force_reprocess: bool = False):
+def run_indexing_process(run_id: str, force_reprocess: bool = False, ignore_chunker_mismatch: bool =True):
     logger.info(f"Background indexing process started for run {run_id}")
     processed_count = 0
     while True:
@@ -258,7 +258,9 @@ def run_indexing_process(run_id: str, force_reprocess: bool = False):
             text=document_part.get("text", ""),
             scope_json=json.loads(document_part.get("scope_json", "{}")),
         ),
-        force_reprocess=force_reprocess)
+        force_reprocess=force_reprocess,
+        ignore_chunker_mismatch=ignore_chunker_mismatch
+        )
         processed_count += 1
         
         if processed_count % 50 == 0:

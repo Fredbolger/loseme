@@ -47,7 +47,8 @@ class IngestDocumentPartRequest(BaseModel):
     scope_json: dict
 
 @router.post("/document_part")
-def ingest_document_part(req: IngestDocumentPartRequest, force_reprocess: bool = False):
+def ingest_document_part(req: IngestDocumentPartRequest, force_reprocess: bool = False,
+                         ignore_chunker_mismatch: bool = True):
     logger.debug(f"Received ingest request for document part ID {req.document_part_id} in run ID {req.run_id}")
     all_runs = show_runs()
     if req.run_id not in [run.id for run in all_runs]:
@@ -65,12 +66,13 @@ def ingest_document_part(req: IngestDocumentPartRequest, force_reprocess: bool =
         if old_part["extractor_version"] != req.extractor_version:
             logger.info(f"Extractor version changed from {old_part['extractor_version']} to {req.extractor_version}. Re-processing suggested.")
             skip_part = False
-        if old_part["chunker_name"] != chunker.name:
-            logger.info(f"Chunker name changed from {old_part['chunker_name']} to {chunker.name}. Re-processing suggested.")
-            skip_part = False
-        if old_part["chunker_version"] != chunker.version:
-            logger.info(f"Chunker version changed from {old_part['chunker_version']} to {chunker.version}. Re-processing suggested.")
-            skip_part = False
+        if not ignore_chunker_mismatch:
+            if old_part["chunker_name"] != chunker.name:
+                logger.info(f"Chunker name changed from {old_part['chunker_name']} to {chunker.name}. Re-processing suggested.")
+                skip_part = False
+            if old_part["chunker_version"] != chunker.version:
+                logger.info(f"Chunker version changed from {old_part['chunker_version']} to {chunker.version}. Re-processing suggested.")
+                skip_part = False
         if old_part.get("checksum") != req.checksum:
             logger.info(f"Checksum changed for document part ID {req.document_part_id}. Re-processing suggested.")
             skip_part = False
