@@ -1,6 +1,7 @@
 // ── Source View ──────────────────────────────────────────────
 import { api, getClientBase, showError, clearError } from '../app.js';
 import { openPreview } from '../previews/index.js';
+import { openDetail, closeDetail, cleanupDetail } from './search/detail-panel.js';
 
 let currentSourceId = null;
 let selectedDocId = null;
@@ -168,10 +169,10 @@ function renderDocumentList(documents) {
     el.addEventListener('click', () => selectDocument(el.dataset.docId));
   });
   
-  // Select first document
-  if (documents.length > 0 && !selectedDocId) {
-    selectDocument(documents[0].document_part_id);
-  }
+  // Select first document - DISABLED as per requirement
+  // if (documents.length > 0 && !selectedDocId) {
+  //   selectDocument(documents[0].document_part_id);
+  // }
 }
 
 function getDocIcon(contentType) {
@@ -192,8 +193,28 @@ async function selectDocument(docId) {
     el.classList.toggle('active', el.dataset.docId === docId);
   });
   
-  // Load document details based on active tab
-  await loadDocumentView(docId, currentView);
+  // Get document details for navigation
+  try {
+    const docData = await api.get(`/documents/${docId}`);
+    const doc = docData.document_part;
+    
+    // Get all documents in current source for navigation
+    const docsData = await api.get(`/documents/by_source/${currentSourceId}`);
+    const allDocs = docsData.documents || [];
+    
+    // Convert to format expected by detail panel
+    const sourcesForNavigation = allDocs.map(d => ({
+      document_part_id: d.document_part_id,
+      source_type: d.source_type,
+      source_path: d.source_path
+    }));
+    
+    // Open detail panel instead of inline preview
+    openDetail(docId, sourcesForNavigation, doc.source_type, doc.source_path);
+    
+  } catch (err) {
+    showError('Failed to load document details: ' + err.message);
+  }
 }
 
 // ── Load Document View ────────────────────────────────────────
@@ -376,6 +397,13 @@ function setupTabHandlers() {
   });
 }
 
+// ── Key Event Handler ─────────────────────────────────────────
+function handleKeydown(e) {
+  if (e.key === 'Escape') {
+    closeDetail();
+  }
+}
+
 // ── Mount / Unmount ────────────────────────────────────────────
 export function mount(app) {
   renderSourceView(app);
@@ -414,10 +442,19 @@ export function mount(app) {
       }
     }
   }
+  
+  // Add close detail panel handler for sources view
+  window.addEventListener('keydown', handleKeydown);
 }
 
 export function unmount() {
   // Cleanup
   currentSourceId = null;
   selectedDocId = null;
+  
+  // Clean up detail panel if open
+  cleanupDetail();
+  
+  // Remove event listeners
+  window.removeEventListener('keydown', handleKeydown);
 }

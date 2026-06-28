@@ -4,11 +4,15 @@
 // ============================================================
 
 import { openPreview } from '../../previews/index.js';
+import { api } from '../../app.js';
 
 // ── State ──
 let currentDocuments = [];
 let currentIndex = -1;
 let isOpen = false;
+let chunksPreviewOpen = false;
+let currentChunks = [];
+let currentChunkIndex = -1;
 let overlay = null;
 let panel = null;
 
@@ -31,7 +35,16 @@ function createPanel() {
         <span class="icon">📄</span>
         <span class="detail-title" id="detailTitle">Document</span>
       </div>
-      <button class="detail-close-btn" id="detailCloseBtn">✕</button>
+      <div class="detail-header-right">
+        <div class="detail-toggle-container">
+          <label class="detail-toggle-switch">
+            <input type="checkbox" id="chunksToggleCheckbox" class="detail-toggle-checkbox">
+            <span class="detail-toggle-slider"></span>
+          </label>
+          <span class="detail-toggle-label">Chunks</span>
+        </div>
+        <button class="detail-close-btn" id="detailCloseBtn">✕</button>
+      </div>
     </div>
     <div class="detail-meta" id="detailMeta">
       <span class="detail-meta-item">
@@ -60,6 +73,24 @@ function createPanel() {
         <button class="detail-nav-btn" id="detailNextBtn">Next →</button>
       </div>
     </div>
+    <div class="chunks-preview-panel" id="chunksPreviewPanel">
+      <div class="chunks-preview-header">
+        <div class="chunks-preview-header-left">
+          <h4>Chunks Preview</h4>
+        </div>
+        <button class="chunks-preview-close-btn" id="chunksPreviewCloseBtn">✕</button>
+      </div>
+      <div class="chunks-preview-body" id="chunksPreviewBody">
+        <div class="chunks-loading">Loading chunks...</div>
+      </div>
+      <div class="chunks-preview-nav" id="chunksPreviewNav">
+        <span class="chunk-nav-info" id="chunkNavInfo">1 / 1</span>
+        <div class="chunk-nav-buttons">
+          <button class="chunk-nav-btn" id="chunkPrevBtn">← Previous</button>
+          <button class="chunk-nav-btn" id="chunkNextBtn">Next →</button>
+        </div>
+      </div>
+    </div>
   `;
   document.body.appendChild(panel);
 
@@ -67,6 +98,14 @@ function createPanel() {
   document.getElementById('detailCloseBtn').addEventListener('click', closeDetail);
   document.getElementById('detailPrevBtn').addEventListener('click', () => navigateDetail(-1));
   document.getElementById('detailNextBtn').addEventListener('click', () => navigateDetail(1));
+  document.getElementById('chunksToggleCheckbox').addEventListener('change', (e) => {
+    toggleChunksPreview(e.target.checked);
+  });
+  document.getElementById('chunksPreviewCloseBtn').addEventListener('click', () => {
+    toggleChunksPreview(false);
+  });
+  document.getElementById('chunkPrevBtn').addEventListener('click', () => navigateChunks(-1));
+  document.getElementById('chunkNextBtn').addEventListener('click', () => navigateChunks(1));
 
   // Keyboard shortcuts
   document.addEventListener('keydown', handleKeydown);
@@ -84,13 +123,52 @@ function handleKeydown(e) {
   
   if (e.key === 'Escape') {
     e.preventDefault();
-    closeDetail();
+    if (chunksPreviewOpen) {
+      toggleChunksPreview(false);
+    } else {
+      closeDetail();
+    }
   } else if (e.key === 'ArrowLeft') {
     e.preventDefault();
-    navigateDetail(-1);
+    if (chunksPreviewOpen) {
+      navigateChunks(-1);
+    } else {
+      navigateDetail(-1);
+    }
   } else if (e.key === 'ArrowRight') {
     e.preventDefault();
-    navigateDetail(1);
+    if (chunksPreviewOpen) {
+      navigateChunks(1);
+    } else {
+      navigateDetail(1);
+    }
+  } else if (e.key === 'c' && e.ctrlKey) {
+    e.preventDefault();
+    toggleChunksPreview(!chunksPreviewOpen);
+  }
+}
+
+// ── Toggle Chunks Preview ──
+function toggleChunksPreview(forceState) {
+  const panel = document.getElementById('chunksPreviewPanel');
+  const checkbox = document.getElementById('chunksToggleCheckbox');
+  
+  if (!panel || !checkbox) return;
+  
+  // Determine new state
+  const newState = typeof forceState === 'boolean' ? forceState : !chunksPreviewOpen;
+  chunksPreviewOpen = newState;
+  checkbox.checked = chunksPreviewOpen;
+  
+  // Update panel visibility - use display property for instant show/hide
+  panel.style.display = chunksPreviewOpen ? 'flex' : 'none';
+  
+  // If opening and we have a current document, load chunks
+  if (chunksPreviewOpen && currentDocuments.length > 0) {
+    const doc = currentDocuments[currentIndex];
+    if (doc) {
+      loadChunksForDocument(doc.document_part_id);
+    }
   }
 }
 
@@ -116,9 +194,14 @@ export function openDetail(docId, sources, sourceType, sourcePath) {
   panel.classList.add('open');
   
   // Shift main content left
-  const mainContent = document.querySelector('.search-main');
-  if (mainContent) {
-    mainContent.classList.add('detail-panel-open');
+  const searchMain = document.querySelector('.search-main');
+  const sourcesMain = document.querySelector('.sources-main');
+  
+  if (searchMain) {
+    searchMain.classList.add('detail-panel-open');
+  }
+  if (sourcesMain) {
+    sourcesMain.classList.add('detail-panel-open');
   }
   
   document.body.style.overflow = 'hidden';
@@ -141,20 +224,38 @@ export function closeDetail() {
   }
   
   // Shift main content back to original position
-  const mainContent = document.querySelector('.search-main');
-  if (mainContent) {
-    mainContent.classList.remove('detail-panel-open');
+  const searchMain = document.querySelector('.search-main');
+  const sourcesMain = document.querySelector('.sources-main');
+  
+  if (searchMain) {
+    searchMain.classList.remove('detail-panel-open');
+  }
+  if (sourcesMain) {
+    sourcesMain.classList.remove('detail-panel-open');
   }
   
   document.body.style.overflow = '';
 }
 
+// ── Utility Functions ──
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 // ── Clean up panel (called on unmount) ──
 export function cleanupDetail() {
   // Reset main content position if needed
-  const mainContent = document.querySelector('.search-main');
-  if (mainContent) {
-    mainContent.classList.remove('detail-panel-open');
+  const searchMain = document.querySelector('.search-main');
+  const sourcesMain = document.querySelector('.sources-main');
+  
+  if (searchMain) {
+    searchMain.classList.remove('detail-panel-open');
+  }
+  if (sourcesMain) {
+    sourcesMain.classList.remove('detail-panel-open');
   }
   
   if (overlay && overlay.parentNode) {
@@ -166,9 +267,93 @@ export function cleanupDetail() {
   overlay = null;
   panel = null;
   isOpen = false;
+  chunksPreviewOpen = false;
+  currentChunks = [];
+  currentChunkIndex = -1;
   
   document.removeEventListener('keydown', handleKeydown);
   document.body.style.overflow = '';
+}
+
+// ── Load Chunks for Document ──
+async function loadChunksForDocument(docId) {
+  const body = document.getElementById('chunksPreviewBody');
+  const navInfo = document.getElementById('chunkNavInfo');
+  
+  if (!body || !navInfo) return;
+  
+  // Show loading
+  body.innerHTML = '<div class="chunks-loading"><div class="spinner"></div><span>Loading chunks...</span></div>';
+  
+  try {
+    // API call to get chunks for this document
+    const data = await api.get(`/documents/${docId}/chunks`);
+    currentChunks = data.chunks || [];
+    currentChunkIndex = 0;
+    
+    if (currentChunks.length === 0) {
+      body.innerHTML = '<div class="chunks-empty">No chunks found for this document</div>';
+      navInfo.textContent = '0 / 0';
+      return;
+    }
+    
+    // Update navigation
+    navInfo.textContent = `${currentChunkIndex + 1} / ${currentChunks.length}`;
+    
+    // Show first chunk
+    renderChunk(currentChunkIndex);
+    
+    // Update navigation buttons
+    document.getElementById('chunkPrevBtn').disabled = currentChunkIndex <= 0;
+    document.getElementById('chunkNextBtn').disabled = currentChunkIndex >= currentChunks.length - 1;
+    
+  } catch (e) {
+    body.innerHTML = `<div class="chunks-error">Failed to load chunks: ${e.message}</div>`;
+    navInfo.textContent = 'Error';
+  }
+}
+
+// ── Render Individual Chunk ──
+function renderChunk(index) {
+  const chunk = currentChunks[index];
+  if (!chunk) return;
+  
+  const body = document.getElementById('chunksPreviewBody');
+  if (!body) return;
+  
+  body.innerHTML = `
+    <div class="chunk-container">
+      <div class="chunk-header">
+        <span class="chunk-index">Chunk #${index + 1}</span>
+        ${chunk.metadata?.char_len ? `<span class="chunk-length">${chunk.metadata.char_len} characters</span>` : ''}
+      </div>
+      <div class="chunk-content">
+        <pre>${escapeHtml(chunk.text || chunk.content || 'No content')}</pre>
+      </div>
+      ${chunk.metadata?.unit_locator ? `<div class="chunk-meta">Unit: ${chunk.metadata.unit_locator}</div>` : ''}
+    </div>
+  `;
+}
+
+// ── Navigate Chunks ──
+function navigateChunks(direction) {
+  if (currentChunks.length <= 1) return;
+  
+  const newIndex = currentChunkIndex + direction;
+  if (newIndex < 0 || newIndex >= currentChunks.length) return;
+  
+  currentChunkIndex = newIndex;
+  renderChunk(currentChunkIndex);
+  
+  // Update navigation info
+  const navInfo = document.getElementById('chunkNavInfo');
+  if (navInfo) {
+    navInfo.textContent = `${currentChunkIndex + 1} / ${currentChunks.length}`;
+  }
+  
+  // Update navigation buttons
+  document.getElementById('chunkPrevBtn').disabled = currentChunkIndex <= 0;
+  document.getElementById('chunkNextBtn').disabled = currentChunkIndex >= currentChunks.length - 1;
 }
 
 // ── Load Document ──

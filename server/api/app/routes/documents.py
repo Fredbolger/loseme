@@ -8,6 +8,7 @@ from storage.metadata_db.indexing_runs import increment_discovered_count
 
 from loseme_core.models import IngestionSource
 from typing import Optional
+import json
 import logging
 
 logger = logging.getLogger(__name__)

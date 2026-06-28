@@ -454,4 +454,14 @@
   .preview-container {
     padding: var(--space-md);
   }
+
+  /* Detail Panel Support - same as search view */
+  .sources-main.detail-panel-open {
+    margin-right: 50%;
+    transition: margin-right var(--transition-spring);
+  }
+
+  .sources-main {
+    transition: margin-right var(--transition-spring);
+  }
 }
