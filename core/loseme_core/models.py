@@ -79,16 +79,25 @@ class IngestionSource(BaseModel):
     @classmethod
     def from_scope(cls, scope: Any, should_stop: Callable[[], bool]) -> "IngestionSource":
         """Factory to return the correct subclass based on scope type."""
-        from .registry import ingestion_source_registry
-
+        # Direct import without registry
+        # Handle StoredScope which has a 'type' field
+        if hasattr(scope, 'type'):
+            if scope.type == "filesystem":
+                from .filesystem_model import FilesystemIngestionSource
+                return FilesystemIngestionSource(scope=scope, should_stop=should_stop)
+            elif scope.type == "thunderbird":
+                from .thunderbird_model import ThunderbirdIngestionSource
+                return ThunderbirdIngestionSource(scope=scope, should_stop=should_stop)
+        
+        # Handle direct scope classes
         if scope.__class__.__name__ == "FilesystemIndexingScope":
-            source = ingestion_source_registry.get_source("filesystem")
-            return source(scope=scope, should_stop=should_stop)
+            from .filesystem_model import FilesystemIngestionSource
+            return FilesystemIngestionSource(scope=scope, should_stop=should_stop)
         elif scope.__class__.__name__ == "ThunderbirdIndexingScope":
-            source = ingestion_source_registry.get_source("thunderbird")
-            return source(scope=scope, should_stop=should_stop)
-        else:
-            raise ValueError(f"No ingestion source for scope type: {type(scope)}")
+            from .thunderbird_model import ThunderbirdIngestionSource
+            return ThunderbirdIngestionSource(scope=scope, should_stop=should_stop)
+        
+        raise ValueError(f"No ingestion source for scope type: {type(scope)}")
 
 class IngestRequest(BaseModel):
     type: str  # "filesystem" | "thunderbird"

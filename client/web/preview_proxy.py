@@ -48,6 +48,149 @@ def _decode_header_str(val: Optional[str]) -> str:
     return str(make_header(decode_header(val)))
 
 
+# ── Content Extraction Route ─────────────────────────────────
+
+@router.get("/{document_part_id}/content")
+def extract_document_content(document_part_id: str):
+    """
+    Extract the full text content of a document for reindexing.
+    This endpoint is called by the server during rescan operations.
+    """
+    meta = _get_part_meta(document_part_id)
+    source_type: str = meta.get("source_type", "filesystem")
+    source_path: str = meta.get("source_path", "")
+    
+    # ── Thunderbird ───────────────────────────────────────────
+    if source_type == "thunderbird":
+        parts = source_path.split("::Message-ID:")
+        if len(parts) != 2:
+            raise HTTPException(400, f"Cannot parse thunderbird source_path: {source_path}")
+        mbox_path, message_id = parts
+
+        # Translate mbox path from host to container
+        try:
+            container_mbox_path = host_path_to_container(mbox_path)
+            mbox_path = str(container_mbox_path)
+        except ValueError as e:
+            raise HTTPException(
+                400,
+                f"Cannot translate mbox host path to container path: {mbox_path}. "
+                f"Error: {str(e)}. "
+                "Make sure LOSEME_HOST_ROOT and LOSEME_CONTAINER_ROOT are properly configured.",
+            )
+
+        if not Path(mbox_path).exists():
+            raise HTTPException(
+                404,
+                f"Mbox file not found on this device: {mbox_path}. "
+                "Make sure you are running the web client on the device that owns this file.",
+            )
+
+        mbox = mailbox.mbox(mbox_path)
+        target = next((m for m in mbox if m.get("Message-ID") == message_id), None)
+        if target is None:
+            raise HTTPException(404, "Email message not found in local mbox")
+
+        # Extract text content from email
+        content = ""
+        if target.is_multipart():
+            for part in target.walk():
+                ct = part.get_content_type()
+                if ct in ("text/html", "text/plain"):
+                    payload = part.get_payload(decode=True)
+                    if payload:
+                        text = payload.decode(part.get_content_charset() or "utf-8", errors="replace")
+                        content += text + "\n\n"
+        else:
+            payload = target.get_payload(decode=True)
+            if payload:
+                content = payload.decode(target.get_content_charset() or "utf-8", errors="replace")
+
+        return {
+            "status": "success",
+            "content": content,
+            "source_type": "thunderbird"
+        }
+
+    # ── Filesystem ────────────────────────────────────────────
+    # Translate host path to container path
+    try:
+        container_path = host_path_to_container(source_path)
+        path = Path(container_path)
+    except ValueError as e:
+        raise HTTPException(
+            400,
+            f"Cannot translate host path to container path: {source_path}. "
+            f"Error: {str(e)}. "
+            "Make sure LOSEME_HOST_ROOT and LOSEME_CONTAINER_ROOT are properly configured.",
+        )
+    
+    if not path.exists():
+        raise HTTPException(
+            404,
+            f"File not found on this device: {source_path} (container: {path}). "
+            "Make sure the web client is running on the device that owns this file.",
+        )
+
+    # Read file content based on type
+    suffix = path.suffix.lower()
+    
+    # Text files
+    text_suffixes = {".txt", ".md", ".rst", ".py", ".js", ".ts", ".css", ".html", ".json", ".xml", ".csv", ".log"}
+    if suffix in text_suffixes:
+        return {
+            "status": "success",
+            "content": path.read_text(encoding="utf-8", errors="replace"),
+            "source_type": "filesystem"
+        }
+    
+    # PDF files (extract text)
+    if suffix == ".pdf":
+        try:
+            import PyPDF2
+            content = ""
+            with open(path, "rb") as file:
+                reader = PyPDF2.PdfReader(file)
+                for page in reader.pages:
+                    content += page.extract_text() + "\n"
+            return {
+                "status": "success",
+                "content": content,
+                "source_type": "filesystem"
+            }
+        except ImportError:
+            raise HTTPException(400, "PDF extraction requires PyPDF2 library")
+        except Exception as e:
+            raise HTTPException(400, f"Error extracting PDF content: {str(e)}")
+    
+    # EML files
+    if suffix == ".eml":
+        import email
+        raw = path.read_text(encoding="utf-8", errors="ignore")
+        msg = email.message_from_string(raw)
+        content = ""
+        if msg.is_multipart():
+            for part in msg.walk():
+                ct = part.get_content_type()
+                if ct in ("text/html", "text/plain"):
+                    payload = part.get_payload(decode=True)
+                    if payload:
+                        text = payload.decode(part.get_content_charset() or "utf-8", errors="replace")
+                        content += text + "\n\n"
+        else:
+            payload = msg.get_payload(decode=True)
+            if payload:
+                content = payload.decode(msg.get_content_charset() or "utf-8", errors="replace")
+        return {
+            "status": "success",
+            "content": content,
+            "source_type": "filesystem"
+        }
+
+    # Binary files - return error
+    raise HTTPException(400, f"Content extraction not supported for {suffix} files")
+
+
 # ── Route ─────────────────────────────────────────────────────
 
 @router.get("/{document_part_id}")

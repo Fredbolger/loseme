@@ -1,5 +1,7 @@
 import json
+import traceback
 from typing import Optional
+from datetime import datetime
 from storage.metadata_db.db import execute, fetch_one, fetch_all
 import logging
 
@@ -17,49 +19,59 @@ def add_document_part_to_queue(
         logger.debug(f"Document part with ID {part['document_part_id']} is already in the queue for run_id {run_id}. Skipping adding to queue.")
         return {"status": "already_in_queue"}
 
-    execute(
-        """
-        INSERT INTO document_parts_queue (
-            run_id,
-            document_part_id,
-            checksum,
-            source_type,
-            source_instance_id,
-            device_id,
-            source_path,
-            metadata_json,
-            unit_locator,
-            content_type,
-            extractor_name,
-            extractor_version,
-            created_at,
-            updated_at,
-            text,
-            scope_json
+    try:
+        logger.debug(f"Queue function - created_at type: {type(part['created_at'])}, value: {part['created_at']}")
+        logger.debug(f"Queue function - updated_at type: {type(part['updated_at'])}, value: {part['updated_at']}")
+
+        execute(
+            """
+            INSERT INTO document_parts_queue (
+                run_id,
+                document_part_id,
+                checksum,
+                source_type,
+                source_instance_id,
+                device_id,
+                source_path,
+                metadata_json,
+                unit_locator,
+                content_type,
+                extractor_name,
+                extractor_version,
+                created_at,
+                updated_at,
+                text,
+                scope_json
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                run_id,
+                part["document_part_id"],
+                part["checksum"],
+                part["source_type"],
+                part["source_instance_id"],
+                part["device_id"],
+                part["source_path"],
+                json.dumps(part.get("metadata", {})),
+                part["unit_locator"],
+                part["content_type"],
+                part["extractor_name"],
+                part["extractor_version"],
+                part["created_at"].isoformat() if isinstance(part["created_at"], datetime) else part["created_at"],
+                part["updated_at"].isoformat() if isinstance(part["updated_at"], datetime) else part["updated_at"],
+                part["text"],
+                json.dumps(part.get("scope_json"))
+                ),
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            run_id,
-            part["document_part_id"],
-            part["checksum"],
-            part["source_type"],
-            part["source_instance_id"],
-            part["device_id"],
-            part["source_path"],
-            json.dumps(part.get("metadata", {})),
-            part["unit_locator"],
-            part["content_type"],
-            part["extractor_name"],
-            part["extractor_version"],
-            part["created_at"].isoformat(),
-            part["updated_at"].isoformat(),
-            part["text"],
-            json.dumps(part.get("scope_json"))
-            ),
-    )
+    except Exception as e:
+        logger.error(f"Error in queue function: {str(e)}")
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        raise
 
     return {"status": "added_to_queue"}
+
+import traceback
 
 def get_next_document_part_from_queue(run_id: str) -> Optional[dict]:
     """

@@ -15,8 +15,8 @@ def upsert_document_part(
     Insert or update a document part in the database.
     If a part with the same document_part_id already exists, it will be updated with the new information.
     """
-
-    execute(
+    try:
+        execute(
         """
         INSERT INTO document_parts (
             document_part_id,
@@ -69,13 +69,18 @@ def upsert_document_part(
             part.get("extractor_name"),
             part.get("extractor_version"),
             part.get("chunker_name"), part.get("chunker_version"),
-            datetime.fromisoformat(part["created_at"]).isoformat(),
-            datetime.fromisoformat(part["updated_at"]).isoformat(),
+            logger.debug(f"upsert_document_part - created_at type: {type(part['created_at'])}, value: {part['created_at']}"),
+            logger.debug(f"upsert_document_part - updated_at type: {type(part['updated_at'])}, value: {part['updated_at']}"),
+            (part["created_at"].isoformat() if isinstance(part["created_at"], datetime) else (datetime.fromisoformat(part["created_at"]).isoformat() if isinstance(part["created_at"], str) else str(part["created_at"]))),
+            (part["updated_at"].isoformat() if isinstance(part["updated_at"], datetime) else (datetime.fromisoformat(part["updated_at"]).isoformat() if isinstance(part["updated_at"], str) else str(part["updated_at"]))),
             None,
             json.dumps(part.get("scope_json"))
         ),
 
     )
+    except Exception as e:
+        logger.error(f"Error in upsert_document_part: {str(e)}")
+        raise
 
 def get_document_part_by_id(document_part_id: str) -> Optional[dict]:
     row = fetch_one(

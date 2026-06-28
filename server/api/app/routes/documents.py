@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from fastapi import HTTPException, APIRouter
+from fastapi import HTTPException, APIRouter, BackgroundTasks
 from storage.metadata_db.document_parts import (upsert_document_part,
 retrieve_scope_by_document_part_id, get_document_part_by_id,
 get_document_stats)
@@ -10,6 +10,9 @@ from loseme_core.models import IngestionSource
 from typing import Optional
 import json
 import logging
+import os
+import traceback
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -271,3 +274,124 @@ def get_document_attachments(document_part_id: str):
     metadata = doc_part.get("metadata_json", {})
     attachments = metadata.get("attachments", [])
     return {"attachments": attachments}
+
+
+@router.post("/{document_part_id}/rescan")
+def rescan_document(document_part_id: str):
+    """
+    Re-scan a document to check if it can still be retrieved and reindex it.
+
+    Args:
+        document_part_id: The ID of the document part to re-scan.
+
+    Returns:
+        Success message with reindexing status.
+
+    Process:
+        1. Retrieve document metadata
+        2. Attempt to re-open the source
+        3. Extract content if possible
+        4. Add to queue for reindexing (if content extracted)
+        5. Ensure the run is active for processing
+        6. Return status
+    """
+    try:
+        # Step 1: Retrieve document metadata
+        document_part = get_document_part_by_id(document_part_id)
+        if not document_part:
+            raise HTTPException(status_code=404, detail=f"Document with ID {document_part_id} not found.")
+
+        # Step 2: Request content extraction from client
+        try:
+            # Call the client to extract document content
+            client_url = os.environ.get("LOSEME_CLIENT_URL", "http://loseme-client-1:3000")
+            client_endpoint = f"{client_url}/preview/{document_part_id}/content"
+            
+            logger.info(f"Requesting content extraction from client: {client_endpoint}")
+            
+            import httpx
+            import traceback
+            client_response = httpx.get(client_endpoint, timeout=30.0)
+            
+            if client_response.status_code != 200:
+                logger.warning(f"Client content extraction failed for document {document_part_id}: {client_response.text}")
+                return {"status": "error", "reason": "client_extraction_failed", "document_part_id": document_part_id, "client_error": client_response.text}
+                
+            logger.info(f"About to parse JSON response")
+            extraction_result = client_response.json()
+            logger.info(f"Successfully parsed JSON: {extraction_result}")
+            
+            # Debug: Check if the document_part has datetime fields
+            logger.debug(f"Before processing - document_part created_at: {document_part.get('created_at')} (type: {type(document_part.get('created_at'))})")
+            logger.debug(f"Before processing - document_part updated_at: {document_part.get('updated_at')} (type: {type(document_part.get('updated_at'))})")
+            
+            if extraction_result.get("status") != "success":
+                logger.warning(f"Client content extraction returned error for document {document_part_id}: {extraction_result}")
+                return {"status": "error", "reason": "client_extraction_error", "document_part_id": document_part_id, "client_response": extraction_result}
+                
+            content = extraction_result.get("content", "")
+            
+            if not content or not content.strip():
+                logger.warning(f"Cannot re-scan document {document_part_id}: No content extracted by client")
+                return {"status": "error", "reason": "no_content_extracted", "document_part_id": document_part_id}
+                
+            # Step 3: Prepare document for reindexing
+            document_part["text"] = content
+            document_part["updated_at"] = datetime.now()  # Keep as datetime object for queue processing
+            
+            # Debug: Check types of datetime fields
+            logger.debug(f"Document part created_at type: {type(document_part.get('created_at'))}")
+            logger.debug(f"Document part updated_at type: {type(document_part.get('updated_at'))}")
+            
+            # Find existing run or use a default one
+            run_id = document_part.get("run_id")
+            if not run_id:
+                # If no run_id, we need to find or create one
+                # For now, let's use a default reindexing run
+                run_id = "reindexing_run"
+
+            # Add to queue for reindexing
+            logger.info(f"ABOUT TO CALL QUEUE FUNCTION - created_at: {document_part.get('created_at')} (type: {type(document_part.get('created_at'))}), updated_at: {document_part.get('updated_at')} (type: {type(document_part.get('updated_at'))})")
+            
+            from storage.metadata_db.document_parts_queue import add_document_part_to_queue
+            logger.info(f"ABOUT TO CALL add_document_part_to_queue")
+            queue_result = add_document_part_to_queue(
+                part=document_part,
+                run_id=run_id
+            )
+            logger.info(f"QUEUE FUNCTION RETURNED: {queue_result}")
+
+            if queue_result.get("status") == "already_in_queue":
+                logger.info(f"Document {document_part_id} already in queue for reindexing")
+                return {"status": "already_in_queue", "document_part_id": document_part_id, "run_id": run_id}
+            else:
+                logger.info(f"Document {document_part_id} added to queue for reindexing")
+                
+                # Ensure the run is active for processing
+                # If this is a new reindexing run, we need to start it
+                if run_id == "reindexing_run":
+                    from fastapi import BackgroundTasks
+                    from .runs import start_indexing_run
+                    
+                    # Create a mock background tasks object
+                    background_tasks = BackgroundTasks()
+                    
+                    # Start the indexing process for this run
+                    try:
+                        start_indexing_run(run_id, background_tasks, force_reprocess=True)
+                        logger.info(f"Started indexing process for reindexing run {run_id}")
+                    except Exception as e:
+                        logger.error(f"Failed to start indexing process for run {run_id}: {str(e)}")
+                        return {"status": "error", "reason": "indexing_start_failed", "error": str(e), "document_part_id": document_part_id}
+
+                return {"status": "queued_and_processing", "document_part_id": document_part_id, "run_id": run_id}
+
+        except Exception as extract_error:
+            logger.error(f"Error extracting content for document {document_part_id}: {str(extract_error)}")
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            return {"status": "error", "reason": "extraction_failed", "error": str(extract_error), "document_part_id": document_part_id}
+
+    except Exception as source_error:
+        logger.error(f"Error re-opening source for document {document_part_id}: {str(source_error)}")
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        return {"status": "error", "reason": "source_error", "error": str(source_error), "document_part_id": document_part_id}
