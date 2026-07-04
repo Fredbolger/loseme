@@ -201,7 +201,24 @@ export interface PaperlessTag {
   color?: string | null;
 }
 
+export interface PaperlessCorrespondent {
+  id: number;
+  name: string;
+}
+
+export interface PaperlessDocumentType {
+  id: number;
+  name: string;
+}
+
 export interface DocumentTagData {
   tag_ids: number[];
   tags: PaperlessTag[];
+}
+
+// Paperless Source Scope Types
+export interface PaperlessSourceScope {
+  tag_ids: number[] | null;
+  correspondent_ids: number[] | null;
+  document_type_ids: number[] | null;
 }

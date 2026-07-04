@@ -1,14 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FileText, Mail, Archive } from 'lucide-react';
+import { FileText, Mail, Archive, Settings } from 'lucide-react';
 import { useSources, useDocumentsBySource } from '@/hooks/useSources';
 import { useDetailPanelStore } from '@/lib/detail-panel-store';
 import { EmptyState, LoadingState, ErrorState } from '@/components/ui/States';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { SOURCE_TYPE_COLOR } from '@/lib/status-colors';
 import type { DocumentPart, MonitoredSource, SourceType } from '@/lib/types';
 import { cn } from '@/lib/cn';
+import { SourceScopeEditor } from '@/components/shared/SourceScopeEditor';
+import { extractConnectionIdFromSource } from '@/hooks/usePaperlessSourceScope';
 
 const SOURCE_ICON: Record<SourceType, React.ReactNode> = {
   filesystem: <FileText size={16} />,
@@ -27,6 +30,7 @@ export default function SourcesPage() {
   const sourcesQ = useSources();
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
+  const [editingSource, setEditingSource] = useState<MonitoredSource | null>(null);
   const docsQ = useDocumentsBySource(selectedSourceId);
   const openDetail = useDetailPanelStore((s) => s.open);
 
@@ -78,6 +82,7 @@ export default function SourcesPage() {
                     setSelectedSourceId(s.id);
                     setSelectedDocId(null);
                   }}
+                  onEdit={() => setEditingSource(s)}
                 />
               ))}
             </div>
@@ -119,6 +124,19 @@ export default function SourcesPage() {
           )}
         </div>
       </main>
+      
+      {/* Source Scope Editor Modal */}
+      {editingSource && (
+        <SourceScopeEditModal
+          source={editingSource}
+          onClose={() => setEditingSource(null)}
+          onSuccess={() => {
+            setEditingSource(null);
+            // Refresh the sources list
+            sourcesQ.refetch();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -127,39 +145,60 @@ function SourceListItem({
   source,
   active,
   onClick,
+  onEdit,
 }: {
   source: MonitoredSource;
   active: boolean;
   onClick: () => void;
+  onEdit: () => void;
 }) {
   const color = SOURCE_TYPE_COLOR[source.source_type];
+  const isPaperless = source.source_type === 'paperless';
+  
   return (
-    <button
-      onClick={onClick}
-      className={cn(
-        'flex items-center gap-2.5 rounded-md px-3 py-2.5 text-left transition-colors',
-        active ? 'bg-bg-active' : 'hover:bg-bg-hover',
-      )}
-      style={active ? { boxShadow: `inset 2px 0 0 0 ${color}` } : undefined}
-    >
-      <div
-        className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md"
-        style={{ background: 'var(--bg-tertiary)', color }}
+    <div className="group flex items-center gap-1">
+      <button
+        onClick={onClick}
+        className={cn(
+          'flex flex-1 gap-2.5 rounded-md px-3 py-2.5 text-left transition-colors',
+          active ? 'bg-bg-active' : 'hover:bg-bg-hover',
+        )}
+        style={active ? { boxShadow: `inset 2px 0 0 0 ${color}` } : undefined}
+        title={source.locator || source.id}
       >
-        {SOURCE_ICON[source.source_type]}
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-[12.5px] font-medium text-text-primary">
-          {source.locator || source.id.slice(0, 8)}
+        <div
+          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md"
+          style={{ background: 'var(--bg-tertiary)', color }}
+        >
+          {SOURCE_ICON[source.source_type]}
         </div>
-        <div className="truncate text-[11px] text-text-tertiary">
-          {source.source_type} · {source.device_id || 'unknown'}
+        <div className="min-w-0 flex-1 flex-col">
+          <div className="text-[12.5px] font-medium text-text-primary leading-tight break-all line-clamp-2">
+            {source.locator || source.id.slice(0, 8)}
+          </div>
+          <div className="truncate text-[11px] text-text-tertiary mt-1">
+            {source.source_type} · {source.device_id || 'unknown'}
+          </div>
         </div>
-      </div>
-      <span
-        className={cn('h-1.5 w-1.5 flex-shrink-0 rounded-full', source.enabled ? 'bg-status-success' : 'bg-text-tertiary')}
-      />
-    </button>
+        <span
+          className={cn('h-1.5 w-1.5 flex-shrink-0 rounded-full self-center', source.enabled ? 'bg-status-success' : 'bg-text-tertiary')}
+        />
+      </button>
+      {isPaperless && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+          className="h-7 w-7 flex-shrink-0 opacity-0 group-hover:opacity-100 hover:bg-bg-hover transition-opacity"
+          title="Edit source scope"
+        >
+          <Settings className="h-3.5 w-3.5 text-text-tertiary" />
+        </Button>
+      )}
+    </div>
   );
 }
 
@@ -194,5 +233,39 @@ function DocumentListItem({
         </Badge>
       </div>
     </button>
+  );
+}
+
+// Edit Source Modal
+function SourceScopeEditModal({
+  source,
+  onClose,
+  onSuccess,
+}: {
+  source: MonitoredSource | null;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  if (!source) return null;
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      {/* Modal */}
+      <div className="fixed left-1/2 top-1/2 z-[201] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 transform">
+        <div className="rounded-xl bg-bg-secondary p-4 shadow-xl">
+          <SourceScopeEditor
+            source={source}
+            onClose={onClose}
+            onSuccess={onSuccess}
+          />
+        </div>
+      </div>
+    </>
   );
 }
