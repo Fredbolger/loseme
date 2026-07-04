@@ -9,11 +9,13 @@ This module provides endpoints for:
 - Proxying document downloads for previews
 """
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Header
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Header, Query
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Tuple
+from datetime import datetime, timezone
 import logging
 import os
+import json
 
 from storage.metadata_db.paperless_connections import (
     create_paperless_connection,
@@ -25,6 +27,7 @@ from storage.metadata_db.paperless_connections import (
     get_connection_url_and_token,
 )
 from storage.metadata_db.sources import add_monitored_source
+from storage.metadata_db.document_parts import get_document_part_by_id, execute
 from api.app.routes.runs import start_indexing_run
 from loseme_core.paperless_model import PaperlessIndexingScope
 from loseme_core.models import IndexingScope
@@ -36,6 +39,68 @@ router = APIRouter(prefix="/paperless", tags=["paperless"])
 
 # Get device ID from environment
 device_id = os.environ.get("LOSEME_DEVICE_ID", "server")
+
+
+def resolve_paperless_context(document_part_id: str) -> Tuple[any, int]:
+    """
+    Resolve the Paperless context for a document part.
+    
+    Returns:
+        (connection, external_document_id)
+    
+    Validation:
+        - Load the document_part row
+        - Return 400 if source_type != "paperless"
+        - Return 404 if:
+            * the Paperless connection cannot be found
+            * the external Paperless document ID is missing
+    """
+    # Get document part
+    doc_part = get_document_part_by_id(document_part_id)
+    if not doc_part:
+        raise HTTPException(status_code=404, detail="document_part_not_found")
+    
+    # Check source type
+    source_type = doc_part.get("source_type")
+    if source_type != "paperless":
+        raise HTTPException(status_code=400, detail="not_paperless_document")
+    
+    # Get connection info from scope
+    scope_json = doc_part.get("scope_json")
+    if not scope_json:
+        raise HTTPException(status_code=404, detail="missing_scope")
+    
+    try:
+        scope_data = json.loads(scope_json) if isinstance(scope_json, str) else scope_json
+        connection_id = scope_data.get("connection_id")
+    except (json.JSONDecodeError, AttributeError):
+        raise HTTPException(status_code=404, detail="invalid_scope")
+    
+    # Get the connection
+    connection = get_paperless_connection(connection_id)
+    if not connection:
+        raise HTTPException(status_code=404, detail="paperless_connection_not_found")
+    
+    # Get external document ID from metadata
+    metadata_json = doc_part.get("metadata_json")
+    if not metadata_json:
+        raise HTTPException(status_code=404, detail="missing_metadata")
+    
+    try:
+        metadata = json.loads(metadata_json) if isinstance(metadata_json, str) else metadata_json
+        external_document_id = metadata.get("paperless_document_id")
+    except (json.JSONDecodeError, AttributeError):
+        raise HTTPException(status_code=404, detail="invalid_metadata")
+    
+    if not external_document_id:
+        raise HTTPException(status_code=404, detail="missing_external_document_id")
+    
+    try:
+        external_document_id = int(external_document_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="invalid_external_document_id")
+    
+    return connection, external_document_id
 
 
 # Request/Response Models
@@ -86,6 +151,33 @@ class ScanResponse(BaseModel):
     run_id: str
     connection_id: str
     status: str
+
+
+# Tag Management Models
+
+class CreateTagRequest(BaseModel):
+    """Request to create a new Paperless tag."""
+    connection_id: str
+    name: str
+    color: Optional[str] = None
+
+
+class TagResponse(BaseModel):
+    """Response for tag operations."""
+    id: int
+    name: str
+    color: Optional[str] = None
+
+
+class AddDocumentTagRequest(BaseModel):
+    """Request to add a tag to a document."""
+    tag_id: int
+
+
+class DocumentTagsResponse(BaseModel):
+    """Response for document tag operations."""
+    tag_ids: List[int]
+    tags: List[dict]
 
 
 # Connection Endpoints
@@ -550,3 +642,348 @@ def list_source_documents(source_id: str):
     except Exception as e:
         logger.error(f"Error fetching documents from Paperless source {source_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch documents: {str(e)}")
+
+
+# Tag Management Routes
+
+@router.get("/tags")
+def list_tags_endpoint(connection_id: str = Query(..., description="Paperless connection ID")):
+    """
+    Return all tags for the specified Paperless connection.
+    
+    Used for autocomplete.
+    """
+    import requests
+    
+    # Validate connection
+    connection = get_paperless_connection(connection_id)
+    if not connection:
+        raise HTTPException(status_code=404, detail="paperless_connection_not_found")
+    
+    try:
+        client = PaperlessApiClient(base_url=connection.base_url, api_token=connection.api_token)
+        tags = client.list_all_tags()
+        logger.debug(f"Retrieved {len(tags)} tags from Paperless connection {connection_id}")
+        return {"tags": tags}
+    except requests.exceptions.Timeout:
+        logger.error(f"Paperless API timeout for connection {connection_id}")
+        raise HTTPException(status_code=502, detail="paperless_unreachable")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Paperless API request failed for connection {connection_id}: {str(e)}")
+        raise HTTPException(status_code=502, detail="paperless_unreachable")
+    except ValueError as e:
+        error_msg = str(e)
+        if "authentication failed" in error_msg or "401" in error_msg:
+            logger.error(f"Paperless authentication failed for connection {connection_id}: {error_msg}")
+            raise HTTPException(status_code=502, detail="paperless_auth_failed")
+        else:
+            logger.error(f"Paperless API error for connection {connection_id}: {error_msg}")
+            raise HTTPException(status_code=500, detail=f"Failed to fetch tags: {error_msg}")
+
+
+@router.post("/tags", response_model=TagResponse)
+def create_tag_endpoint(request: CreateTagRequest):
+    """
+    Create a new Paperless tag.
+    
+    Request body:
+    {
+      "connection_id": ...,
+      "name": "...",
+      "color": "..."
+    }
+    """
+    import requests
+    
+    # Validate connection
+    connection = get_paperless_connection(request.connection_id)
+    if not connection:
+        raise HTTPException(status_code=404, detail="paperless_connection_not_found")
+    
+    try:
+        client = PaperlessApiClient(base_url=connection.base_url, api_token=connection.api_token)
+        tag = client.create_tag(name=request.name, color=request.color)
+        logger.info(f"Created tag {tag.get('id')} with name '{request.name}' in Paperless connection {request.connection_id}")
+        return TagResponse(
+            id=tag.get("id"),
+            name=tag.get("name"),
+            color=tag.get("color")
+        )
+    except requests.exceptions.Timeout:
+        logger.error(f"Paperless API timeout for connection {request.connection_id}")
+        raise HTTPException(status_code=502, detail="paperless_unreachable")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Paperless API request failed for connection {request.connection_id}: {str(e)}")
+        raise HTTPException(status_code=502, detail="paperless_unreachable")
+    except ValueError as e:
+        error_msg = str(e)
+        if "authentication failed" in error_msg or "401" in error_msg:
+            logger.error(f"Paperless authentication failed for connection {request.connection_id}: {error_msg}")
+            raise HTTPException(status_code=502, detail="paperless_auth_failed")
+        else:
+            logger.error(f"Paperless API error for connection {request.connection_id}: {error_msg}")
+            raise HTTPException(status_code=500, detail=f"Failed to create tag: {error_msg}")
+
+
+@router.get("/documents/{document_part_id}/tags")
+def get_document_tags_endpoint(document_part_id: str):
+    """
+    Resolve the Paperless document from the local document part and return its current tags.
+    """
+    import requests
+    
+    try:
+        connection, external_document_id = resolve_paperless_context(document_part_id)
+    except HTTPException as e:
+        # Re-raise the HTTPException with the normalized error
+        raise e
+    except Exception as e:
+        logger.error(f"Error resolving Paperless context for document {document_part_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to resolve context: {str(e)}")
+    
+    try:
+        client = PaperlessApiClient(base_url=connection.base_url, api_token=connection.api_token)
+        doc = client.get_document(external_document_id)
+        
+        # Extract tag information
+        tags = doc.get("tags", [])
+        tag_ids = [tag.get("id") for tag in tags if isinstance(tag, dict) and tag.get("id")]
+        
+        logger.debug(f"Retrieved {len(tags)} tags for document {external_document_id}")
+        return DocumentTagsResponse(
+            tag_ids=tag_ids,
+            tags=tags
+        )
+    except requests.exceptions.Timeout:
+        logger.error(f"Paperless API timeout for connection {connection.id}")
+        raise HTTPException(status_code=502, detail="paperless_unreachable")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Paperless API request failed for connection {connection.id}: {str(e)}")
+        raise HTTPException(status_code=502, detail="paperless_unreachable")
+    except ValueError as e:
+        error_msg = str(e)
+        if "404" in error_msg and "document" in error_msg:
+            # Mark document as stale
+            _mark_document_as_stale(document_part_id)
+            raise HTTPException(status_code=404, detail="paperless_document_missing")
+        elif "authentication failed" in error_msg or "401" in error_msg:
+            logger.error(f"Paperless authentication failed for connection {connection.id}: {error_msg}")
+            raise HTTPException(status_code=502, detail="paperless_auth_failed")
+        else:
+            logger.error(f"Paperless API error for connection {connection.id}: {error_msg}")
+            raise HTTPException(status_code=500, detail=f"Failed to fetch document tags: {error_msg}")
+
+
+@router.post("/documents/{document_part_id}/tags")
+def add_document_tag_endpoint(document_part_id: str, request: AddDocumentTagRequest):
+    """
+    Add a tag to a document using the client's add_tag() wrapper.
+    
+    Request body:
+    {
+      "tag_id": 123
+    }
+    """
+    import requests
+    
+    try:
+        connection, external_document_id = resolve_paperless_context(document_part_id)
+    except HTTPException as e:
+        # Re-raise the HTTPException with the normalized error
+        raise e
+    except Exception as e:
+        logger.error(f"Error resolving Paperless context for document {document_part_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to resolve context: {str(e)}")
+    
+    try:
+        client = PaperlessApiClient(base_url=connection.base_url, api_token=connection.api_token)
+        
+        # Use the convenience method which handles fetch → modify → PATCH
+        updated_doc = client.add_tag(external_document_id, request.tag_id)
+        
+        # Update local cache
+        _update_document_tags_cache(document_part_id, updated_doc.get("tags", []))
+        
+        logger.info(f"Added tag {request.tag_id} to document {external_document_id}")
+        
+        # Return the updated tags
+        tags = updated_doc.get("tags", [])
+        tag_ids = [tag.get("id") for tag in tags if isinstance(tag, dict) and tag.get("id")]
+        
+        return DocumentTagsResponse(
+            tag_ids=tag_ids,
+            tags=tags
+        )
+    except requests.exceptions.Timeout:
+        logger.error(f"Paperless API timeout for connection {connection.id}")
+        raise HTTPException(status_code=502, detail="paperless_unreachable")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Paperless API request failed for connection {connection.id}: {str(e)}")
+        raise HTTPException(status_code=502, detail="paperless_unreachable")
+    except ValueError as e:
+        error_msg = str(e)
+        if "404" in error_msg and "document" in error_msg:
+            # Mark document as stale
+            _mark_document_as_stale(document_part_id)
+            raise HTTPException(status_code=404, detail="paperless_document_missing")
+        elif "authentication failed" in error_msg or "401" in error_msg:
+            logger.error(f"Paperless authentication failed for connection {connection.id}: {error_msg}")
+            raise HTTPException(status_code=502, detail="paperless_auth_failed")
+        else:
+            logger.error(f"Paperless API error for connection {connection.id}: {error_msg}")
+            raise HTTPException(status_code=500, detail=f"Failed to add tag: {error_msg}")
+
+
+@router.delete("/documents/{document_part_id}/tags/{tag_id}")
+def remove_document_tag_endpoint(document_part_id: str, tag_id: int):
+    """
+    Remove a tag from a document using the client's remove_tag() wrapper.
+    """
+    import requests
+    
+    try:
+        connection, external_document_id = resolve_paperless_context(document_part_id)
+    except HTTPException as e:
+        # Re-raise the HTTPException with the normalized error
+        raise e
+    except Exception as e:
+        logger.error(f"Error resolving Paperless context for document {document_part_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to resolve context: {str(e)}")
+    
+    try:
+        client = PaperlessApiClient(base_url=connection.base_url, api_token=connection.api_token)
+        
+        # Use the convenience method which handles fetch → modify → PATCH
+        updated_doc = client.remove_tag(external_document_id, tag_id)
+        
+        # Update local cache
+        _update_document_tags_cache(document_part_id, updated_doc.get("tags", []))
+        
+        logger.info(f"Removed tag {tag_id} from document {external_document_id}")
+        
+        # Return the updated tags
+        tags = updated_doc.get("tags", [])
+        tag_ids = [tag.get("id") for tag in tags if isinstance(tag, dict) and tag.get("id")]
+        
+        return DocumentTagsResponse(
+            tag_ids=tag_ids,
+            tags=tags
+        )
+    except requests.exceptions.Timeout:
+        logger.error(f"Paperless API timeout for connection {connection.id}")
+        raise HTTPException(status_code=502, detail="paperless_unreachable")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Paperless API request failed for connection {connection.id}: {str(e)}")
+        raise HTTPException(status_code=502, detail="paperless_unreachable")
+    except ValueError as e:
+        error_msg = str(e)
+        if "404" in error_msg and "document" in error_msg:
+            # Mark document as stale
+            _mark_document_as_stale(document_part_id)
+            raise HTTPException(status_code=404, detail="paperless_document_missing")
+        elif "authentication failed" in error_msg or "401" in error_msg:
+            logger.error(f"Paperless authentication failed for connection {connection.id}: {error_msg}")
+            raise HTTPException(status_code=502, detail="paperless_auth_failed")
+        else:
+            logger.error(f"Paperless API error for connection {connection.id}: {error_msg}")
+            raise HTTPException(status_code=500, detail=f"Failed to remove tag: {error_msg}")
+
+
+# Helper functions for cache synchronization
+
+def _update_document_tags_cache(document_part_id: str, tags: List[dict]) -> None:
+    """
+    Update the local database cache with the current tags from Paperless.
+    
+    Updates document_parts.metadata_json.tags immediately within the same request.
+    """
+    try:
+        # Get current document part
+        doc_part = get_document_part_by_id(document_part_id)
+        if not doc_part:
+            logger.warning(f"Document part {document_part_id} not found for cache update")
+            return
+        
+        # Parse existing metadata
+        metadata_json = doc_part.get("metadata_json")
+        if metadata_json:
+            try:
+                metadata = json.loads(metadata_json) if isinstance(metadata_json, str) else metadata_json
+            except (json.JSONDecodeError, AttributeError):
+                metadata = {}
+        else:
+            metadata = {}
+        
+        # Extract tag information
+        tag_ids = [tag.get("id") for tag in tags if isinstance(tag, dict) and tag.get("id")]
+        tag_names = [tag.get("name") for tag in tags if isinstance(tag, dict) and tag.get("name")]
+        
+        # Update metadata with tag info
+        metadata["tags"] = tag_names
+        metadata["tag_ids"] = tag_ids
+        
+        # Update the document part in the database
+        execute(
+            """
+            UPDATE document_parts 
+            SET metadata_json = ?, updated_at = ?
+            WHERE document_part_id = ?
+            """,
+            (
+                json.dumps(metadata),
+                datetime.now(timezone.utc).isoformat(),
+                document_part_id
+            )
+        )
+        
+        logger.debug(f"Updated tag cache for document part {document_part_id}: {tag_ids}")
+        
+    except Exception as e:
+        logger.error(f"Failed to update tag cache for document part {document_part_id}: {str(e)}")
+        # Don't fail the main operation just because cache update failed
+        
+
+def _mark_document_as_stale(document_part_id: str) -> None:
+    """
+    Mark a document as stale when Paperless reports it no longer exists.
+    
+    Sets metadata_json.paperless_stale = true
+    """
+    try:
+        # Get current document part
+        doc_part = get_document_part_by_id(document_part_id)
+        if not doc_part:
+            logger.warning(f"Document part {document_part_id} not found for stale marking")
+            return
+        
+        # Parse existing metadata
+        metadata_json = doc_part.get("metadata_json")
+        if metadata_json:
+            try:
+                metadata = json.loads(metadata_json) if isinstance(metadata_json, str) else metadata_json
+            except (json.JSONDecodeError, AttributeError):
+                metadata = {}
+        else:
+            metadata = {}
+        
+        # Mark as stale
+        metadata["paperless_stale"] = True
+        
+        # Update the document part in the database
+        execute(
+            """
+            UPDATE document_parts 
+            SET metadata_json = ?, updated_at = ?
+            WHERE document_part_id = ?
+            """,
+            (
+                json.dumps(metadata),
+                datetime.now(timezone.utc).isoformat(),
+                document_part_id
+            )
+        )
+        
+        logger.info(f"Marked document part {document_part_id} as paperless_stale")
+        
+    except Exception as e:
+        logger.error(f"Failed to mark document part {document_part_id} as stale: {str(e)}")

@@ -5,6 +5,7 @@ export interface DetailDoc {
   document_part_id: string;
   source_type: SourceType;
   source_path: string;
+  scope_json?: string;
 }
 
 interface DetailPanelState {

@@ -3,11 +3,14 @@
 import { useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 import { useDetailPanelStore } from '@/lib/detail-panel-store';
-import { useDocumentChunks } from '@/hooks/useSources';
+import { useDocumentChunks, useDocumentDetail } from '@/hooks/useSources';
 import { DocumentPreview } from '@/components/previews/DocumentPreview';
 import { Button } from '@/components/ui/Button';
 import { LoadingState, EmptyState } from '@/components/ui/States';
 import { cn } from '@/lib/cn';
+import { TagEditor } from '@/components/shared/TagEditor';
+import type { DocumentPart } from '@/lib/types';
+import type { DetailDoc } from '@/lib/detail-panel-store';
 
 /**
  * Rebuilt from client/web/static/views/search/detail-panel.js. Preserves the
@@ -26,6 +29,10 @@ export function DetailPanel() {
   const activeDoc = docs[activeIndex];
 
   const chunksQuery = useDocumentChunks(activeDoc?.document_part_id ?? null, chunksOpen);
+  
+  // Fetch full document details to get scope_json for Paperless documents
+  const { data: fullDocData, isLoading: isLoadingFullDoc } = useDocumentDetail(activeDoc?.document_part_id ?? null);
+  const fullDoc = fullDocData?.document_part;
 
   useEffect(() => {
     function onKeydown(e: KeyboardEvent) {
@@ -59,6 +66,20 @@ export function DetailPanel() {
 
   const fileName = activeDoc.source_path.split(/[/\\]/).pop() || activeDoc.document_part_id;
   const total = docs.length;
+  
+  // Extract connection_id for Paperless documents
+  const getConnectionId = (doc: any): string | null => {
+    if (!doc || doc.source_type !== 'paperless') return null;
+    
+    try {
+      const scope = doc.scope_json ? JSON.parse(doc.scope_json) : null;
+      return scope?.connection_id || null;
+    } catch {
+      return null;
+    }
+  };
+  
+  const connectionId = fullDoc ? getConnectionId(fullDoc) : getConnectionId(activeDoc);
 
   return (
     <>
@@ -145,6 +166,18 @@ export function DetailPanel() {
           <div className="flex flex-wrap gap-5 border-b border-border bg-bg-tertiary px-5 py-2.5 text-[12px]">
             <MetaItem label="Path" value={activeDoc.source_path} />
             <MetaItem label="Type" value={activeDoc.source_type} />
+            {activeDoc.source_type === 'paperless' && connectionId && (
+              <div className="flex items-center gap-2">
+                <span className="text-text-tertiary">Tags:</span>
+                <TagEditor 
+                  documentPart={fullDoc ? 
+                    { document_part_id: fullDoc.document_part_id, source_type: fullDoc.source_type, scope_json: fullDoc.scope_json } :
+                    { document_part_id: activeDoc.document_part_id, source_type: activeDoc.source_type, scope_json: activeDoc.scope_json }
+                  } 
+                  connectionId={connectionId}
+                />
+              </div>
+            )}
           </div>
 
           <div className="flex-1 overflow-hidden">

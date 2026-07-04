@@ -24,7 +24,7 @@ const RENDERERS = [
  * Picks the correct renderer for the given file and calls render().
  * @param {HTMLElement} body       - The preview panel body element to render into
  * @param {string}      partId     - document_part_id
- * @param {string}      sourceType - e.g. 'filesystem', 'thunderbird'
+ * @param {string}      sourceType - e.g. 'filesystem', 'thunderbird', 'paperless'
  * @param {string}      path       - source path, used to determine file extension
  */
 export function openPreview(body, partId, sourceType, path) {

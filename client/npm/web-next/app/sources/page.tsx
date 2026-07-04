@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FileText, Mail } from 'lucide-react';
+import { FileText, Mail, Archive } from 'lucide-react';
 import { useSources, useDocumentsBySource } from '@/hooks/useSources';
 import { useDetailPanelStore } from '@/lib/detail-panel-store';
 import { EmptyState, LoadingState, ErrorState } from '@/components/ui/States';
@@ -13,6 +13,7 @@ import { cn } from '@/lib/cn';
 const SOURCE_ICON: Record<SourceType, React.ReactNode> = {
   filesystem: <FileText size={16} />,
   thunderbird: <Mail size={16} />,
+  paperless: <Archive size={16} />,
 };
 
 function docIcon(contentType?: string) {

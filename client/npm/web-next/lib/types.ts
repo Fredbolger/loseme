@@ -1,7 +1,7 @@
 // Ported from core/loseme_core/document_models.py, models.py,
 // server/preview/models.py, server/storage/metadata_db/*.py
 
-export type SourceType = 'filesystem' | 'thunderbird';
+export type SourceType = 'filesystem' | 'thunderbird' | 'paperless';
 
 export interface DocumentPart {
   document_part_id: string;
@@ -22,6 +22,7 @@ export interface DocumentPart {
   updated_at: string;
   last_indexed_at?: string | null;
   text?: string;
+  scope_json?: string;
 }
 
 export interface Chunk {
@@ -69,7 +70,15 @@ export interface ThunderbirdScope {
   ignore_patterns?: { field: string; value: string }[] | null;
 }
 
-export type IndexingScopeDTO = FilesystemScope | ThunderbirdScope | (Record<string, unknown> & { type: string });
+export interface PaperlessScope {
+  type: 'paperless';
+  connection_id: string;
+  tag_ids?: number[] | null;
+  correspondent_ids?: number[] | null;
+  document_type_ids?: number[] | null;
+}
+
+export type IndexingScopeDTO = FilesystemScope | ThunderbirdScope | PaperlessScope | (Record<string, unknown> & { type: string });
 
 export interface MonitoredSource {
   id: string;
@@ -183,4 +192,16 @@ export interface SessionSummary {
   message_count: number;
   updated_at: string;
   title?: string | null;
+}
+
+// Paperless Tag Management Types
+export interface PaperlessTag {
+  id: number;
+  name: string;
+  color?: string | null;
+}
+
+export interface DocumentTagData {
+  tag_ids: number[];
+  tags: PaperlessTag[];
 }

@@ -1,0 +1,36 @@
+client/web/
+├── __init__.py
+├── main.py
+├── preview_proxy.py
+├── __pycache__
+│   ├── __init__.cpython-314.pyc
+│   ├── main.cpython-314.pyc
+│   └── preview_proxy.cpython-314.pyc
+└── static
+    ├── app.js
+    ├── previews
+    │   ├── email.js
+    │   ├── fallback.js
+    │   ├── index.js
+    │   ├── pdf.js
+    │   └── plaintext.js
+    ├── styles
+    │   ├── animations.css
+    │   ├── base.css
+    │   ├── components.css
+    │   ├── layout.css
+    │   ├── main.css
+    │   ├── runs.css
+    │   ├── search.css
+    │   └── sources.css
+    └── views
+        ├── index.html
+        ├── index.js
+        ├── runs.js
+        ├── search
+        │   ├── search-api.js
+        │   ├── search.js
+        │   └── search-ui.js
+        ├── source.js
+        └── storage.js
+

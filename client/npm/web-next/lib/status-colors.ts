@@ -42,9 +42,11 @@ export const RUN_STATUS_LABEL: Record<RunStatus, string> = {
 export const SOURCE_TYPE_COLOR: Record<SourceType, string> = {
   filesystem: 'var(--accent-secondary)',
   thunderbird: 'var(--accent-quaternary)',
+  paperless: 'var(--accent-tertiary)',
 };
 
 export const SOURCE_TYPE_ICON: Record<SourceType, string> = {
   filesystem: '📁',
   thunderbird: '📧',
+  paperless: '📋',
 };

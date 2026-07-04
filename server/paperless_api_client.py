@@ -154,6 +154,99 @@ class PaperlessApiClient:
         
         return all_tags
     
+    def create_tag(self, name: str, color: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Create a new tag.
+        
+        Args:
+            name: The name of the tag
+            color: Optional color for the tag (hex color code)
+            
+        Returns:
+            The created tag object
+        """
+        payload = {"name": name}
+        if color:
+            payload["color"] = color
+            
+        return self._make_request("POST", "api/tags/", json=payload)
+    
+    def set_document_tags(self, document_id: int, tag_ids: List[int]) -> Dict[str, Any]:
+        """
+        Set the complete list of tags for a document.
+        
+        Paperless does NOT support incremental tag updates - this replaces the entire tag list.
+        
+        Args:
+            document_id: The Paperless document ID
+            tag_ids: Complete list of tag IDs to assign to the document
+            
+        Returns:
+            The updated document object
+        """
+        payload = {"tags": tag_ids}
+        return self._make_request("PATCH", f"api/documents/{document_id}/", json=payload)
+    
+    def add_tag(self, document_id: int, tag_id: int) -> Dict[str, Any]:
+        """
+        Add a single tag to a document.
+        
+        This is a convenience method that:
+        1. Fetches the current document
+        2. Reads its current tag IDs
+        3. Adds the new tag ID if not already present
+        4. PATCHes the complete updated tag list
+        
+        Args:
+            document_id: The Paperless document ID
+            tag_id: The tag ID to add
+            
+        Returns:
+            The updated document object
+        """
+        # Get current document
+        doc = self.get_document(document_id)
+        
+        # Get current tag IDs
+        current_tag_ids = [tag.get("id") for tag in doc.get("tags", []) if isinstance(tag, dict) and tag.get("id")]
+        
+        # Add the new tag if not already present
+        if tag_id not in current_tag_ids:
+            current_tag_ids.append(tag_id)
+        
+        # Set the complete tag list
+        return self.set_document_tags(document_id, current_tag_ids)
+    
+    def remove_tag(self, document_id: int, tag_id: int) -> Dict[str, Any]:
+        """
+        Remove a single tag from a document.
+        
+        This is a convenience method that:
+        1. Fetches the current document
+        2. Reads its current tag IDs
+        3. Removes the specified tag ID
+        4. PATCHes the complete updated tag list
+        
+        Args:
+            document_id: The Paperless document ID
+            tag_id: The tag ID to remove
+            
+        Returns:
+            The updated document object
+        """
+        # Get current document
+        doc = self.get_document(document_id)
+        
+        # Get current tag IDs
+        current_tag_ids = [tag.get("id") for tag in doc.get("tags", []) if isinstance(tag, dict) and tag.get("id")]
+        
+        # Remove the specified tag if present
+        if tag_id in current_tag_ids:
+            current_tag_ids.remove(tag_id)
+        
+        # Set the complete tag list
+        return self.set_document_tags(document_id, current_tag_ids)
+    
     def list_correspondents(self, page: int = 1, page_size: int = 100) -> Dict[str, Any]:
         """
         List all correspondents.

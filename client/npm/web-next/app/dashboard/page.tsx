@@ -62,7 +62,7 @@ export default function DashboardPage() {
           <EmptyState
             icon="📁"
             title="No monitored sources yet"
-            subtitle="Add a filesystem or Thunderbird source from the CLI to start indexing."
+            subtitle="Add a filesystem, Thunderbird, or Paperless source from the CLI to start indexing."
           />
         ) : (
           <SourceTreeView
