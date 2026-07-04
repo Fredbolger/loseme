@@ -25,6 +25,10 @@ COPY server/storage/  storage/
 COPY server/preview/  preview/
 COPY server/wiring.py wiring.py
 COPY server/scripts/  scripts/
+COPY server/paperless_api_client.py paperless_api_client.py
+COPY server/paperless_ingestion.py paperless_ingestion.py
+COPY server/ingestion_sources.py ingestion_sources.py
+
 
 RUN pip install --no-cache-dir --no-deps .
 

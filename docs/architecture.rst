@@ -1,188 +1,201 @@
 Architecture
 ============
 
-The Vector DB Project is structured as a set of loosely coupled components
-that communicate through well-defined data structures and interfaces.
+LoseMe follows a **client-server architecture** with clear separation of concerns.
+The system is designed to be:
 
-This architecture is designed to be:
-
-- Easy to extend
-- Easy to test
-- Safe to evolve over time
-
-The system follows a clear data flow from ingestion to storage, with each
-layer having a single, well-defined responsibility.
+- **Local-first**: All processing happens on your own hardware
+- **Extensible**: New sources, chunkers, and embeddings can be added easily
+- **Resumable**: Indexing can be stopped and resumed safely
+- **Deterministic**: Reproducible IDs ensure no duplicate indexing
 
 --------------------------------------------------------------------------
 
-High-Level Flow
+System Overview
 ---------------
 
-At a high level, the system processes documents in the following steps:
+::
 
-1. Collectors ingest raw data from external sources
-2. The pipeline processes and enriches documents
-3. Storage persists metadata and vector representations
-4. Domain models define the contracts between all components
+    +---------------+     +----------------+     +----------------+
+    |               |     |                |     |                |
+    |   CLI/Web UI  +---->+   API Server    +---->+   Qdrant       |
+    |   (Client)    |     |   (Server)     |     |   (Vector DB) |
+    |               |     |                |     |                |
+    +---------------+     +--------+-------+     +----------------+
+                                   |
+                                   v
+                          +--------+-------+
+                          |                |
+                          |   SQLite       |
+                          |   (Metadata)   |
+                          |                |
+                          +----------------+
 
-Each stage can be extended or replaced independently.
+**Client Container**
+  - CLI for ingestion and search
+  - Web UI for dashboard and search
+  - Document extractors (PDF, HTML, plaintext, EML, Thunderbird, Python)
+  - Filesystem and Thunderbird ingestion sources
 
---------------------------------------------------------------------------
+**Server Container**
+  - FastAPI REST API
+  - Pipeline: chunking and embedding
+  - Metadata storage: SQLite
+  - Vector storage: Qdrant
 
-Collectors
-----------
-
-Collectors are responsible for data ingestion.
-
-They are the system's boundary to the outside world and handle the discovery
-and reading of raw documents.
-
-Typical responsibilities include:
-
-- Discovering documents from a source
-- Reading raw content
-- Attaching source-specific metadata
-- Emitting normalized document objects
-
-Examples of collectors:
-
-- Filesystem-based ingestion
-- Future extensions such as Git repositories, web crawlers, or object storage
-
-Code location::
-
-    collectors/
-
---------------------------------------------------------------------------
-
-Pipeline
---------
-
-The pipeline transforms raw documents into searchable representations.
-
-It is split into independent stages to allow experimentation and replacement
-without impacting the rest of the system.
-
-Chunking
-~~~~~~~~
-
-Chunking splits documents into smaller, semantically meaningful units.
-
-Design goals:
-
-- Preserve semantic coherence
-- Control chunk size and overlap
-- Improve embedding quality
-
-Chunking is intentionally isolated so that multiple strategies can coexist.
-
-Code location::
-
-    pipeline/chunking/
-
-Embedding
-~~~~~~~~~
-
-Embedding transforms text chunks into vector representations.
-
-Design goals:
-
-- Pluggable embedding backends
-- Clear, stable interfaces
-- No coupling to storage or ingestion logic
-
-This makes it easy to switch between embedding models or providers.
-
-Code location::
-
-    pipeline/embeddings/
+**Core Package** (shared)
+  - Domain models (Document, DocumentPart, Chunk, IndexingRun)
+  - ID generation utilities
+  - Configuration
 
 --------------------------------------------------------------------------
 
-Storage
--------
+Containers and Deployment
+------------------------
 
-Storage is explicitly split by responsibility to avoid tight coupling.
+LoseMe is deployed using Docker Compose with separate containers:
 
-Metadata Database
-~~~~~~~~~~~~~~~~~
+**core**
+  Shared Python library. Built first and installed into both client and server.
 
-The metadata database stores structured information about documents and runs.
+**server**
+  FastAPI application with GPU support (NVIDIA runtime). Exposes API on port 8000.
+  Requires Qdrant as a dependency.
 
-Examples include:
+**client**
+  Web UI and CLI. Exposes web interface on port 3000. Mounts host directories
+  for file access.
 
-- Document identifiers and checksums
-- Processing status
-- Indexing runs and timestamps
+**qdrant**
+  Vector database service. Stores embeddings with metadata. Exposes on port 6333.
 
-This layer is typically backed by a relational database such as SQLite.
+Code locations::
 
-Code location::
-
-    storage/metadata_db/
-
-Vector Store
-~~~~~~~~~~~~
-
-The vector store is responsible for storing and querying vector embeddings.
-
-Design goals:
-
-- Backend-agnostic interface
-- Replaceable implementations
-- No knowledge of document ingestion details
-
-This separation enables experimentation with different vector databases.
-
-Code location::
-
-    storage/vector_db/
+    core/                # Shared package (loseme-core)
+    server/             # Server container with API and pipeline
+    client/             # Client container with CLI and web UI
 
 --------------------------------------------------------------------------
 
-Domain Layer
-------------
+Data Flow
+---------
 
-The domain layer defines the core abstractions shared across the system.
+**Ingestion:**
 
-It acts as the architectural backbone and protects the rest of the codebase
-from implementation churn.
+1. Client discovers documents (filesystem walk or Thunderbird mbox reading)
+2. Extractors pull text and metadata from files/emails
+3. Client sends document parts to server via POST /ingest/document_part
+4. Server chunks text using configured chunker (simple/sentence/semantic)
+5. Server generates embeddings using configured embedding model
+6. Server stores chunks + embeddings in Qdrant
+7. Server stores metadata in SQLite
 
-Typical responsibilities include:
+**Search:**
 
-- Defining document and chunk models
-- Declaring embedding and vector store interfaces
-- Enforcing invariants and contracts
+1. User sends query to POST /search
+2. Server embeds query using same embedding model
+3. Server queries Qdrant for nearest neighbor chunks
+4. Server returns ranked results with similarity scores
+5. Client can preview or open original documents
 
-All higher-level components depend on the domain layer, not the other way around.
+**Indexing Run Lifecycle:**
 
-Code location::
+1. POST /runs/create - creates run with scope
+2. POST /runs/start_indexing/{run_id} - marks as running, starts background processing
+3. Client queues document parts to /ingest/document_part
+4. Server processes queue in background task
+5. POST /runs/discovering_stopped/{run_id} - marks discovery complete
+6. Run continues until queue empty, then marks as completed
 
-    src/domain/
+--------------------------------------------------------------------------
+
+Component Layers
+----------------
+
+**Core Layer** (``core/loseme_core/``)
+  Domain models and utilities shared by client and server:
+
+  - **models.py**: Document, DocumentPart, Chunk, IndexingRun, IngestionSource
+  - **document_models.py**: Core data structures
+  - **domain.py**: EmbeddingOutput, EmbeddingProvider abstract interface
+  - **config.py**: Configuration constants (CHUNKER_TYPE, EMBEDDING_MODEL, etc.)
+  - **ids.py**: Deterministic ID generation
+  - **scope_models.py**: IndexingScope base class
+
+**Client Layer** (``client/``)
+  Document discovery and extraction:
+
+  - **extractors/**: Content extractors for different file types
+  - **sources/**: Document source handlers (filesystem, thunderbird)
+  - **ingest/**: Queue client for sending parts to server
+  - **cli/**: Typer-based CLI commands
+  - **web/**: FastAPI web frontend
+  - **preview/**: Document preview generators
+
+**Server Layer** (``server/``)
+  API and processing pipeline:
+
+  - **api/app/**: FastAPI application and routes
+  - **pipeline/**: Chunking and embedding
+  - **storage/**: Metadata and vector storage
+  - **preview/**: Server-side preview generators
+  - **wiring.py**: Factory functions for component assembly
 
 --------------------------------------------------------------------------
 
 Design Principles
 -----------------
 
-The project follows a small set of explicit design principles:
+**Local-first**
+  No cloud API calls during indexing or search. Everything runs on your hardware.
 
-- Explicit over implicit
-- Interfaces before implementations
-- Side effects pushed to the edges
-- Docker-first execution model
+**Stable, deterministic IDs**
+  The deduplication strategy relies on reproducible IDs:
 
-These principles are intended to keep the system understandable as it grows.
+  - ``source_instance_id``: source_type + device_id + source_path
+  - ``logical_document_part_id``: source_instance_id + unit_locator
+  - ``chunk_id``: document_part_id + checksum + chunk index
+
+  A change to any input produces a new ID, triggering re-indexing.
+
+**Multi-device awareness**
+  The same file on two devices gets separate embeddings, tracked by device_id.
+  This prevents duplicates without requiring a shared filesystem.
+
+**Resumable indexing**
+  Runs move through a state machine: pending -> running -> discovering_stopped -> 
+  completed/interrupted/failed. Interrupted runs resume without reprocessing.
+
+**Skip-on-reingest**
+  A document part is skipped if its checksum, extractor name/version, and chunker 
+  name/version are all unchanged since the last run.
+
+**Replaceable components**
+  Each major component (chunker, embedder, vector store) is behind an interface
+  and can be swapped without affecting the rest of the system.
 
 --------------------------------------------------------------------------
 
-Future Extensions
------------------
+Extensibility Points
+--------------------
 
-The architecture is designed to support future extensions, including:
+**Adding a new source type:**
+  1. Create a new scope model in core (e.g., ``MySourceIndexingScope``)
+  2. Create a new ingestion source in client/sources/
+  3. Register it in the ingestion_source_registry
+  4. Add client CLI commands
 
-- Re-ranking and hybrid search
-- Streaming or incremental ingestion
-- Multiple vector store backends
-- Distributed or parallel execution
+**Adding a new extractor:**
+  1. Implement DocumentExtractor in client/extractors/
+  2. Register it in extractor_registry
+
+**Adding a new chunker:**
+  1. Implement chunker in server/pipeline/chunking/
+  2. Add to wiring.py build_chunker()
+  3. Set LOSEME_CHUNKER environment variable
+
+**Adding a new embedding model:**
+  1. Implement EmbeddingProvider in server/pipeline/embeddings/
+  2. Add to wiring.py build_embedding_provider()
+  3. Set LOSEME_EMBEDDING_MODEL environment variable
 

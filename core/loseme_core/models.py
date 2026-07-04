@@ -12,6 +12,7 @@ from loseme_core.document_models import Document, DocumentPart, Chunk
 from loseme_core.scope_models import IndexingScope
 from loseme_core.thunderbird_model import ThunderbirdIndexingScope
 from loseme_core.filesystem_model import FilesystemIndexingScope
+from loseme_core.paperless_model import PaperlessIndexingScope
 
 import logging
 logger = logging.getLogger(__name__)
@@ -88,6 +89,9 @@ class IngestionSource(BaseModel):
             elif scope.type == "thunderbird":
                 from .thunderbird_model import ThunderbirdIngestionSource
                 return ThunderbirdIngestionSource(scope=scope, should_stop=should_stop)
+            elif scope.type == "paperless":
+                from .paperless_model import PaperlessIngestionSource
+                return PaperlessIngestionSource(scope=scope, should_stop=should_stop)
         
         # Handle direct scope classes
         if scope.__class__.__name__ == "FilesystemIndexingScope":
@@ -96,17 +100,23 @@ class IngestionSource(BaseModel):
         elif scope.__class__.__name__ == "ThunderbirdIndexingScope":
             from .thunderbird_model import ThunderbirdIngestionSource
             return ThunderbirdIngestionSource(scope=scope, should_stop=should_stop)
+        elif scope.__class__.__name__ == "PaperlessIndexingScope":
+            # Paperless ingestion source is server-side only
+            # This will be handled by the server's IngestionSource.from_scope override
+            from .paperless_model import PaperlessIndexingScope
+            # For core usage, we return a placeholder that will be replaced on server
+            raise NotImplementedError(f"PaperlessIngestionSource must be used on the server side. Scope: {scope.locator()}")
         
         raise ValueError(f"No ingestion source for scope type: {type(scope)}")
 
 class IngestRequest(BaseModel):
-    type: str  # "filesystem" | "thunderbird"
+    type: str  # "filesystem" | "thunderbird" | "paperless"
     data: Dict[str, Any]  # whatever extra parameters
 
     @field_validator('type')
     def type_must_be_valid(cls, v):
-        if v not in ["filesystem", "thunderbird"]:
-            raise ValueError('type must be either "filesystem" or "thunderbird"')
+        if v not in ["filesystem", "thunderbird", "paperless"]:
+            raise ValueError('type must be either "filesystem", "thunderbird", or "paperless"')
         return v
 
 @dataclass

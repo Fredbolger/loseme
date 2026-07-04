@@ -71,8 +71,6 @@ def add_document_part_to_queue(
 
     return {"status": "added_to_queue"}
 
-import traceback
-
 def get_next_document_part_from_queue(run_id: str) -> Optional[dict]:
     """
     Get the next document part from the processing queue for a given run_id.

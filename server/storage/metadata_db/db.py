@@ -102,6 +102,17 @@ def init_db() -> None:
             );
             """
         )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS paperless_connections (
+                id TEXT PRIMARY KEY,
+                base_url TEXT NOT NULL,
+                api_token TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+            """
+        )
         run_migrations(conn)  # <-- run migrations after ensuring base tables exist
 
         

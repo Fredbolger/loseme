@@ -166,6 +166,7 @@ The client exposes the web UI on port `3000`.
 | `LOSEME_API_URL` | URL of the server API | 
 | `LOSEME_DEVICE_ID` | Unique name for this client device |
 | `LOSEME_API_KEY` | Must match server key if auth is enabled |
+| `LOSEME_INGEST_SIDECAR_URL` | URL of the ingest sidecar service (default: `http://ingest-sidecar:3000`) | Handles filesystem and Thunderbird ingestion via the legacy Python client |
 
 ---
 

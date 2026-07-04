@@ -31,8 +31,8 @@ class DocumentPart(BaseModel):
 
 class Document(BaseModel):
     id: str
-    source_type: Literal["filesystem", "thunderbird"]
-    source_id: str # logical id that uniquely identifies the source of this document, e.g. "filesystem:/path/to/file.txt" or "thunderbird:message-id"
+    source_type: Literal["filesystem", "thunderbird", "paperless"]
+    source_id: str # logical id that uniquely identifies the source of this document, e.g. "filesystem:/path/to/file.txt" or "thunderbird:message-id" or "paperless:document-id"
     device_id: str
     source_path: str
     metadata: Dict[str, Any] = Field(default_factory=dict)
@@ -101,8 +101,8 @@ class Document(BaseModel):
 
     @field_validator('source_type')
     def source_type_must_be_valid(cls, v):
-        if v not in ["filesystem", "thunderbird"]:
-            raise ValueError('source_type must be either "filesystem" or "thunderbird"')
+        if v not in ["filesystem", "thunderbird", "paperless"]:
+            raise ValueError('source_type must be either "filesystem", "thunderbird", or "paperless"')
         return v
 
     @field_validator('source_path')

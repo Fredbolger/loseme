@@ -5,5 +5,6 @@ export async function GET() {
     api_url: process.env.LOSEME_API_URL || 'http://localhost:8000',
     api_key: process.env.LOSEME_API_KEY || '',
     client_url: process.env.LOSEME_CLIENT_URL || 'http://localhost:3000',
+    ingest_sidecar_url: process.env.LOSEME_INGEST_SIDECAR_URL || 'http://ingest-sidecar:3000',
   });
 }

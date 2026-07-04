@@ -5,7 +5,7 @@ import sys
  
 from api.app.routes import (
     ingest_router, health_router, search_router, document_router,
-    chunk_router, runs_router, sources_router, queue_router, database_router, llm_router
+    chunk_router, runs_router, sources_router, queue_router, database_router, llm_router, paperless_router
 )
 from api.app.core.auth import APIKeyMiddleware
 from contextlib import asynccontextmanager
@@ -57,6 +57,7 @@ app.include_router(sources_router)
 app.include_router(queue_router)
 app.include_router(database_router)
 app.include_router(llm_router)
+app.include_router(paperless_router)
     
 logger.info("API initialized with routers.")
 

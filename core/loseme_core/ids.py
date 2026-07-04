@@ -54,3 +54,15 @@ def make_thunderbird_source_id(
     return hashlib.sha256(
         f"thunderbird:{device_id}:{mbox_path}:{message_id}".encode("utf-8")
     ).hexdigest()
+
+def make_paperless_source_id(
+    device_id: str,
+    paperless_document_id: str,
+) -> str:
+    """
+    Create a stable ID for a Paperless document.
+    Uses the Paperless document ID which is already unique.
+    """
+    return hashlib.sha256(
+        f"paperless:{device_id}:{paperless_document_id}".encode("utf-8")
+    ).hexdigest()

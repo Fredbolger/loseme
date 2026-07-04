@@ -33,6 +33,10 @@ class IndexingScope(BaseModel):
             from .thunderbird_model import ThunderbirdIndexingScope
             return ThunderbirdIndexingScope.deserialize(data)
 
+        if scope_type == "paperless":
+            from .paperless_model import PaperlessIndexingScope
+            return PaperlessIndexingScope.deserialize(data)
+
         raise ValueError(f"Unknown scope type: {scope_type}")
 
 

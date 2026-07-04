@@ -12,3 +12,6 @@ docs/_build/*
 docker-compose.yml.my
 docker-compose.yml.bak
 ingest.log
+**/node_modules/
+**/.next/
+*.log
