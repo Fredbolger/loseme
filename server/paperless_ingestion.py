@@ -77,10 +77,18 @@ class PaperlessIngestionSource(IngestionSource):
         try:
             logger.debug(f"Fetching documents from Paperless with filters: tag_ids={self.scope.tag_ids}, correspondent_ids={self.scope.correspondent_ids}, document_type_ids={self.scope.document_type_ids}")
             
+            # If all filters are None or empty, index nothing (return empty list)
+            # This implements the "whitelist-only" behavior: only explicitly selected items are indexed
+            if (not self.scope.tag_ids or len(self.scope.tag_ids) == 0) and \
+               (not self.scope.correspondent_ids or len(self.scope.correspondent_ids) == 0) and \
+               (not self.scope.document_type_ids or len(self.scope.document_type_ids) == 0):
+                logger.info("No Paperless filters selected - indexing nothing (whitelist-only mode)")
+                return []
+            
             documents = self.api_client.list_all_documents(
-                tag_ids=self.scope.tag_ids,
-                correspondent_ids=self.scope.correspondent_ids,
-                document_type_ids=self.scope.document_type_ids
+                tag_ids=self.scope.tag_ids if self.scope.tag_ids else None,
+                correspondent_ids=self.scope.correspondent_ids if self.scope.correspondent_ids else None,
+                document_type_ids=self.scope.document_type_ids if self.scope.document_type_ids else None
             )
             
             logger.info(f"Found {len(documents)} documents matching Paperless filters")
