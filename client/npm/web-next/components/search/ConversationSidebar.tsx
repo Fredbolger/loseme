@@ -12,9 +12,10 @@ interface ConversationSidebarProps {
   activeSessionId: string | null;
   onSelect: (sessionId: string) => void;
   onNewChat: () => void;
+  onLoadConversation?: (sessionId: string) => void;
 }
 
-export function ConversationSidebar({ activeSessionId, onSelect, onNewChat }: ConversationSidebarProps) {
+export function ConversationSidebar({ activeSessionId, onSelect, onNewChat, onLoadConversation }: ConversationSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const conversationsQ = useConversations();
   const deleteMutation = useDeleteConversation();
@@ -53,7 +54,10 @@ export function ConversationSidebar({ activeSessionId, onSelect, onNewChat }: Co
               {conversationsQ.data.sessions.map((s) => (
                 <button
                   key={s.session_id}
-                  onClick={() => onSelect(s.session_id)}
+                  onClick={() => {
+                    onSelect(s.session_id);
+                    onLoadConversation?.(s.session_id);
+                  }}
                   className={cn(
                     'group flex flex-col gap-1 rounded-md px-3 py-2.5 text-left transition-colors',
                     s.session_id === activeSessionId ? 'bg-bg-active' : 'hover:bg-bg-hover',

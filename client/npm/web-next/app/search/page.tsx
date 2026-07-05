@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useSearchStore } from '@/lib/search-store';
 import { useDetailPanelStore } from '@/lib/detail-panel-store';
@@ -13,6 +13,7 @@ import {
   useConversationDetail,
 } from '@/hooks/useSearch';
 import { useSSEStream } from '@/hooks/useSSEStream';
+import { api } from '@/lib/api-client';
 import { ConversationSidebar } from '@/components/search/ConversationSidebar';
 import { ChatMessage } from '@/components/search/ChatMessage';
 import { ChatInputBar } from '@/components/search/ChatInputBar';
@@ -22,7 +23,7 @@ import type { ChatMessage as ChatMessageType, SourceRef } from '@/lib/types';
 
 export default function SearchPage() {
   const store = useSearchStore();
-  const { stream, isStreaming } = useSSEStream();
+  const { stream, isStreaming, abort } = useSSEStream();
   const modelsQ = useLLMModels();
   const openDetail = useDetailPanelStore((s) => s.open);
 
@@ -37,18 +38,16 @@ export default function SearchPage() {
     }
   }, [modelsQ.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const conversationDetailQ = useConversationDetail(store.sessionId);
-
-  // When switching to a session via the sidebar (not via an active local
-  // search), hydrate the message list from the server.
-  useEffect(() => {
-    if (!conversationDetailQ.data) return;
-    const detail = conversationDetailQ.data as {
-      messages: { id: string; role: string; content: string; sources?: SourceRef[]; created_at: string }[];
-    };
-    // Only hydrate if our local message list doesn't already match (avoids
-    // clobbering an in-progress conversation we just created locally).
-    if (store.messages.length === 0 || store.messages[0]?.id !== detail.messages[0]?.id) {
+  // Explicit loadConversation function - only called when user selects a conversation from sidebar
+  const loadConversation = useCallback(async (sessionId: string) => {
+    // Abort any in-flight SSE stream to avoid stale stream writing to wrong session
+    abort();
+    
+    try {
+      const detail = await api.get<{
+        messages: { id: string; role: string; content: string; sources?: SourceRef[]; created_at: string }[]
+      }>(`/search/sessions/${sessionId}`);
+      
       store.setMessages(
         detail.messages
           .filter((m) => m.role === 'user' || m.role === 'assistant')
@@ -60,8 +59,12 @@ export default function SearchPage() {
             created_at: m.created_at,
           })),
       );
+    } catch (error) {
+      toast.error('Failed to load conversation');
+      console.error('Failed to load conversation:', error);
     }
-  }, [conversationDetailQ.data]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [store, abort]);
+
 
   function openSourcesPanel(sources: SourceRef[]) {
     setActiveSourcesForPanel(sources);
@@ -83,6 +86,8 @@ export default function SearchPage() {
     const query = draft.trim();
     if (!query || store.isAwaitingResponse) return;
 
+    // Abort any in-flight SSE stream before starting a new search
+    abort();
     setDraft('');
     const userMsg: ChatMessageType = {
       id: crypto.randomUUID(),
@@ -180,6 +185,8 @@ export default function SearchPage() {
   }
 
   function handleNewChat() {
+    // Abort any in-flight SSE stream when starting a new chat
+    abort();
     store.reset();
   }
 
@@ -192,6 +199,7 @@ export default function SearchPage() {
           store.setSession(id);
         }}
         onNewChat={handleNewChat}
+        onLoadConversation={loadConversation}
       />
 
       <div className="flex flex-1 flex-col overflow-hidden">

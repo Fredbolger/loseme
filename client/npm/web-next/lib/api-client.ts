@@ -81,3 +81,9 @@ export async function getClientBase(): Promise<string> {
   const cfg = await getRuntimeConfig();
   return cfg.client_url;
 }
+
+/** Resolve the ingest sidecar base URL for filesystem walking and extractor operations. */
+export async function getIngestSidecarBase(): Promise<string> {
+  const cfg = await getRuntimeConfig();
+  return cfg.ingest_sidecar_url;
+}

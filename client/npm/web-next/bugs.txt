@@ -1,0 +1,219 @@
+# 🐛 Current Persisting Bugs in LoSeMe npm Client
+
+This document tracks known issues that need to be addressed. Each bug includes:
+- Detailed description
+- Relevant code files
+- Expected vs actual behavior
+- Potential root causes
+
+---
+
+## 🔴 CRITICAL BUGS
+
+### 1. **Indexing: 400 Bad Request on Source Scan**
+**Status**: PARTIALLY FIXED (authentication added, but may still have issues)
+**Files**: 
+- `app/api/sources/scan/[sourceId]/route.ts` (proxy route)
+- `hooks/useDashboard.ts` (useScanSource mutation)
+- `client/web/main.py` (legacy scan_source endpoint)
+
+**Description**: 
+When clicking "Scan" on a source in the dashboard, the request to the ingest sidecar returns 400 Bad Request. The proxy route now includes authentication headers, but there may still be additional validation requirements from the Python sidecar.
+
+**Expected**: 
+- Scan request succeeds with 200 OK
+- Source begins indexing process
+- Toast shows "Scan queued" message
+
+**Actual**: 
+- Request returns 400 Bad Request
+- No indexing occurs
+- Error toast shows generic message
+
+**Potential Causes**:
+- Missing device_id validation in proxy route
+- Ingest sidecar expects additional headers beyond X-API-Key
+- Source ownership check failing
+- Content-Type mismatch
+
+**Debugging**:
+```bash
+# Check server logs for detailed 400 error
+journalctl -u loseme-ingest-sidecar -f
+
+# Check Next.js proxy logs
+npm run dev
+```
+
+---
+
+### 2. **Search: Message Clobbering on Session Switch**
+**Status**: FIXED (but needs verification)
+**Files**:
+- `app/search/page.tsx` (loadConversation function)
+- `components/search/ConversationSidebar.tsx` (onSelect handler)
+- `lib/search-store.ts` (message state management)
+
+**Description**:
+When switching between conversations in the sidebar, the current conversation's messages were being overwritten by server data, causing loss of streaming responses and user messages.
+
+**Expected**:
+- Conversation history loads only when explicitly selected from sidebar
+- Streaming responses continue uninterrupted
+- Local optimistic messages are preserved
+
+**Actual** (before fix):
+- Automatic useEffect would overwrite messages on sessionId change
+- Streaming responses could be interrupted
+- User messages could disappear
+
+**Fix Applied**:
+- Removed automatic useEffect synchronization
+- Added explicit loadConversation function
+- Added SSE stream abort protection
+
+**Verification Needed**:
+- Test conversation switching during active streams
+- Verify message persistence across tab changes
+
+---
+
+### 3. **Paperless: Source Scope Selections Not Saved**
+**Status**: FIXED (but needs verification)
+**Files**:
+- `components/shared/SourceScopeEditor.tsx` (scope initialization)
+- `hooks/usePaperlessSourceScope.ts` (scope management)
+- `app/sources/page.tsx` (modal integration)
+
+**Description**:
+When editing Paperless source scope (tags, correspondents, document types), user selections were being lost due to the component re-initializing scope from props on every render.
+
+**Expected**:
+- User selections persist when interacting with dropdowns
+- Selections are preserved when available items list updates
+- Save button reflects actual changes made
+
+**Actual** (before fix):
+- Selections would reset when parent component re-rendered
+- Available items list updates would overwrite user choices
+- HasChanges() could return false even when user made selections
+
+**Fix Applied**:
+- Added useRef to track previous source ID
+- Only initialize scope when source actually changes
+- Prevent re-initialization on prop reference changes
+
+**Verification Needed**:
+- Test Paperless source scope editing
+- Verify selections persist across interactions
+- Test with multiple filter types
+
+---
+
+## 🟡 MINOR BUGS
+
+### 4. **UI: Missing Loading States in Some Components**
+**Files**:
+- `components/dashboard/SourceTreeView.tsx` (scan/delete buttons)
+- `components/search/ConversationSidebar.tsx` (conversation loading)
+- Various other interactive components
+
+**Description**:
+Some interactive elements lack proper loading states, which can cause confusion during async operations.
+
+**Expected**:
+- Buttons show loading spinners during operations
+- Disabled states prevent duplicate submissions
+- Visual feedback for async processes
+
+**Actual**:
+- Some buttons don't indicate loading state
+- Users may click multiple times
+- No visual feedback for background operations
+
+---
+
+### 5. **API: Inconsistent Error Handling**
+**Files**:
+- `lib/api-client.ts` (global error handling)
+- Various hook files (mutation error handling)
+- `app/search/page.tsx` (search error handling)
+
+**Description**:
+Error handling is inconsistent across different API calls. Some show toasts, others show alerts, some fail silently.
+
+**Expected**:
+- Consistent error display (toasts for most errors)
+- User-friendly error messages
+- Error logging for debugging
+- Recovery options where possible
+
+**Actual**:
+- Mixed use of toasts, alerts, and silent failures
+- Some errors show raw HTTP status codes
+- Limited error recovery options
+
+---
+
+## 🟢 COMPLETED FIXES
+
+### ✅ Indexing Authentication
+- Added X-API-Key header forwarding in proxy route
+- Synchronized with legacy client authentication pattern
+- Added comprehensive debugging
+
+### ✅ Search Message Management
+- Removed problematic automatic synchronization
+- Added explicit conversation loading
+- Added SSE stream abort protection
+
+### ✅ Paperless Scope Editing
+- Fixed scope initialization logic
+- Prevented selection overwrites
+- Added source ID tracking
+
+---
+
+## 📋 NEXT STEPS
+
+1. **Verify Critical Fixes**: Test the three main fixes in production-like environment
+2. **Address Minor Issues**: Improve loading states and error handling consistency
+3. **Add Regression Tests**: Create tests for fixed bugs to prevent recurrence
+4. **Monitor for New Issues**: Watch for any side effects from the changes
+
+---
+
+## 🔧 DEBUGGING TIPS
+
+### For Indexing Issues:
+```bash
+# Check Next.js server logs
+npm run dev
+
+# Check ingest sidecar logs  
+docker logs -f ingest-sidecar
+
+# Test scan endpoint directly
+curl -X POST "http://localhost:3000/api/sources/scan/SOURCE_ID?force_reprocess=true" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+### For Search Issues:
+```bash
+# Monitor conversation loading
+# Open browser console and filter for "loadConversation"
+
+# Test conversation endpoint
+curl "http://localhost:8000/search/sessions/SESSION_ID" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+### For Paperless Issues:
+```bash
+# Check scope initialization
+# Open React dev tools and inspect SourceScopeEditor component
+
+# Test scope endpoint
+curl "http://localhost:8000/sources/SOURCE_ID" \
+  -H "X-API-Key: YOUR_API_KEY"
+```

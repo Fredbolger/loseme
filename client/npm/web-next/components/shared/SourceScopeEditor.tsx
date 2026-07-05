@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, memo, useRef } from 'react';
 import { Settings, X, Loader2, Check, ChevronDown, Plus } from 'lucide-react';
 import {
   useAvailableTagsForSource,
@@ -76,47 +76,53 @@ export function SourceScopeEditor({ source, onClose, onSuccess }: SourceScopeEdi
   const [activeFilterType, setActiveFilterType] = useState<FilterType | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
-  
-  // Parse the current scope from the source
+
+  // Track the previous source ID to only initialize when the source actually changes
+  const prevSourceIdRef = useRef<string | null>(null);
+
+  // Parse the current scope from the source - only when the source changes
+  // to avoid overwriting user selections due to reference changes
   useEffect(() => {
-    if (!source || source.source_type !== 'paperless') {
-      setCurrentScope({
-        tag_ids: null,
-        correspondent_ids: null,
-        document_type_ids: null,
-      });
-      return;
-    }
+    const currentSourceId = source?.id || null;
+    const previousSourceId = prevSourceIdRef.current;
     
-    const scopeData = source.scope;
-    
-    if (!scopeData) {
-      setCurrentScope({
-        tag_ids: null,
-        correspondent_ids: null,
-        document_type_ids: null,
-      });
-      return;
-    }
-    
-    // Handle different scope formats
-    let parsedScope: any = null;
-    
-    if (typeof scopeData === 'string') {
-      try {
-        parsedScope = JSON.parse(scopeData);
-      } catch {
+    // Only initialize if the source has changed or this is the first load
+    if (currentSourceId !== previousSourceId) {
+      if (!source || source.source_type !== 'paperless') {
+        setCurrentScope({
+          tag_ids: null,
+          correspondent_ids: null,
+          document_type_ids: null,
+        });
+        prevSourceIdRef.current = currentSourceId;
+        return;
+      }
+      
+      const scopeData = source.scope;
+      
+      // Handle different scope formats
+      let parsedScope: any = null;
+      
+      if (typeof scopeData === 'string') {
+        try {
+          parsedScope = JSON.parse(scopeData);
+        } catch {
+          parsedScope = {};
+        }
+      } else if (typeof scopeData === 'object' && scopeData !== null) {
+        parsedScope = scopeData;
+      } else if (!scopeData) {
         parsedScope = {};
       }
-    } else if (typeof scopeData === 'object' && scopeData !== null) {
-      parsedScope = scopeData;
+      
+      setCurrentScope({
+        tag_ids: parsedScope?.tag_ids || null,
+        correspondent_ids: parsedScope?.correspondent_ids || null,
+        document_type_ids: parsedScope?.document_type_ids || null,
+      });
+      
+      prevSourceIdRef.current = currentSourceId;
     }
-    
-    setCurrentScope({
-      tag_ids: parsedScope?.tag_ids || null,
-      correspondent_ids: parsedScope?.correspondent_ids || null,
-      document_type_ids: parsedScope?.document_type_ids || null,
-    });
   }, [source]);
   
   // Get the currently selected items for a filter type
