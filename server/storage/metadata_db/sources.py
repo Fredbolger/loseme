@@ -5,8 +5,8 @@ from typing import Optional
 from pathlib import Path
 
 from storage.metadata_db.db import execute, fetch_one, fetch_all
-from loseme_core.models import IndexingRun, IndexingScope
-from storage.metadata_db.models import StoredScope
+from loseme_core.models import IndexingRun
+from loseme_core.scope_models import IndexingScope
 import logging
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ def get_monitored_source_by_id(source_id: str) -> Optional[dict]:
         "id": row[0],
         "source_type": row[1],
         "locator": row[2],
-        "scope": StoredScope(**json.loads(row[3])),
+        "scope": IndexingScope.deserialize(json.loads(row[3])),
         "last_seen_fingerprint": row[4],
         "last_checked_at": row[5],
         "last_ingested_at": row[6],
@@ -139,7 +139,7 @@ def list_all_monitored_sources() -> list:
             "id": row[0],
             "source_type": row[1],
             "locator": row[2],
-            "scope": StoredScope(**json.loads(row[3])),
+            "scope": IndexingScope.deserialize(json.loads(row[3])),
             "last_seen_fingerprint": row[4],
             "last_checked_at": row[5],
             "last_ingested_at": row[6],

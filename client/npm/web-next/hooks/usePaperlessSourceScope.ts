@@ -154,15 +154,19 @@ export function useUpdateSourceScope() {
     mutationFn: (params: {
       sourceId: string;
       scope: PaperlessSourceScope;
+      connectionId: string;
     }) => {
-      // Build the scope_json object
+      // Build the scope_json object with connection_id
       const scope_json = {
+        type: 'paperless',
+        connection_id: params.connectionId,
         ...(params.scope.tag_ids !== null && { tag_ids: params.scope.tag_ids }),
         ...(params.scope.correspondent_ids !== null && { correspondent_ids: params.scope.correspondent_ids }),
         ...(params.scope.document_type_ids !== null && { document_type_ids: params.scope.document_type_ids }),
       };
       
       return api.put<MonitoredSource>(`/sources/edit/${params.sourceId}`, {
+        source_id: params.sourceId,
         scope_json,
       });
     },

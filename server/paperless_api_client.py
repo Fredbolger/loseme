@@ -354,8 +354,8 @@ class PaperlessApiClient:
         
         if tag_ids:
             # Convert tag IDs to comma-separated string
-            # Paperless-ngx uses tag__id__in for filtering by tag IDs
-            params["tag__id__in"] = ",".join(map(str, tag_ids))
+            # Paperless-ngx uses tag__id__all for filtering by tag IDs
+            params["tag__id__all"] = ",".join(map(str, tag_ids))
         
         if correspondent_ids:
             params["correspondent__id__in"] = ",".join(map(str, correspondent_ids))

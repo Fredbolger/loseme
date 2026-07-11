@@ -86,6 +86,10 @@ export default function DashboardPage() {
           if (scanTarget) scanMutation.mutate({ sourceId: scanTarget, forceReprocess: true });
           setScanTarget(null);
         }}
+        onCancel={() => {
+          if (scanTarget) scanMutation.mutate({ sourceId: scanTarget, forceReprocess: false });
+          setScanTarget(null);
+        }}
       />
 
       {/* Delete confirm */}

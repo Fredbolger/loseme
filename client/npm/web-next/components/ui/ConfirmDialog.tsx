@@ -11,6 +11,7 @@ interface ConfirmDialogProps {
   cancelLabel?: string;
   destructive?: boolean;
   onConfirm: () => void;
+  onCancel?: () => void;
 }
 
 export function ConfirmDialog({
@@ -22,6 +23,7 @@ export function ConfirmDialog({
   cancelLabel = 'Cancel',
   destructive = false,
   onConfirm,
+  onCancel,
 }: ConfirmDialogProps) {
   return (
     <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
@@ -36,7 +38,10 @@ export function ConfirmDialog({
           </AlertDialog.Description>
           <div className="mt-5 flex justify-end gap-3">
             <AlertDialog.Cancel asChild>
-              <button className="rounded-md bg-bg-tertiary px-4 py-2 text-[13px] font-medium text-text-secondary hover:bg-bg-hover">
+              <button
+                onClick={onCancel}
+                className="rounded-md bg-bg-tertiary px-4 py-2 text-[13px] font-medium text-text-secondary hover:bg-bg-hover"
+              >
                 {cancelLabel}
               </button>
             </AlertDialog.Cancel>

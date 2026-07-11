@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, memo, useRef } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { Settings, X, Loader2, Check, ChevronDown, Plus } from 'lucide-react';
 import {
   useAvailableTagsForSource,
   useAvailableCorrespondents,
   useAvailableDocumentTypes,
   useUpdateSourceScope,
+  useSourceScope,
   extractConnectionIdFromSource,
 } from '@/hooks/usePaperlessSourceScope';
 import { Button } from '@/components/ui/Button';
@@ -53,9 +54,20 @@ const FILTER_DESCRIPTIONS: Record<FilterType, string> = {
   document_types: 'Filter documents by document type',
 };
 
+// Map filter types to the correct state property names
+// Note: PaperlessSourceScope uses singular forms (tag_ids, correspondent_ids, document_type_ids)
+const FILTER_TYPE_TO_STATE_KEY: Record<FilterType, keyof PaperlessSourceScope> = {
+  tags: 'tag_ids',
+  correspondents: 'correspondent_ids',
+  document_types: 'document_type_ids',
+};
+
 export function SourceScopeEditor({ source, onClose, onSuccess }: SourceScopeEditorProps) {
   const connectionId = extractConnectionIdFromSource(source);
-  
+
+  // Get the current scope from the hook
+  const { data: currentScopeFromHook } = useSourceScope(source);
+
   // Fetch available items for each filter type
   const { data: availableTagsData, isLoading: isLoadingTags } = useAvailableTagsForSource(connectionId);
   const { data: availableCorrespondentsData, isLoading: isLoadingCorrespondents } = useAvailableCorrespondents(connectionId);
@@ -77,53 +89,18 @@ export function SourceScopeEditor({ source, onClose, onSuccess }: SourceScopeEdi
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
 
-  // Track the previous source ID to only initialize when the source actually changes
-  const prevSourceIdRef = useRef<string | null>(null);
-
-  // Parse the current scope from the source - only when the source changes
-  // to avoid overwriting user selections due to reference changes
+  // Initialize from hook data
   useEffect(() => {
-    const currentSourceId = source?.id || null;
-    const previousSourceId = prevSourceIdRef.current;
-    
-    // Only initialize if the source has changed or this is the first load
-    if (currentSourceId !== previousSourceId) {
-      if (!source || source.source_type !== 'paperless') {
-        setCurrentScope({
-          tag_ids: null,
-          correspondent_ids: null,
-          document_type_ids: null,
-        });
-        prevSourceIdRef.current = currentSourceId;
-        return;
-      }
-      
-      const scopeData = source.scope;
-      
-      // Handle different scope formats
-      let parsedScope: any = null;
-      
-      if (typeof scopeData === 'string') {
-        try {
-          parsedScope = JSON.parse(scopeData);
-        } catch {
-          parsedScope = {};
-        }
-      } else if (typeof scopeData === 'object' && scopeData !== null) {
-        parsedScope = scopeData;
-      } else if (!scopeData) {
-        parsedScope = {};
-      }
-      
+    if (currentScopeFromHook) {
+      setCurrentScope(currentScopeFromHook);
+    } else if (!source || source.source_type !== 'paperless') {
       setCurrentScope({
-        tag_ids: parsedScope?.tag_ids || null,
-        correspondent_ids: parsedScope?.correspondent_ids || null,
-        document_type_ids: parsedScope?.document_type_ids || null,
+        tag_ids: null,
+        correspondent_ids: null,
+        document_type_ids: null,
       });
-      
-      prevSourceIdRef.current = currentSourceId;
     }
-  }, [source]);
+  }, [currentScopeFromHook, source?.id]);
   
   // Get the currently selected items for a filter type
   const getSelectedIds = (filterType: FilterType): number[] => {
@@ -196,7 +173,7 @@ export function SourceScopeEditor({ source, onClose, onSuccess }: SourceScopeEdi
     
     setCurrentScope({
       ...currentScope,
-      [filterType + '_ids']: newIds.length > 0 ? newIds : null,
+      [FILTER_TYPE_TO_STATE_KEY[filterType]]: newIds.length > 0 ? newIds : null,
     });
   };
   
@@ -232,13 +209,13 @@ export function SourceScopeEditor({ source, onClose, onSuccess }: SourceScopeEdi
       // Deselect all
       setCurrentScope({
         ...currentScope,
-        [filterType + '_ids']: null,
+        [FILTER_TYPE_TO_STATE_KEY[filterType]]: null,
       });
     } else {
       // Select all
       setCurrentScope({
         ...currentScope,
-        [filterType + '_ids']: availableItems.map(item => item.id),
+        [FILTER_TYPE_TO_STATE_KEY[filterType]]: availableItems.map(item => item.id),
       });
     }
   };
@@ -291,10 +268,14 @@ export function SourceScopeEditor({ source, onClose, onSuccess }: SourceScopeEdi
   const handleSave = () => {
     if (!source) return;
     
+    const connId = extractConnectionIdFromSource(source);
+    if (!connId) return;
+    
     updateScope(
       {
         sourceId: source.id,
         scope: currentScope,
+        connectionId: connId,
       },
       {
         onSuccess: () => {
@@ -322,27 +303,12 @@ export function SourceScopeEditor({ source, onClose, onSuccess }: SourceScopeEdi
   
   // Check if there are unsaved changes compared to the source
   const hasChanges = () => {
-    if (!source || source.source_type !== 'paperless') return false;
-    
-    const scopeData = source.scope;
-    if (!scopeData) return hasActiveFilters;
-    
-    let originalScope: any = {};
-    
-    if (typeof scopeData === 'string') {
-      try {
-        originalScope = JSON.parse(scopeData);
-      } catch {
-        originalScope = {};
-      }
-    } else if (typeof scopeData === 'object' && scopeData !== null) {
-      originalScope = scopeData;
-    }
+    if (!currentScopeFromHook) return hasActiveFilters;
     
     return (
-      JSON.stringify(currentScope.tag_ids || []) !== JSON.stringify(originalScope.tag_ids || []) ||
-      JSON.stringify(currentScope.correspondent_ids || []) !== JSON.stringify(originalScope.correspondent_ids || []) ||
-      JSON.stringify(currentScope.document_type_ids || []) !== JSON.stringify(originalScope.document_type_ids || [])
+      JSON.stringify(currentScope.tag_ids || []) !== JSON.stringify(currentScopeFromHook.tag_ids || []) ||
+      JSON.stringify(currentScope.correspondent_ids || []) !== JSON.stringify(currentScopeFromHook.correspondent_ids || []) ||
+      JSON.stringify(currentScope.document_type_ids || []) !== JSON.stringify(currentScopeFromHook.document_type_ids || [])
     );
   };
   
