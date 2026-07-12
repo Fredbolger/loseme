@@ -16,8 +16,6 @@ services:
     environment:
       - QDRANT_URL=http://qdrant:6333
       - LOSEME_DEVICE_ID=${LOSEME_DEVICE_ID:-server}
-      - LOSEME_CONTAINER_ROOT=${LOSEME_CONTAINER_ROOT:-}
-      - LOSEME_HOST_ROOT=${LOSEME_HOST_ROOT:-}
       - HF_HOME=/root/.cache/huggingface
       - TRANSFORMERS_CACHE=/root/.cache/huggingface
       - NVIDIA_VISIBLE_DEVICES=all
@@ -25,8 +23,7 @@ services:
     volumes:
       - metadata:/var/lib/loseme/metadata
       - hf_cache:/root/.cache/huggingface
-      # Mount shared/NAS storage here if the server can reach it directly.
-      # Example: - /mnt/nas:/mnt/userdata
+      - ${LOSEME_HOST_ROOT}:/mnt/userdata
     command: uvicorn api.app.main:app --host 0.0.0.0 --port 8000 --log-level info
     deploy:
       resources:

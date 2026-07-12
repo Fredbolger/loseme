@@ -53,7 +53,7 @@ def add_document_part_to_queue(
                 part["source_instance_id"],
                 part["device_id"],
                 part["source_path"],
-                json.dumps(part.get("metadata", {})),
+                json.dumps(part.get("metadata_json", {})),
                 part["unit_locator"],
                 part["content_type"],
                 part["extractor_name"],

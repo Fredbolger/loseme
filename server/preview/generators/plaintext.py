@@ -30,11 +30,10 @@ class PlaintextPreviewGenerator(PreviewGenerator):
 
     def generate(self, doc_part: dict) -> PreviewResult:
         host_path = doc_part["source_path"]
-        try:
-            host_root = os.environ.get("LOSEME_HOST_ROOT")
-            container_root = os.environ.get("LOSEME_CONTAINER_ROOT")
-        except KeyError:
-            raise ValueError("LOSEME_HOST_ROOT and LOSEME_CONTAINER_ROOT environment variables must be set")
+        host_root = os.environ.get("LOSEME_HOST_ROOT")
+        container_root = os.environ.get("LOSEME_CONTAINER_ROOT")
+        if not host_root or not container_root:
+            raise ValueError("LOSEME_HOST_ROOT and LOSEME_CONTAINER_ROOT environment variables must be set and non-empty")
         path = Path(host_path_to_container(host_path, host_root, container_root))
         suffix = path.suffix.lower()
         text = path.read_text(encoding="utf-8", errors="replace")

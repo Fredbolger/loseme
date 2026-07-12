@@ -1,5 +1,6 @@
 from pathlib import Path
 from fastapi import HTTPException
+from loseme_core.docker_path_translation import host_path_to_container
 from preview.registry import PreviewGenerator, preview_registry
 from preview.models import PreviewResult
 
@@ -12,15 +13,20 @@ class ThunderbirdEmailPreviewGenerator(PreviewGenerator):
         return source_type == "thunderbird"
 
     def generate(self, doc_part: dict) -> PreviewResult:
+        import os
         source_path_parts = doc_part["source_path"].split("::Message-ID:")
         mbox_path  = source_path_parts[0]
         message_id = source_path_parts[1]
+        
+        host_root = os.environ.get("LOSEME_HOST_ROOT")
+        container_root = os.environ.get("LOSEME_CONTAINER_ROOT")
+        if not host_root or not container_root:
+            raise ValueError("LOSEME_HOST_ROOT and LOSEME_CONTAINER_ROOT environment variables must be set and non-empty")
 
-        from src.sources.base.docker_path_translation import host_path_to_container
         import mailbox
         from email.header import decode_header, make_header
 
-        container_mbox_path = host_path_to_container(mbox_path)
+        container_mbox_path = host_path_to_container(mbox_path, host_root, container_root)
         mbox = mailbox.mbox(str(container_mbox_path))
         mbox._generate_toc()
 

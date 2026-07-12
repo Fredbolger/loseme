@@ -33,6 +33,7 @@ export function PaperlessPreview({
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actualContentType, setActualContentType] = useState<string | null>(null);
   
   // Fetch tags for this document
   const documentPartId = docId || paperlessDocumentId;
@@ -68,6 +69,11 @@ export function PaperlessPreview({
         // Create a blob URL for the document
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
+        
+        // Get the actual content type from the response headers
+        const responseContentType = response.headers.get('content-type') || blob.type;
+        setActualContentType(responseContentType);
+        
         setDocumentUrl(url);
 
       } catch (err) {
@@ -100,9 +106,28 @@ export function PaperlessPreview({
     return <ErrorState message="No document URL available" />;
   }
 
-  // Determine the preview approach based on the preview type
-  const isPdf = previewType === 'paperless_pdf' || previewType === 'paperless_document';
-  const isImage = previewType === 'paperless_image';
+  // Determine the preview approach based on the preview type and actual content type
+  // If we have detected the actual content type from the proxy response, use that as primary
+  // Otherwise fall back to the server-provided preview type
+  let isPdf = false;
+  let isImage = false;
+  
+  if (actualContentType) {
+    // Use actual content type from the proxy response
+    if (actualContentType.startsWith('image/')) {
+      isImage = true;
+    } else if (actualContentType.startsWith('application/pdf')) {
+      isPdf = true;
+    } else {
+      // For other content types, fall back to the server's preview type
+      isPdf = previewType === 'paperless_pdf' || previewType === 'paperless_document';
+      isImage = previewType === 'paperless_image';
+    }
+  } else {
+    // Fallback to server-provided preview type
+    isPdf = previewType === 'paperless_pdf' || previewType === 'paperless_document';
+    isImage = previewType === 'paperless_image';
+  }
 
   return (
     <div className="flex h-full flex-col">

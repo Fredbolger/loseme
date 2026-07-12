@@ -84,6 +84,15 @@ class PaperlessDocumentPreviewGenerator(PreviewGenerator):
         content_type = metadata.get("mime_type", "application/octet-stream")
         file_size = metadata.get("file_size", 0)
         
+        # Fallback: if content_type is generic, try to detect from file extension
+        if content_type == "application/octet-stream" and original_filename:
+            import os
+            file_ext = os.path.splitext(original_filename)[1].lower()
+            if file_ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg']:
+                content_type = f"image/{file_ext[1:]}"  # Remove the dot, e.g., '.jpg' -> 'jpg'
+            elif file_ext == '.pdf':
+                content_type = "application/pdf"
+        
         # Get the text content
         text = doc_part.get("text", "")
         

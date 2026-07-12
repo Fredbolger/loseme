@@ -61,7 +61,7 @@ def upsert_document_part(
             part["source_instance_id"],
             part["device_id"],
             part["source_path"],
-            json.dumps(part.get("metadata", {})),
+            json.dumps(part.get("metadata_json", {})),
             run_id,
             None,
             part.get("unit_locator"),

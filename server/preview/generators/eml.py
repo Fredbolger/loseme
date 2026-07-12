@@ -1,7 +1,7 @@
 import email as emaillib
 from pathlib import Path
 from email.header import decode_header, make_header
-#from src.sources.base.docker_path_translation import host_path_to_container
+from loseme_core.docker_path_translation import host_path_to_container
 from preview.registry import PreviewGenerator, preview_registry
 from preview.models import PreviewResult
 
@@ -16,7 +16,13 @@ class EmlFilePreviewGenerator(PreviewGenerator):
         return Path(doc_part.get("source_path", "")).suffix.lower() == ".eml"
 
     def generate(self, doc_part: dict) -> PreviewResult:
-        path = Path(host_path_to_container(doc_part["source_path"]))
+        import os
+        host_path = doc_part["source_path"]
+        host_root = os.environ.get("LOSEME_HOST_ROOT")
+        container_root = os.environ.get("LOSEME_CONTAINER_ROOT")
+        if not host_root or not container_root:
+            raise ValueError("LOSEME_HOST_ROOT and LOSEME_CONTAINER_ROOT environment variables must be set and non-empty")
+        path = Path(host_path_to_container(host_path, host_root, container_root))
         msg = emaillib.message_from_bytes(path.read_bytes())
 
         def decode_str(val):
