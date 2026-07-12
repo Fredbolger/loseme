@@ -1,0 +1,9 @@
+1. Can not scan without forcing re-index
+2. chunks slider indicator in sources detailed view is placed outside the slider 
+3. Detailed view previews are not supported for any document type
+4. Search is not working (getting error code in browser network)
+5. LLM generation is not working
+6. Paperless source configuration does not show the current source settings correctly (whitelist
+   tags, document types, ...) 
+7. Paperless source configuration dialoge doe not load the available tags, document types, etc.
+   correctly

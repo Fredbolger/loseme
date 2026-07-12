@@ -47,6 +47,24 @@ class PaperlessDocumentPreviewGenerator(PreviewGenerator):
         original_filename = metadata.get("original_filename", "")
         paperless_document_id = metadata.get("paperless_document_id", "")
         
+        # Fallback: extract paperless_document_id from source_path if not in metadata
+        # source_path format is "paperless:{paperless_doc_id}:{title}"
+        if not paperless_document_id and doc_part.get("source_path"):
+            source_path_parts = doc_part["source_path"].split(":")
+            if len(source_path_parts) >= 2:
+                paperless_document_id = source_path_parts[1]
+        
+        # Extract connection_id from scope_json
+        connection_id = None
+        scope_json = doc_part.get("scope_json")
+        if scope_json:
+            try:
+                import json
+                scope = json.loads(scope_json) if isinstance(scope_json, str) else scope_json
+                connection_id = scope.get("connection_id")
+            except:
+                pass
+        
         # Extract tags
         tags = metadata.get("tags", [])
         
@@ -85,6 +103,7 @@ class PaperlessDocumentPreviewGenerator(PreviewGenerator):
             "file_size": file_size,
             "source_path": doc_part.get("source_path", ""),
             "document_part_id": doc_part.get("document_part_id", ""),
+            "connection_id": connection_id,
         }
         
         # Determine preview type based on content
@@ -100,6 +119,8 @@ class PaperlessDocumentPreviewGenerator(PreviewGenerator):
             preview_type=preview_type,
             text=text,
             meta=meta,
+            paperless_document_id=paperless_document_id,
+            connection_id=connection_id,
         )
 
 

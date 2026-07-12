@@ -5,6 +5,7 @@ import { LoadingState, ErrorState } from '@/components/ui/States';
 import { PlaintextPreview } from './PlaintextPreview';
 import { EmailPreview } from './EmailPreview';
 import { PdfPreview, FallbackPreview } from './PdfFallbackPreview';
+import { PaperlessDocumentHandler } from './PaperlessDocumentHandler';
 import { getRuntimeConfig } from '@/lib/api-client';
 import { useEffect, useState } from 'react';
 import type { PreviewResult } from '@/lib/types';
@@ -20,6 +21,8 @@ import type { PreviewResult } from '@/lib/types';
 export function DocumentPreview({ docId, sourcePath }: { docId: string; sourcePath: string }) {
   const preview = usePreview(docId);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [docDetails, setDocDetails] = useState<{connectionId?: string} | null>(null);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
 
   const suffix = sourcePath.split('.').pop()?.toLowerCase() || '';
   const isPdf = suffix === 'pdf';
@@ -41,6 +44,13 @@ export function DocumentPreview({ docId, sourcePath }: { docId: string; sourcePa
   const data = preview.data as PreviewResult | undefined;
   if (!data) return <FallbackPreview suffix={suffix} />;
 
+  console.log('DEBUG: [Main] Preview data received:', {
+    preview_type: data.preview_type,
+    has_paperless_document_id: !!data.paperless_document_id,
+    has_connection_id: !!data.connection_id,
+    source_path: data.source_path
+  });
+
   switch (data.preview_type) {
     case 'email':
       return (
@@ -55,7 +65,19 @@ export function DocumentPreview({ docId, sourcePath }: { docId: string; sourcePa
       );
     case 'plaintext':
       return <PlaintextPreview text={data.text || ''} language={data.language || 'plaintext'} />;
+    case 'paperless_document':
+    case 'paperless_pdf':
+    case 'paperless_image':
+      console.log('DEBUG: [Main] Delegating to PaperlessDocumentHandler');
+      return (
+        <PaperlessDocumentHandler
+          data={data}
+          docId={docId}
+          sourcePath={sourcePath}
+        />
+      );
     default:
+      console.log('DEBUG: [Main] Using fallback preview for type:', data.preview_type);
       return <FallbackPreview suffix={suffix} />;
   }
 }

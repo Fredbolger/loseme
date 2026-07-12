@@ -52,6 +52,45 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ par
     );
   }
 
+  // ── Paperless ──
+  if (meta.source_type === 'paperless') {
+    // Paperless documents need to be fetched from the server's paperless proxy endpoint
+    // The source_path format is: paperless:{document_id}:{title}
+    const parts = meta.source_path.split(':');
+    if (parts.length < 2) {
+      return NextResponse.json({ detail: 'Cannot parse paperless source_path' }, { status: 400 });
+    }
+    
+    const paperlessDocumentId = parts[1];
+    
+    // Get the document metadata to find the connection_id
+    let connectionId: string | null = null;
+    try {
+      const docMeta = await getPartMeta(partId);
+      const scopeJson = docMeta.scope_json;
+      if (scopeJson) {
+        const scope = typeof scopeJson === 'string' ? JSON.parse(scopeJson) : scopeJson;
+        connectionId = scope.connection_id;
+      }
+    } catch (e) {
+      return NextResponse.json({ detail: 'Failed to get paperless document metadata' }, { status: 500 });
+    }
+    
+    if (!connectionId) {
+      return NextResponse.json({ detail: 'Paperless connection ID not found' }, { status: 404 });
+    }
+    
+    // Return a paperless preview result that the client can use to fetch the document
+    return NextResponse.json({
+      source_type: 'paperless',
+      preview_type: 'paperless_document',
+      paperless_document_id: paperlessDocumentId,
+      connection_id: connectionId,
+      source_path: meta.source_path,
+      document_part_id: partId,
+    });
+  }
+
   // ── Filesystem ──
   let containerPath: string;
   try {

@@ -1,0 +1,21 @@
+{
+  "name": "loseme",
+  "version": "1.0.0",
+  "description": "> Privacy-preserving semantic search over your personal files. Runs entirely on your own hardware.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitea.benheuser.de/ben/loseme"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

@@ -95,7 +95,7 @@ export interface MonitoredSource {
 
 export interface PreviewResult {
   source_type: SourceType;
-  preview_type: 'email' | 'plaintext' | 'pdf' | string;
+  preview_type: 'email' | 'plaintext' | 'pdf' | 'paperless_document' | 'paperless_pdf' | 'paperless_image' | string;
   subject?: string;
   from_?: string;
   to?: string;
@@ -105,6 +105,10 @@ export interface PreviewResult {
   text?: string;
   language?: string;
   meta?: Record<string, unknown>;
+  source_path?: string;
+  // Paperless-specific fields
+  paperless_document_id?: string;
+  connection_id?: string;
 }
 
 export interface DocumentStats {

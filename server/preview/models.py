@@ -23,6 +23,10 @@ class PreviewResult:
     text:      Optional[str] = None
     language:  Optional[str] = None   # e.g. "markdown", "python"
 
+    # Paperless-specific fields
+    paperless_document_id: Optional[str] = None
+    connection_id: Optional[str] = None
+
     # Generic metadata blob — catch-all for future types
     meta: dict = field(default_factory=dict)
 
