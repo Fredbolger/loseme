@@ -101,6 +101,7 @@ export function PaperlessDocumentHandler({
         connectionId={connectionId}
         sourcePath={data.source_path || sourcePath}
         previewType={data.preview_type}
+        docId={docId}
       />
     );
   }

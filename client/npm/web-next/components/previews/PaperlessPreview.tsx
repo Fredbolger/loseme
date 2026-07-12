@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { LoadingState, ErrorState } from '@/components/ui/States';
 import { getRuntimeConfig } from '@/lib/api-client';
-import type { PreviewResult } from '@/lib/types';
+import { useDocumentTags } from '@/hooks/usePaperlessTags';
+import { Badge } from '@/components/ui/Badge';
+import type { PaperlessTag } from '@/lib/types';
 
 /**
  * Paperless document preview component.
@@ -13,21 +15,28 @@ import type { PreviewResult } from '@/lib/types';
  * 1. Fetching the document from the server's paperless proxy endpoint
  * 2. Displaying the document content (PDF, image, or other formats)
  * 3. Providing fallback options if direct preview is not possible
+ * 4. Displaying document tags with names and colors
  */
 export function PaperlessPreview({
   paperlessDocumentId,
   connectionId,
   sourcePath,
   previewType,
+  docId,
 }: {
   paperlessDocumentId: string;
   connectionId: string;
   sourcePath: string;
   previewType: string;
+  docId?: string;
 }) {
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Fetch tags for this document
+  const documentPartId = docId || paperlessDocumentId;
+  const { data: documentTags, isLoading: isLoadingTags } = useDocumentTags(documentPartId);
 
   useEffect(() => {
     const fetchDocument = async () => {
@@ -140,11 +149,31 @@ export function PaperlessPreview({
       </div>
 
       {/* Document info footer */}
-      <div className="border-t border-border-primary p-3 text-xs text-text-tertiary">
-        <div className="truncate">
+      <div className="border-t border-border-primary p-3 text-xs">
+        <div className="truncate text-text-tertiary">
           {sourcePath.split(':').slice(2).join(':') || 'Paperless Document'}
         </div>
-        <div className="text-text-quaternary">
+        <div className="flex items-center gap-2 mt-2">
+          {/* Display tags with colors */}
+          {isLoadingTags ? null : documentTags?.tags?.length ? (
+            documentTags.tags.map((tag: PaperlessTag) => (
+              <Badge
+                key={tag.id}
+                dot={tag.color || undefined}
+                className="text-[11px]"
+                style={{
+                  backgroundColor: tag.color || undefined,
+                  color: tag.text_color || undefined
+                }}
+              >
+                {tag.name}
+              </Badge>
+            ))
+          ) : (
+            <span className="text-text-quaternary">No tags</span>
+          )}
+        </div>
+        <div className="text-text-quaternary mt-1">
           Paperless ID: {paperlessDocumentId}
         </div>
       </div>

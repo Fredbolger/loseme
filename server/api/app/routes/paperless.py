@@ -83,14 +83,21 @@ def resolve_paperless_context(document_part_id: str) -> Tuple[any, int]:
     
     # Get external document ID from metadata
     metadata_json = doc_part.get("metadata_json")
-    if not metadata_json:
-        raise HTTPException(status_code=404, detail="missing_metadata")
+    external_document_id = None
     
-    try:
-        metadata = json.loads(metadata_json) if isinstance(metadata_json, str) else metadata_json
-        external_document_id = metadata.get("paperless_document_id")
-    except (json.JSONDecodeError, AttributeError):
-        raise HTTPException(status_code=404, detail="invalid_metadata")
+    if metadata_json:
+        try:
+            metadata = json.loads(metadata_json) if isinstance(metadata_json, str) else metadata_json
+            external_document_id = metadata.get("paperless_document_id")
+        except (json.JSONDecodeError, AttributeError):
+            pass  # Will try fallback below
+    
+    # Fallback: extract from source_path if not in metadata
+    # source_path format is "paperless:{paperless_doc_id}:{title}"
+    if not external_document_id and doc_part.get("source_path"):
+        source_path_parts = doc_part["source_path"].split(":")
+        if len(source_path_parts) >= 2:
+            external_document_id = source_path_parts[1]
     
     if not external_document_id:
         raise HTTPException(status_code=404, detail="missing_external_document_id")
@@ -746,8 +753,39 @@ def get_document_tags_endpoint(document_part_id: str):
         doc = client.get_document(external_document_id)
         
         # Extract tag information
-        tags = doc.get("tags", [])
-        tag_ids = [tag.get("id") for tag in tags if isinstance(tag, dict) and tag.get("id")]
+        # Paperless API can return tags as list of ints [1, 2, 3] or list of dicts [{"id": 1, ...}, ...]
+        raw_tags = doc.get("tags", [])
+        
+        # Separate dict tags from int tags
+        dict_tags = [t for t in raw_tags if isinstance(t, dict)]
+        int_tag_ids = [t for t in raw_tags if isinstance(t, int)]
+        
+        # For integer tag IDs, fetch the full tag details from Paperless
+        tags = list(dict_tags)
+        tag_ids = [t.get("id") for t in dict_tags if t.get("id")]
+        
+        if int_tag_ids:
+            try:
+                # Fetch all tags for this connection to get names and colors
+                all_tags = client.list_all_tags()
+                # Create a lookup map: tag_id -> tag_dict
+                tag_lookup = {tag.get("id"): tag for tag in all_tags if isinstance(tag, dict) and tag.get("id")}
+                
+                # Resolve integer tag IDs to full tag objects
+                for tag_id in int_tag_ids:
+                    tag_ids.append(tag_id)
+                    full_tag = tag_lookup.get(tag_id)
+                    if full_tag:
+                        tags.append(full_tag)
+                    else:
+                        # Fallback: create minimal tag if not found
+                        tags.append({"id": tag_id, "name": f"Tag {tag_id}", "color": "#666666"})
+            except Exception as e:
+                logger.warning(f"Failed to fetch tag details for document {external_document_id}: {str(e)}")
+                # Fallback: use placeholder tags
+                for tag_id in int_tag_ids:
+                    tag_ids.append(tag_id)
+                    tags.append({"id": tag_id, "name": f"Tag {tag_id}", "color": "#666666"})
         
         logger.debug(f"Retrieved {len(tags)} tags for document {external_document_id}")
         return DocumentTagsResponse(

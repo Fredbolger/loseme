@@ -202,7 +202,9 @@ export interface SessionSummary {
 export interface PaperlessTag {
   id: number;
   name: string;
+  slug?: string;
   color?: string | null;
+  text_color?: string | null;
 }
 
 export interface PaperlessCorrespondent {

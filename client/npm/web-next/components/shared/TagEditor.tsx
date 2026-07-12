@@ -201,7 +201,12 @@ export function TagEditor({ documentPart, connectionId, onTagChange }: TagEditor
           <Badge 
             key={tag.id} 
             variant="neutral"
+            dot={tag.color || undefined}
             className="flex items-center gap-1 cursor-pointer hover:bg-bg-hover transition-colors"
+            style={{
+              backgroundColor: tag.color || undefined,
+              color: tag.text_color || undefined
+            }}
             onClick={() => {}}
           >
             {tag.name}
