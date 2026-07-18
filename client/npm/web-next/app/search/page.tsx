@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import { useSearchStore } from '@/lib/search-store';
 import { useDetailPanelStore } from '@/lib/detail-panel-store';
 import { mergeByPart, buildLLMContext } from '@/lib/merge-search-results';
@@ -22,6 +23,7 @@ import { SourcesPanel } from '@/components/search/SourcesPanel';
 import type { ChatMessage as ChatMessageType, SourceRef } from '@/lib/types';
 
 export default function SearchPage() {
+  const queryClient = useQueryClient();
   const store = useSearchStore();
   const { stream, isStreaming, abort } = useSSEStream();
   const modelsQ = useLLMModels();
@@ -99,8 +101,19 @@ export default function SearchPage() {
     store.setAwaiting(true);
 
     try {
-      const searchRes = await performSearch(query, store.topK, store.sessionId);
-      store.setSession(searchRes.session_id);
+      const searchRes = await performSearch(query, store.topK, store.sessionId, queryClient);
+      if (!searchRes?.session_id) {
+        toast.error(`Server did not return session_id: ${JSON.stringify(searchRes)}`);
+      } else {
+        toast.success(`Session created: ${searchRes.session_id.slice(0, 8)}...`);
+      }
+      const sid = searchRes.session_id;
+      store.setSession(sid);
+      // Use getState() to get the current value from the global store
+      const currentSessionId = useSearchStore.getState().sessionId;
+      if (!currentSessionId) {
+        toast.error(`CRITICAL: sessionId not set! sid=${sid?.slice(0, 8) || 'NULL'}, current=${currentSessionId}`);
+      }
 
       const merged = mergeByPart(searchRes.results);
       const partIds = [...new Set(searchRes.results.map((r) => r.document_part_id))];
@@ -125,13 +138,17 @@ export default function SearchPage() {
           created_at: new Date().toISOString(),
         };
         store.addMessage(assistantMsg);
-        if (store.sessionId) {
+        const currentSessionId = useSearchStore.getState().sessionId;
+        if (currentSessionId) {
           await saveAnswer(
-            store.sessionId,
+            currentSessionId,
             assistantMsg.content,
             merged.slice(0, store.topK).map((d) => d.document_part_id),
             sourcesToStore,
           );
+          toast.success('Search mode: Assistant message saved');
+        } else {
+          toast.error('Search mode: Failed to save - sessionId not set');
         }
       } else {
         // Hybrid mode: stream the LLM answer token by token.
@@ -152,23 +169,29 @@ export default function SearchPage() {
         );
 
         const finalContent = useSearchStore.getState().streamingContent;
+        // Use fallback message if LLM returned empty content
+        const assistantContent = finalContent.trim() || `Found ${merged.length} relevant document${merged.length !== 1 ? 's' : ''}.`;
         const assistantMsg: ChatMessageType = {
           id: assistantId,
           role: 'assistant',
-          content: finalContent,
+          content: assistantContent,
           sources: sourcesToStore,
           created_at: new Date().toISOString(),
         };
         store.addMessage(assistantMsg);
         store.setStreaming(null, '');
 
-        if (store.sessionId && finalContent.trim()) {
+        const currentSessionId = useSearchStore.getState().sessionId;
+        if (currentSessionId) {
           await saveAnswer(
-            store.sessionId,
-            finalContent,
+            currentSessionId,
+            assistantContent,
             merged.slice(0, store.topK).map((d) => d.document_part_id),
             sourcesToStore,
           );
+          toast.success('Assistant message saved to history');
+        } else {
+          toast.error('Failed to save: sessionId is not set');
         }
       }
     } catch (e) {

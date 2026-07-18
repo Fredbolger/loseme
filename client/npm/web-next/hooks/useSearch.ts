@@ -43,10 +43,13 @@ interface SearchResponse {
   is_continuation: boolean;
 }
 
-export async function performSearch(query: string, topK: number, sessionId: string | null) {
+export async function performSearch(query: string, topK: number, sessionId: string | null, queryClient?: any) {
   const body: Record<string, unknown> = { query, top_k: topK };
   if (sessionId) body.session_id = sessionId;
-  return api.post<SearchResponse>('/search', body);
+  const result = await api.post<SearchResponse>('/search', body);
+  // Invalidate conversations cache to update sidebar immediately
+  queryClient?.invalidateQueries({ queryKey: ['search', 'history'] });
+  return result;
 }
 
 export async function batchGetDocuments(partIds: string[]): Promise<Record<string, DocumentPart>> {
