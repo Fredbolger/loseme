@@ -45,7 +45,7 @@ export function buildLLMContext(
   enriched: Record<string, { source_path?: string } | undefined>,
   history: { role: string; content: string }[],
 ): string {
-  const contextParts = mergedResults.slice(0, 8).map((doc, i) => {
+  const contextParts = mergedResults.map((doc, i) => {
     const ep = enriched[doc.document_part_id];
     const name = (ep?.source_path || doc.source_path || doc.document_part_id).split(/[/\\]/).pop() || 'Unknown';
     const allText = doc.allChunkTexts.join('\n\n');
