@@ -12,6 +12,7 @@ const TABS = [
   { href: '/runs', label: 'Runs' },
   { href: '/storage', label: 'Storage' },
   { href: '/sources', label: 'Sources' },
+  { href: '/labels', label: 'Labels' },
 ];
 
 export function Header() {

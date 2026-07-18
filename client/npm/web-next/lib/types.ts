@@ -228,3 +228,50 @@ export interface PaperlessSourceScope {
   correspondent_ids: number[] | null;
   document_type_ids: number[] | null;
 }
+
+// ML Labels Types
+
+export type LabelValueType = 'select' | 'multiselect' | 'text' | 'boolean' | 'number';
+
+export interface MlLabelDefinition {
+  id: string;
+  key: string;
+  name: string;
+  description?: string | null;
+  value_type: LabelValueType;
+  color?: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MlLabelOption {
+  id: string;
+  definition_id: string;
+  value: string;
+  display_name: string;
+  color?: string | null;
+  sort_order: number;
+}
+
+export interface MlDocumentLabel {
+  id: string;
+  document_part_id: string;
+  definition_id: string;
+  option_id?: string | null;
+  text_value?: string | null;
+  number_value?: number | null;
+  bool_value?: boolean | null;
+  confidence?: number | null;
+  label_source: 'human' | 'model';
+  created_at?: string | null;
+  updated_at?: string | null;
+  // joined for display convenience (populate server-side in get_labels_for_document)
+  definition_key?: string;
+  definition_name?: string;
+  definition_value_type?: LabelValueType;
+  definition_color?: string | null;
+  option_value?: string | null;
+  option_display_name?: string | null;
+  option_color?: string | null;
+}

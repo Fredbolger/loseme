@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingState, EmptyState } from '@/components/ui/States';
 import { cn } from '@/lib/cn';
 import { TagEditor } from '@/components/shared/TagEditor';
+import { DocumentLabelAssigner } from '@/components/labels/DocumentLabelAssigner';
 import type { DocumentPart } from '@/lib/types';
 import type { DetailDoc } from '@/lib/detail-panel-store';
 
@@ -178,6 +179,14 @@ export function DetailPanel() {
                 />
               </div>
             )}
+          </div>
+          
+          {/* ML Labels section - separate from Paperless tags, available for all source types */}
+          <div className="border-b border-border px-5 py-3">
+            <div className="mb-2 flex items-center gap-1.5 text-[12px] font-semibold text-text-secondary">
+              ML Labels
+            </div>
+            <DocumentLabelAssigner documentPartId={activeDoc.document_part_id} />
           </div>
 
           <div className="flex-1 overflow-hidden">

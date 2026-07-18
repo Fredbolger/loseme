@@ -9,5 +9,6 @@ from .queue import router as queue_router
 from .database import router as database_router
 from .llm import router as llm_router
 from .paperless import router as paperless_router
+from .ml_labels import router as ml_labels_router
 
-__all__ = ["ingest_router", "health_router", "search_router", "document_router", "chunk_router", "runs_router", "sources_router", "queue_router", "database_router", "llm_router", "paperless_router"]
+__all__ = ["ingest_router", "health_router", "search_router", "document_router", "chunk_router", "runs_router", "sources_router", "queue_router", "database_router", "llm_router", "paperless_router", "ml_labels_router"]
