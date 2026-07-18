@@ -63,7 +63,7 @@ export function ChatInputBar({ value, onChange, onSend, disabled, models }: Chat
               max={50}
               value={topK}
               onChange={(e) => setTopK(parseInt(e.target.value) || 10)}
-              className="w-14"
+              className="w-20"
             />
           </label>
 
