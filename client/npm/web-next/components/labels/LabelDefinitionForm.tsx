@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, Plus } from 'lucide-react';
 import { useCreateLabelDefinition, useUpdateLabelDefinition, useCreateLabelOption } from '@/hooks/useMlLabels';
 import { Button } from '@/components/ui/Button';
@@ -30,48 +30,66 @@ function ColorPicker({
   onChange: (color: string | undefined) => void 
 }) {
   const [showPicker, setShowPicker] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setShowPicker(false);
+      }
+    }
+    if (showPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showPicker]);
   
   return (
-    <div className="relative">
+    <div className="relative z-[52]" ref={ref}>
       <button 
-        onClick={() => setShowPicker(!showPicker)}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          setShowPicker(!showPicker);
+        }}
         className="h-8 w-8 rounded-md border border-border bg-bg-secondary flex items-center justify-center"
         style={{ backgroundColor: value || 'transparent' }}
+        onMouseDown={(e) => e.stopPropagation()}
       >
         {value ? null : <div className="h-4 w-4 rounded-full border border-border bg-bg-tertiary" />}
       </button>
       
       {showPicker && (
-        <>
-          <div 
-            className="fixed inset-0 z-10"
-            onClick={() => setShowPicker(false)}
-          />
-          <div className="absolute top-10 left-0 z-20 rounded-lg border border-border bg-bg-secondary p-2 shadow-lg">
-            <div className="grid grid-cols-4 gap-1">
-              {presetColors.map((color) => (
-                <button
-                  key={color}
-                  onClick={() => {
-                    onChange(color);
-                    setShowPicker(false);
-                  }}
-                  className="h-6 w-6 rounded-md"
-                  style={{ backgroundColor: color }}
-                />
-              ))}
+        <div className="absolute top-10 left-0 z-[100] rounded-lg border border-border bg-bg-secondary p-2 shadow-lg">
+          <div className="grid grid-cols-4 gap-1">
+            {presetColors.map((color) => (
               <button
-                onClick={() => {
-                  onChange(undefined);
+                key={color}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  onChange(color);
                   setShowPicker(false);
                 }}
-                className="h-6 w-6 rounded-md border border-border bg-bg-tertiary flex items-center justify-center"
-              >
-                <X size={12} />
-              </button>
-            </div>
+                className="h-6 w-6 rounded-md"
+                style={{ backgroundColor: color }}
+              />
+            ))}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                onChange(undefined);
+                setShowPicker(false);
+              }}
+              className="h-6 w-6 rounded-md border border-border bg-bg-tertiary flex items-center justify-center"
+            >
+              <X size={12} />
+            </button>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

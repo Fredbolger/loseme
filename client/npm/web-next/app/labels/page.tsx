@@ -27,7 +27,7 @@ function Dialog({
         className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
         onClick={() => onOpenChange(false)}
       />
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[51] flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
         <div 
           className="relative w-full max-w-lg rounded-xl border border-border bg-bg-secondary shadow-xl"
           onClick={(e) => e.stopPropagation()}

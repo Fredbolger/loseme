@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
-import { X, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { X, ChevronLeft, ChevronRight, FileText, ChevronDown, ChevronUp } from 'lucide-react';
 import { useDetailPanelStore } from '@/lib/detail-panel-store';
 import { useDocumentChunks, useDocumentDetail } from '@/hooks/useSources';
 import { DocumentPreview } from '@/components/previews/DocumentPreview';
@@ -28,6 +28,7 @@ import type { DetailDoc } from '@/lib/detail-panel-store';
 export function DetailPanel() {
   const { isOpen, docs, activeIndex, chunksOpen, close, navigate, toggleChunks } = useDetailPanelStore();
   const activeDoc = docs[activeIndex];
+  const [mlLabelsOpen, setMlLabelsOpen] = useState(false);
 
   const chunksQuery = useDocumentChunks(activeDoc?.document_part_id ?? null, chunksOpen);
   
@@ -182,11 +183,21 @@ export function DetailPanel() {
           </div>
           
           {/* ML Labels section - separate from Paperless tags, available for all source types */}
-          <div className="border-b border-border px-5 py-3">
-            <div className="mb-2 flex items-center gap-1.5 text-[12px] font-semibold text-text-secondary">
-              ML Labels
-            </div>
-            <DocumentLabelAssigner documentPartId={activeDoc.document_part_id} />
+          <div className="border-b border-border">
+            <button
+              onClick={() => setMlLabelsOpen(!mlLabelsOpen)}
+              className="flex w-full items-center justify-between px-5 py-2 text-[12px] font-semibold text-text-secondary hover:bg-bg-tertiary transition-colors"
+            >
+              <span className="flex items-center gap-1.5">
+                ML Labels
+              </span>
+              {mlLabelsOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </button>
+            {mlLabelsOpen && (
+              <div className="px-5 pb-3">
+                <DocumentLabelAssigner documentPartId={activeDoc.document_part_id} />
+              </div>
+            )}
           </div>
 
           <div className="flex-1 overflow-hidden">
