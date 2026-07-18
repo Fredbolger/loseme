@@ -275,3 +275,16 @@ export interface MlDocumentLabel {
   option_display_name?: string | null;
   option_color?: string | null;
 }
+
+export interface MlLabelStatistic {
+  definition_id: string;
+  definition_key?: string | null;
+  definition_name?: string | null;
+  definition_value_type?: LabelValueType | null;
+  option_id?: string | null;
+  option_value?: string | null;
+  option_display_name?: string | null;
+  option_color?: string | null;
+  count: number;
+  total?: number | null;
+}

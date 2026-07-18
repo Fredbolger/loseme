@@ -30,6 +30,7 @@ from storage.metadata_db.ml_labels import (
     remove_label_assignment,
     get_labels_for_document,
     list_documents_by_label,
+    get_label_statistics,
 )
 
 logger = logging.getLogger(__name__)
@@ -119,6 +120,20 @@ class DocumentLabelResponse(BaseModel):
     option_value: Optional[str] = None
     option_display_name: Optional[str] = None
     option_color: Optional[str] = None
+
+
+# Label Statistics Model
+class LabelStatisticResponse(BaseModel):
+    definition_id: str
+    definition_key: Optional[str] = None
+    definition_name: Optional[str] = None
+    definition_value_type: Optional[str] = None
+    option_id: Optional[str] = None
+    option_value: Optional[str] = None
+    option_display_name: Optional[str] = None
+    option_color: Optional[str] = None
+    count: int
+    total: Optional[int] = None
 
 
 # =============================================================================
@@ -396,3 +411,23 @@ async def list_documents_with_label(
     document_ids = list_documents_by_label(definition_id, option_id)
     logger.info(f"Retrieved {len(document_ids)} documents with label {definition_id}")
     return {"document_part_ids": document_ids}
+
+
+@router.get("/statistics", response_model=List[LabelStatisticResponse])
+async def get_statistics(
+    definition_id: Optional[str] = Query(None, description="Filter by specific definition ID")
+):
+    """
+    Get label assignment statistics grouped by option/value for each definition.
+    
+    Returns counts of documents for each label option or value.
+    For select/multiselect: grouped by option.
+    For text/boolean/number: grouped by the actual value.
+    
+    Can be filtered by definition_id to get stats for a specific definition only.
+    """
+    logger.debug(f"Getting label statistics (definition_id={definition_id})")
+    
+    stats = get_label_statistics(definition_id)
+    logger.info(f"Retrieved {len(stats)} label statistics entries")
+    return stats

@@ -591,3 +591,187 @@ def list_documents_by_label(definition_id: str, option_id: Optional[str] = None)
     rows = fetch_all(query, params)
     
     return [row['document_part_id'] for row in rows]
+
+
+def get_label_statistics(definition_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    """
+    Get label assignment statistics grouped by option for each definition.
+    
+    Args:
+        definition_id: Optional - if provided, get stats only for this definition
+                        If None, get stats for all definitions
+    
+    Returns:
+        List of dictionaries with:
+        - definition_id: The label definition ID
+        - definition_key: The definition key
+        - definition_name: The definition name
+        - definition_value_type: The value type
+        - option_id: The option ID (for select/multiselect)
+        - option_value: The option value (for select/multiselect) or actual value (for text/boolean/number)
+        - option_display_name: The option display name (for select/multiselect) or actual value (for text/boolean/number)
+        - option_color: The option color (for select/multiselect)
+        - count: Number of documents with this label
+        - total: Total number of documents with this definition (for percentage calculation)
+    """
+    result: List[Dict[str, Any]] = []
+    
+    if definition_id:
+        definitions_filter = "AND d.id = ?"
+        params_base: tuple = (definition_id,)
+        order_by = "ORDER BY o.sort_order ASC, o.display_name ASC"
+    else:
+        definitions_filter = ""
+        params_base = ()
+        order_by = "ORDER BY d.name ASC, o.sort_order ASC, o.display_name ASC"
+    
+    # Handle select/multiselect definitions (group by option_id)
+    option_query = f"""
+    SELECT 
+        dl.definition_id,
+        d.key as definition_key,
+        d.name as definition_name,
+        d.value_type as definition_value_type,
+        dl.option_id,
+        o.value as option_value,
+        o.display_name as option_display_name,
+        o.color as option_color,
+        COUNT(DISTINCT dl.document_part_id) as option_count,
+        (SELECT COUNT(DISTINCT dl2.document_part_id) 
+         FROM ml_document_labels dl2 
+         WHERE dl2.definition_id = dl.definition_id) as total_count
+    FROM ml_document_labels dl
+    JOIN ml_label_definitions d ON dl.definition_id = d.id
+    JOIN ml_label_options o ON dl.option_id = o.id
+    WHERE d.value_type IN ('select', 'multiselect') {definitions_filter}
+    GROUP BY dl.definition_id, d.key, d.name, d.value_type, dl.option_id, o.value, o.display_name, o.color
+    {order_by}
+    """
+    
+    option_rows = fetch_all(option_query, params_base)
+    for row in option_rows:
+        result.append({
+            'definition_id': row['definition_id'],
+            'definition_key': row['definition_key'],
+            'definition_name': row['definition_name'],
+            'definition_value_type': row['definition_value_type'],
+            'option_id': row['option_id'],
+            'option_value': row['option_value'],
+            'option_display_name': row['option_display_name'],
+            'option_color': row['option_color'],
+            'count': row['option_count'],
+            'total': row['total_count'],
+        })
+    
+    # Handle text type (group by text_value)
+    text_query = f"""
+    SELECT 
+        dl.definition_id,
+        d.key as definition_key,
+        d.name as definition_name,
+        d.value_type as definition_value_type,
+        NULL as option_id,
+        dl.text_value as option_value,
+        dl.text_value as option_display_name,
+        NULL as option_color,
+        COUNT(DISTINCT dl.document_part_id) as option_count,
+        (SELECT COUNT(DISTINCT dl2.document_part_id) 
+         FROM ml_document_labels dl2 
+         WHERE dl2.definition_id = dl.definition_id) as total_count
+    FROM ml_document_labels dl
+    JOIN ml_label_definitions d ON dl.definition_id = d.id
+    WHERE d.value_type = 'text' AND dl.text_value IS NOT NULL {definitions_filter}
+    GROUP BY dl.definition_id, d.key, d.name, d.value_type, dl.text_value
+    {order_by}
+    """
+    
+    text_rows = fetch_all(text_query, params_base)
+    for row in text_rows:
+        result.append({
+            'definition_id': row['definition_id'],
+            'definition_key': row['definition_key'],
+            'definition_name': row['definition_name'],
+            'definition_value_type': row['definition_value_type'],
+            'option_id': row['option_id'],
+            'option_value': row['option_value'],
+            'option_display_name': row['option_display_name'],
+            'option_color': row['option_color'],
+            'count': row['option_count'],
+            'total': row['total_count'],
+        })
+    
+    # Handle number type (group by number_value)
+    number_query = f"""
+    SELECT 
+        dl.definition_id,
+        d.key as definition_key,
+        d.name as definition_name,
+        d.value_type as definition_value_type,
+        NULL as option_id,
+        CAST(dl.number_value AS TEXT) as option_value,
+        CAST(dl.number_value AS TEXT) as option_display_name,
+        NULL as option_color,
+        COUNT(DISTINCT dl.document_part_id) as option_count,
+        (SELECT COUNT(DISTINCT dl2.document_part_id) 
+         FROM ml_document_labels dl2 
+         WHERE dl2.definition_id = dl.definition_id) as total_count
+    FROM ml_document_labels dl
+    JOIN ml_label_definitions d ON dl.definition_id = d.id
+    WHERE d.value_type = 'number' AND dl.number_value IS NOT NULL {definitions_filter}
+    GROUP BY dl.definition_id, d.key, d.name, d.value_type, dl.number_value
+    {order_by}
+    """
+    
+    number_rows = fetch_all(number_query, params_base)
+    for row in number_rows:
+        result.append({
+            'definition_id': row['definition_id'],
+            'definition_key': row['definition_key'],
+            'definition_name': row['definition_name'],
+            'definition_value_type': row['definition_value_type'],
+            'option_id': row['option_id'],
+            'option_value': row['option_value'],
+            'option_display_name': row['option_display_name'],
+            'option_color': row['option_color'],
+            'count': row['option_count'],
+            'total': row['total_count'],
+        })
+    
+    # Handle boolean type (group by bool_value)
+    bool_query = f"""
+    SELECT 
+        dl.definition_id,
+        d.key as definition_key,
+        d.name as definition_name,
+        d.value_type as definition_value_type,
+        NULL as option_id,
+        CASE WHEN dl.bool_value = 1 THEN 'true' ELSE 'false' END as option_value,
+        CASE WHEN dl.bool_value = 1 THEN 'True' ELSE 'False' END as option_display_name,
+        NULL as option_color,
+        COUNT(DISTINCT dl.document_part_id) as option_count,
+        (SELECT COUNT(DISTINCT dl2.document_part_id) 
+         FROM ml_document_labels dl2 
+         WHERE dl2.definition_id = dl.definition_id) as total_count
+    FROM ml_document_labels dl
+    JOIN ml_label_definitions d ON dl.definition_id = d.id
+    WHERE d.value_type = 'boolean' AND dl.bool_value IS NOT NULL {definitions_filter}
+    GROUP BY dl.definition_id, d.key, d.name, d.value_type, dl.bool_value
+    {order_by}
+    """
+    
+    bool_rows = fetch_all(bool_query, params_base)
+    for row in bool_rows:
+        result.append({
+            'definition_id': row['definition_id'],
+            'definition_key': row['definition_key'],
+            'definition_name': row['definition_name'],
+            'definition_value_type': row['definition_value_type'],
+            'option_id': row['option_id'],
+            'option_value': row['option_value'],
+            'option_display_name': row['option_display_name'],
+            'option_color': row['option_color'],
+            'count': row['option_count'],
+            'total': row['total_count'],
+        })
+    
+    return result

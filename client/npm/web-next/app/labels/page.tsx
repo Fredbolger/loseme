@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
-import { useLabelDefinitions } from '@/hooks/useMlLabels';
+import { useLabelDefinitions, useLabelStatistics } from '@/hooks/useMlLabels';
 import { Button } from '@/components/ui/Button';
 import { LoadingState } from '@/components/ui/States';
 import { LabelDefinitionCard } from '@/components/labels/LabelDefinitionCard';
 import { LabelDefinitionForm } from '@/components/labels/LabelDefinitionForm';
-import type { MlLabelDefinition, MlLabelOption } from '@/lib/types';
+import type { MlLabelDefinition, MlLabelOption, MlLabelStatistic } from '@/lib/types';
 
 // Dialog component (simplified version)
 function Dialog({ 
@@ -159,6 +159,7 @@ export default function LabelsPage() {
   const [editingOption, setEditingOption] = useState<MlLabelOption | null>(null);
   
   const { data: definitions, isLoading, error } = useLabelDefinitions(true);
+  const { data: statistics, isLoading: statsLoading } = useLabelStatistics(null);
   
   const handleCreate = () => {
     setEditingDefinition(null);
@@ -227,19 +228,47 @@ export default function LabelsPage() {
         </Button>
       </div>
       
+      {/* Statistics Summary */}
+      {!statsLoading && statistics?.length ? (
+        <div className="border-b border-border px-6 py-3">
+          <div className="flex flex-wrap gap-6 text-[12px] text-text-secondary">
+            {definitions?.map((definition) => {
+              const defStats = statistics.filter(s => s.definition_id === definition.id);
+              const total = defStats.reduce((sum, s) => sum + s.count, 0);
+              return (
+                <div key={definition.id} className="flex items-center gap-2">
+                  <span className="font-medium text-text-primary">{definition.name}:</span>
+                  {defStats.map((stat, idx) => (
+                    <span key={stat.option_id || stat.option_value || idx} className="flex items-center gap-1">
+                      {stat.option_display_name || stat.option_value || 'N/A'}: {stat.count}
+                      {idx < defStats.length - 1 && <span>,</span>}
+                    </span>
+                  ))}
+                  <span className="text-text-tertiary">({total} total)</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+      
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6">
         {definitions && definitions.length > 0 ? (
           <div className="grid gap-4 max-w-4xl">
-            {definitions.map((definition) => (
-              <LabelDefinitionCard
-                key={definition.id}
-                definition={definition}
-                onEdit={handleEdit}
-                onAddOption={handleAddOption}
-                onEditOption={handleEditOption}
-              />
-            ))}
+            {definitions.map((definition) => {
+              const defStats = statistics?.filter(s => s.definition_id === definition.id) || [];
+              return (
+                <LabelDefinitionCard
+                  key={definition.id}
+                  definition={definition}
+                  onEdit={handleEdit}
+                  onAddOption={handleAddOption}
+                  onEditOption={handleEditOption}
+                  statistics={defStats}
+                />
+              );
+            })}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center gap-4 px-6 py-16 text-center">

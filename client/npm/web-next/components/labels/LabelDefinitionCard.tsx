@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import type { MlLabelDefinition, MlLabelOption } from '@/lib/types';
+import type { MlLabelDefinition, MlLabelOption, MlLabelStatistic } from '@/lib/types';
 import { cn } from '@/lib/cn';
 
 interface LabelDefinitionCardProps {
@@ -15,6 +15,7 @@ interface LabelDefinitionCardProps {
   onEdit: (definition: MlLabelDefinition) => void;
   onAddOption: (definition: MlLabelDefinition) => void;
   onEditOption: (option: MlLabelOption) => void;
+  statistics?: MlLabelStatistic[];
 }
 
 // Color swatch component
@@ -98,7 +99,8 @@ export function LabelDefinitionCard({
   definition, 
   onEdit, 
   onAddOption,
-  onEditOption 
+  onEditOption,
+  statistics
 }: LabelDefinitionCardProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -142,6 +144,26 @@ export function LabelDefinitionCard({
           {definition.description && (
             <p className="mt-2 text-[13px] text-text-secondary">{definition.description}</p>
           )}
+          
+          {/* Statistics section */}
+          {statistics?.length ? (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {statistics.map((stat, idx) => (
+                <span key={stat.option_id || stat.option_value || idx} 
+                  className="flex items-center gap-1 text-[11px] font-mono text-text-tertiary"
+                >
+                  <span 
+                    className="h-2 w-2 rounded-full"
+                    style={{ backgroundColor: stat.option_color || 'transparent' }}
+                  />
+                  {stat.option_display_name || stat.option_value || 'N/A'}: {stat.count}
+                </span>
+              ))}
+              <span className="text-[11px] text-text-tertiary">
+                ({statistics.reduce((sum, s) => sum + s.count, 0)} total)
+              </span>
+            </div>
+          ) : null}
           
           {/* Options section */}
           {definition.value_type === 'select' || definition.value_type === 'multiselect' ? (

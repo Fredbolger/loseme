@@ -5,7 +5,8 @@ import { api } from '@/lib/api-client';
 import type { 
   MlLabelDefinition, 
   MlLabelOption, 
-  MlDocumentLabel 
+  MlDocumentLabel,
+  MlLabelStatistic 
 } from '@/lib/types';
 
 /**
@@ -357,6 +358,29 @@ export function useRemoveLabelAssignment() {
       queryClient.invalidateQueries({
         queryKey: ['ml-labels', 'documents', params.documentPartId],
       });
+    },
+  });
+}
+
+// =============================================================================
+// Label Statistics
+// =============================================================================
+
+/**
+ * Get label assignment statistics grouped by option/value.
+ */
+export function useLabelStatistics(definitionId: string | null = null) {
+  const queryKey = definitionId 
+    ? ['ml-labels', 'statistics', definitionId]
+    : ['ml-labels', 'statistics'];
+  
+  return useQuery({
+    queryKey,
+    queryFn: () => {
+      const url = definitionId 
+        ? `/ml-labels/statistics?definition_id=${definitionId}`
+        : '/ml-labels/statistics';
+      return api.get<MlLabelStatistic[]>(url);
     },
   });
 }
