@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Trash2, PanelLeftClose, PanelLeftOpen, MessageSquare } from 'lucide-react';
+import { Plus, Trash2, PanelLeftClose, PanelLeftOpen, MessageSquare, Search } from 'lucide-react';
 import { useConversations, useDeleteConversation } from '@/hooks/useSearch';
 import { fmtDate } from '@/lib/format';
 import { Button } from '@/components/ui/Button';
@@ -24,31 +24,69 @@ export function ConversationSidebar({ activeSessionId, onSelect, onNewChat, onLo
     <aside
       className={cn(
         'flex flex-shrink-0 flex-col overflow-hidden border-r border-border bg-bg-secondary transition-[width] duration-300',
-        collapsed ? 'w-[56px]' : 'w-[280px]',
+        collapsed ? 'w-[48px]' : 'w-[280px]',
       )}
     >
+      {/* === HEADER === */}
       <div className="flex flex-col gap-2.5 border-b border-border p-3">
-        <div className="flex items-center justify-between">
-          {!collapsed && (
-            <h2 className="flex items-center gap-1.5 text-[13px] font-semibold text-text-secondary">
-              🔍 Search
-            </h2>
+        {/* Top row: title + toggle button */}
+        <div
+          className={cn(
+            'flex items-center',
+            collapsed ? 'justify-center' : 'justify-between',
           )}
-          <Button variant="ghost" size="icon" onClick={() => setCollapsed((c) => !c)}>
+        >
+          <h2
+            className={cn(
+              'flex items-center gap-1.5 text-[13px] font-semibold text-text-secondary transition-all duration-300 overflow-hidden whitespace-nowrap',
+              collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100',
+            )}
+          >
+            <MessageSquare size={14} /> Conversations
+          </h2>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setCollapsed((c) => !c)}
+            className="flex-shrink-0"
+          >
             {collapsed ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
           </Button>
         </div>
-        <Button variant="primary" size="sm" onClick={onNewChat} className={collapsed ? 'px-0' : ''}>
-          <Plus size={14} /> {!collapsed && 'New chat'}
-        </Button>
+
+        {/* "New chat" button – fades & shrinks when collapsed */}
+        <div
+          className={cn(
+            'transition-all duration-300 overflow-hidden',
+            collapsed ? 'h-0 opacity-0' : 'h-auto opacity-100',
+          )}
+        >
+          <Button variant="primary" size="sm" onClick={onNewChat} className="w-full">
+            <Plus size={14} /> New chat
+          </Button>
+        </div>
       </div>
 
-      {!collapsed && (
-        <div className="flex-1 overflow-y-auto p-2">
+      {/* === CONVERSATION LIST === */}
+      {/* Always rendered – just hidden when collapsed, so no sudden pop‑in */}
+      <div
+        className={cn(
+          'flex-1 overflow-y-auto overflow-x-hidden p-2 transition-all duration-300 ease-out',
+          collapsed
+            ? 'opacity-0 pointer-events-none translate-x-2'
+            : 'opacity-100 translate-x-0',
+        )}
+      >
+        {/* This inner div keeps the layout fixed to 280px, so text never reflows */}
+        <div className="w-full">
           {conversationsQ.isLoading ? (
             <LoadingState />
           ) : !conversationsQ.data?.sessions.length ? (
-            <EmptyState icon="💬" title="No conversations yet" subtitle="Start a new search to begin" />
+            <EmptyState
+              icon="💬"
+              title="No conversations yet"
+              subtitle="Start a new search to begin"
+            />
           ) : (
             <div className="flex flex-col gap-1">
               {conversationsQ.data.sessions.map((s) => (
@@ -88,7 +126,7 @@ export function ConversationSidebar({ activeSessionId, onSelect, onNewChat, onLo
             </div>
           )}
         </div>
-      )}
+      </div>
     </aside>
   );
 }

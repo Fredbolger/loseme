@@ -93,7 +93,7 @@ export function DetailPanel() {
         {/* Chunks drawer */}
         <div
           className={cn(
-            'flex h-full flex-col overflow-hidden border-l border-border bg-bg-secondary shadow-xl transition-[width] duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]',
+            'flex h-full flex-col overflow-hidden border-l border-border bg-bg-secondary shadow-xl transition-[width] duration-300 ease-out',
             chunksOpen ? 'w-[380px] min-w-[380px]' : 'w-0 min-w-0',
           )}
         >
@@ -147,14 +147,14 @@ export function DetailPanel() {
                   aria-checked={chunksOpen}
                   onClick={() => toggleChunks()}
                   className={cn(
-                    'relative h-5 w-9 rounded-full transition-colors',
-                    chunksOpen ? 'bg-accent-primary' : 'bg-bg-tertiary border border-border',
+                    'relative h-5 w-9 rounded-full border border-border transition-colors',
+                    chunksOpen ? 'bg-accent-primary' : 'bg-bg-tertiary',
                   )}
                 >
                   <span
                     className={cn(
-                      'absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition-transform',
-                      chunksOpen ? 'translate-x-4' : 'translate-x-0',
+                      'absolute top-px left-0.5 h-4 w-4 rounded-full bg-white transition-transform',
+                      chunksOpen ? 'translate-x-3.5' : 'translate-x-0',
                     )}
                   />
                 </button>

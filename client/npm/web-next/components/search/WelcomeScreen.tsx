@@ -1,4 +1,5 @@
 'use client';
+import { MessageSquare } from 'lucide-react';
 
 const SUGGESTIONS = [
   'What documents do I have?',
@@ -9,7 +10,7 @@ const SUGGESTIONS = [
 export function WelcomeScreen({ onPick }: { onPick: (text: string) => void }) {
   return (
     <div className="mx-auto flex max-w-lg flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
-      <div className="text-5xl opacity-60">🧠</div>
+      <MessageSquare size={40} className="text-accent-primary" />
       <h2 className="font-display text-2xl font-bold text-text-primary">How can I help you today?</h2>
       <p className="text-[14px] leading-relaxed text-text-secondary">
         Ask me anything about your documents — I&apos;ll search and provide answers with sources.
