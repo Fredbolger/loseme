@@ -9,6 +9,7 @@ import {
   useScanSource,
   useDeleteSource,
 } from '@/hooks/useDashboard';
+import { AddFilesystemSourceDialog } from '@/components/dashboard/AddFilesystemSourceDialog';
 import { StatTile } from '@/components/dashboard/StatTile';
 import { SourceTreeView } from '@/components/dashboard/SourceTreeView';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -26,6 +27,7 @@ export default function DashboardPage() {
 
   const [scanTarget, setScanTarget] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [addSourceOpen, setAddSourceOpen] = useState(false);
 
   const tree = useMemo(() => {
     if (!sourcesQ.data) return [];
@@ -54,6 +56,12 @@ export default function DashboardPage() {
           <Badge variant="outline">
             {sourcesQ.data?.sources.length ?? 0} source{sourcesQ.data?.sources.length !== 1 ? 's' : ''}
           </Badge>
+          <button
+            className="ml-auto inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            onClick={() => setAddSourceOpen(true)}
+          >
+            + Add Filesystem Source
+          </button>
         </div>
 
         {sourcesQ.isLoading ? (
@@ -72,6 +80,17 @@ export default function DashboardPage() {
           />
         )}
       </section>
+
+      {/* Add Source Dialog */}
+      <AddFilesystemSourceDialog
+        open={addSourceOpen}
+        onOpenChange={setAddSourceOpen}
+        onSuccess={() => {
+          sourcesQ.refetch();
+          stats.refetch();
+          perSourceQ.refetch();
+        }}
+      />
 
       {/* Scan confirm */}
       <ConfirmDialog
