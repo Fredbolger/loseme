@@ -2,8 +2,9 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { api, getClientBase } from '@/lib/api-client';
+import { api, getClientBase, getRuntimeConfig } from '@/lib/api-client';
 import type { DocumentStats, MonitoredSource, StatsPerSource } from '@/lib/types';
+
 
 export function useDocumentStats() {
   return useQuery({
@@ -93,5 +94,41 @@ export function useDeleteSource() {
       qc.invalidateQueries({ queryKey: ['documents'] });
     },
     onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+export function useAddFilesystemSource() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      directory: string;
+      recursive: boolean;
+      includePatterns: string[];
+      excludePatterns: string[];
+    }) => {
+      const cfg = await getRuntimeConfig();
+      // The server expects 'device_id' in the payload, which we now have.
+      return api.post<{ source_id: string }>('/sources/add', {
+        source_type: 'filesystem',
+        device_id: cfg.device_id,
+        scope: {
+          type: 'filesystem',
+          directories: [params.directory],
+          recursive: params.recursive,
+          include_patterns: params.includePatterns,
+          exclude_patterns: params.excludePatterns,
+        },
+      });
+    },
+    onSuccess: () => {
+      toast.success('Filesystem source added');
+      qc.invalidateQueries({ queryKey: ['sources', 'all'] }); // matches useAllSources
+      qc.invalidateQueries({ queryKey: ['documents'] });
+      // Also invalidate per‑source stats if you want
+      qc.invalidateQueries({ queryKey: ['documents', 'stats', 'per_source'] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
+    },
   });
 }

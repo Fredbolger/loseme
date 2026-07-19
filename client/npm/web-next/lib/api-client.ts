@@ -12,6 +12,7 @@ export interface RuntimeConfig {
   api_key: string;
   client_url: string;
   ingest_sidecar_url: string;
+  device_id: string;
 }
 
 let cachedConfig: RuntimeConfig | null = null;
@@ -27,6 +28,7 @@ export async function getRuntimeConfig(): Promise<RuntimeConfig> {
       api_key: '',
       client_url: 'http://localhost:3000',
       ingest_sidecar_url: 'http://ingest-sidecar:3000',
+      device_id: '',
     };
     return cachedConfig;
   }
