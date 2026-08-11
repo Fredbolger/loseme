@@ -17,6 +17,7 @@ from storage.metadata_db.db import get_connection
 from storage.vector_db.migrations import run_vector_migrations
 
 COLLECTION = "chunks"
+CENTEROIDS_COLLECTION = "centroids"
 VECTOR_SIZE = build_embedding_provider().dimension()
 
 logger = logging.getLogger(__name__)
@@ -59,6 +60,19 @@ class QdrantVectorStoreHybrid(VectorStore):
                         index=SparseIndexParams(
                             on_disk=True,
                         ),
+                    ),
+                },
+            )
+        try: 
+            self.client.get_collection(CENTEROIDS_COLLECTION)
+        except UnexpectedResponse:
+            logger.info(f"Creating Qdrant collection '{CENTEROIDS_COLLECTION}' with vector size {VECTOR_SIZE}")
+            self.client.create_collection(
+                collection_name=CENTEROIDS_COLLECTION,
+                vectors_config={
+                    "dense": VectorParams(
+                    size=VECTOR_SIZE,
+                    distance=Distance.COSINE,
                     ),
                 },
             )
